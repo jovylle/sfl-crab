@@ -1,0 +1,20 @@
+
+/* your native CSS file must be imported in main.js for these to apply */
+.grid {
+  display: grid;
+  gap: 2px;
+  /* 10 columns, each 2rem wide */
+  grid-template-columns: repeat(10, 2rem);
+}
+.tile {
+  width: 2rem;
+  aspect-ratio: 1;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: white; /* default empty */
+}
+.tile.sand  { background-color: #fef3c7; }  /* light yellow */
+.tile.crab  { background-color: #f87171; }  /* red */
+.tile.safe  { background-color: #d1d5db; }  /* gray */
+.tile.risky { background-color: #fb923c; }  /* orange */
