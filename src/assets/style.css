@@ -18,3 +18,8 @@
 .tile.crab  { background-color: #f87171; }  /* red */
 .tile.safe  { background-color: #d1d5db; }  /* gray */
 .tile.risky { background-color: #fb923c; }  /* orange */
+
+.site-footer .github-link {
+  color: #fff;
+  text-decoration: underline;
+}

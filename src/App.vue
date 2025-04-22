@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <header class="site-header">
-      <h1>SFL Digging Assistant</h1>
+      <h1>SFL Digging Assistant V1.1</h1>
     </header>
 
     <main class="site-main">
@@ -38,7 +38,17 @@
     </main>
 
     <footer class="site-footer">
-      <p>&copy; 2025 Your Name</p>
+      <p>
+        &copy; 2025 - Tool by Community for Community -
+        <a
+          href="https://github.com/jovylle"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="github-link"
+        >
+          git
+        </a>
+      </p>
     </footer>
   </div>
 </template>
