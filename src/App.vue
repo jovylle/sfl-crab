@@ -141,9 +141,9 @@ function resetGrid() {
   text-align: center;
   font-size: 0.9rem;
 }
-.sand-label     { color: #fef3c7; font-weight: bold; }
-.crab-label     { color: #f87171; font-weight: bold; }
-.treasure-label { color: #4ade80; font-weight: bold; }
+.sand-label     { font-weight: bold; background-color: #fed7cc; padding: 2px 4px; }
+.crab-label     { font-weight: bold; background-color: #f1f1c9; padding: 2px 4px; }
+.treasure-label { font-weight: bold; background-color: #4ade80; padding: 2px 4px; }
 
 /* Grid & tiles */
 .grid {
@@ -163,11 +163,16 @@ function resetGrid() {
   transition: background 0.2s;
   background: white;
 }
-.tile.sand     { background: #fef3c7; }
-.tile.crab     { background: #f87171; }
-.tile.safe     { background: #d1d5db; }
-.tile.risky    { background: #fb923c; }
+.tile.sand  { background-color: #fed7cc; }  /* light yellow */
+.tile.crab  {  background-color: #f1f1c9;}  /* yellow */
+.tile.safe  { background-color: #fed7cc; }  /* red */
+.tile.risky { background-color: #f1f1c9; }  /* orange */
 .tile.treasure { background: #4ade80; }
+
+.site-footer .github-link {
+  color: #fff;
+  text-decoration: underline;
+}
 .tile-img {
   width: 1rem;
   height: 1rem;
