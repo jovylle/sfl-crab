@@ -11,28 +11,29 @@
         <span class="crab-label">crab (red)</span> →
         <span class="treasure-label">treasure (green)</span>
       </p>
-
-      <div class="grid">
-        <div
-          v-for="(tile, index) in tiles"
-          :key="index"
-          @click="toggleTile(index)"
-          :class="['tile', tile]"
-        >
-          <img
-            v-if="tile === 'sand'"
-            :src="SandImg"
-            alt="sand"
-            class="tile-img"
-          />
-          <img
-            v-if="tile === 'crab'"
-            :src="CrabImg"
-            alt="crab"
-            class="tile-img"
-          />
-        </div>
-      </div>
+      <div class="contain-please">
+        
+        <div class="grid">
+          <div
+            v-for="(tile, index) in tiles"
+            :key="index"
+            @click="toggleTile(index)"
+            :class="['tile', tile]"
+          >
+            <img
+              v-if="tile === 'sand'"
+              :src="SandImg"
+              alt="sand"
+              class="tile-img"
+            />
+            <img
+              v-if="tile === 'crab'"
+              :src="CrabImg"
+              alt="crab"
+              class="tile-img"
+            />
+          </div>
+        </div></div>
 
       <button class="reset" @click="resetGrid">Reset</button>
     </main>
@@ -172,22 +173,17 @@ function isNeighborOfCrab(idx) {
 .treasure-label { font-weight: bold; background-color: #4ade80; padding: 2px 4px; }
 
 /* Grid & tiles */
-.grid {
-  display: grid;
-  gap: 2px;
-  grid-template-columns: repeat(10, 2rem);
-  margin-bottom: 1rem;
+.contain-please {
+  max-width: 500px;
+  width: 100%;
+  margin: 0px auto;
 }
-.tile {
-  width: 2rem;
-  aspect-ratio: 1;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-  background: white;
+.grid {
+  width: 100%; /* Ensure it doesn't exceed the parent container */
+  max-width: 100%; /* Prevent overflow */
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* 10 equal columns */
+  gap: 2px; /* Space between grid items */
 }
 .tile.sand  { background-color: #fed7cc; }  /* light yellow */
 .tile.crab  {  background-color: #f1f1c9;}  /* yellow */
@@ -200,8 +196,8 @@ function isNeighborOfCrab(idx) {
   text-decoration: underline;
 }
 .tile-img {
-  width: 1rem;
-  height: 1rem;
+  width: 60%;
+  height: 60%;
   object-fit: contain;
 }
 
@@ -216,5 +212,34 @@ function isNeighborOfCrab(idx) {
 }
 .reset:hover {
   background: #dc2626;
+}
+
+.site-main .grid {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* 10 equal columns */
+}
+
+/* Let each tile fill its cell & stay square */
+.tile {
+  width: 100%;
+  height: auto; /* Maintain aspect ratio if needed */
+  aspect-ratio: 1 / 1;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+  background: white;
+  overflow: hidden; /* Prevent content overflow */
+}
+
+/* Optional: tweak gaps on small screens */
+@media (max-width: 400px) {
+  .site-main .grid {
+    gap: 0px;
+  }
 }
 </style>
