@@ -59,48 +59,65 @@ import SandImg from './assets/images/Sand.png'
 import CrabImg from './assets/images/Crab.png'
 
 const gridSize = 10
+const deltas = [
+  [-1, 0], [1, 0], [0, -1], [0, 1]
+]
 const tiles = ref(Array(gridSize * gridSize).fill('empty'))
 
+// convert between index ↔ coords
 const indexToCoord = i => [Math.floor(i / gridSize), i % gridSize]
 const coordToIndex = (x, y) => x * gridSize + y
 
 function toggleTile(idx) {
   const cur = tiles.value[idx]
+
+  // safe = ignore
+  if (cur === 'safe') return
+
+  // risky → treasure
+  if (cur === 'risky') {
+    tiles.value[idx] = 'treasure'
+    return
+  }
+
+  // treasure → back to risky **only if** still next to a crab
+  if (cur === 'treasure') {
+    tiles.value[idx] = isNeighborOfCrab(idx) ? 'risky' : 'empty'
+    return
+  }
+
+  // empty → sand → crab → (directly) treasure
   const next =
-    cur === 'empty'     ? 'sand'
-  : cur === 'sand'      ? 'crab'
-  : cur === 'crab'      ? 'treasure'
-  :                       'empty'
+       cur === 'empty' ? 'sand'
+     : cur === 'sand'  ? 'crab'
+     :                    'treasure'
   tiles.value[idx] = next
+
+  // only sand/crab placement/removal touches highlights
   recomputeHighlights()
 }
 
 function recomputeHighlights() {
+  // wipe old auto‐marks
   tiles.value = tiles.value.map(t =>
     (t === 'safe' || t === 'risky') ? 'empty' : t
   )
+  // for each sand/crab, highlight its cardinal neighbors
   tiles.value.forEach((t, idx) => {
     if (t === 'sand' || t === 'crab') {
-      highlightNeighbors(idx, t)
-    }
-  })
-}
-
-function highlightNeighbors(idx, type) {
-  const [x, y] = indexToCoord(idx)
-  const deltas = [
-    [-1, 0], [1, 0], [0, -1], [0, 1]
-  ]
-  deltas.forEach(([dx, dy]) => {
-    const nx = x + dx, ny = y + dy
-    if (
-      nx >= 0 && nx < gridSize &&
-      ny >= 0 && ny < gridSize
-    ) {
-      const j = coordToIndex(nx, ny)
-      if (tiles.value[j] === 'empty') {
-        tiles.value[j] = type === 'sand' ? 'safe' : 'risky'
-      }
+      const [x, y] = indexToCoord(idx)
+      deltas.forEach(([dx, dy]) => {
+        const nx = x + dx, ny = y + dy
+        if (
+          nx >= 0 && nx < gridSize &&
+          ny >= 0 && ny < gridSize
+        ) {
+          const j = coordToIndex(nx, ny)
+          if (tiles.value[j] === 'empty') {
+            tiles.value[j] = (t === 'sand') ? 'safe' : 'risky'
+          }
+        }
+      })
     }
   })
 }
@@ -108,6 +125,15 @@ function highlightNeighbors(idx, type) {
 function resetGrid() {
   tiles.value = Array(gridSize * gridSize).fill('empty')
 }
+function isNeighborOfCrab(idx) {
+  const [x, y] = indexToCoord(idx)
+  return deltas.some(([dx, dy]) => {
+    const nx = x + dx, ny = y + dy
+    if (nx<0||nx>=gridSize||ny<0||ny>=gridSize) return false
+    return tiles.value[coordToIndex(nx, ny)] === 'crab'
+  })
+}
+
 </script>
 
 <style>
