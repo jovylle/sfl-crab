@@ -72,11 +72,11 @@
   border: 4px solid #6ade95;
 }
 
-.tile.near-hint-sand:not(.treasure):not(.crab) {
+.tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(.hint-treasure) {
   background-color: #fed7cc;
   border: 4px dashed #f4cabe;
 }
-.tile.near-hint-crab:not(.treasure):not(.near-sand) {
+.tile.near-hint-crab:not(.treasure):not(.near-sand):not(.near-hint-sand):not(.hint-treasure) {
   background-color: #f1f1c9;
   border: 4px dashed #e8e8bb;
 }

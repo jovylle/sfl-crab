@@ -26,6 +26,7 @@ export function useGrid (gridSize = 10) {
     })
   }
 
+  const hintCounts = ref(Array(gridSize * gridSize).fill(null).map(() => ({})))
 
   function applyHint (x, y, hintClass) {
     const directions = [
@@ -37,10 +38,14 @@ export function useGrid (gridSize = 10) {
       const nx = x + dx
       const ny = y + dy
       if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
-        const neighborIndex = ny * gridSize + nx
-        const current = tiles.value[neighborIndex]
-        if (!current.includes(hintClass)) {
-          tiles.value[neighborIndex] = [...current, hintClass]
+        const index = ny * gridSize + nx
+        const currentTile = tiles.value[index]
+        const counts = hintCounts.value[index]
+
+        counts[hintClass] = (counts[hintClass] || 0) + 1
+
+        if (!currentTile.includes(hintClass)) {
+          tiles.value[index] = [...currentTile, hintClass]
         }
       }
     })
@@ -56,8 +61,18 @@ export function useGrid (gridSize = 10) {
       const nx = x + dx
       const ny = y + dy
       if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
-        const neighborIndex = ny * gridSize + nx
-        tiles.value[neighborIndex] = tiles.value[neighborIndex].filter(cls => cls !== hintClass)
+        const index = ny * gridSize + nx
+        const currentTile = tiles.value[index]
+        const counts = hintCounts.value[index]
+
+        if (counts[hintClass]) {
+          counts[hintClass]--
+
+          if (counts[hintClass] === 0) {
+            delete counts[hintClass]
+            tiles.value[index] = currentTile.filter(cls => cls !== hintClass)
+          }
+        }
       }
     })
   }
@@ -67,7 +82,7 @@ export function useGrid (gridSize = 10) {
   }
 
   function cycleHintAt (index) {
-    const apiClasses = ['sand', 'near-sand', 'crab', 'treasure']
+    const apiClasses = ['sand', 'near-sand', 'crab', 'treasure', 'near-hint-sand']
     const current = tiles.value[index]
     if (current.some(cls => apiClasses.includes(cls))) return // ignore non-editable
 
