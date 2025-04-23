@@ -2,7 +2,7 @@
 <template>
   <div class="container">
     <header class="site-header">
-      <h1>SFL Digging Assistant V1.1</h1>
+      <h1>SFL Digging Assistant V2</h1>
     </header>
 
     <main class="site-main">
