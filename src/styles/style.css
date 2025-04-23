@@ -54,14 +54,14 @@
 }
 
 .tile.hint-sand {
-  background-image: url('@/assets/images/sand.png');
+  background-image: url('../assets/images/sand.png');
   background-size: 60%;
   background-repeat: no-repeat;
   background-position: center;
 }
 
 .tile.hint-crab {
-  background-image: url('@/assets/images/crab.png');
+  background-image: url('../assets/images/crab.png');
   background-size: 60%;
   background-repeat: no-repeat;
   background-position: center;
