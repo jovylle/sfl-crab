@@ -1,3 +1,4 @@
+<!-- filepath: /Users/jovylle.bermudez/fore/lab/sfl-crab/src/App.vue -->
 <template>
   <div class="container">
     <header class="site-header">
@@ -5,37 +6,28 @@
     </header>
 
     <main class="site-main">
-      <p class="instructions">
-        <strong>Click sequence:</strong>
-        <span class="sand-label">sand (yellow)</span> →
-        <span class="crab-label">crab (red)</span> →
-        <span class="treasure-label">treasure (green)</span>
-      </p>
-      <div class="contain-please">
-        
-        <div class="grid">
-          <div
-            v-for="(tile, index) in tiles"
-            :key="index"
-            @click="toggleTile(index)"
-            :class="['tile', tile]"
-          >
-            <img
-              v-if="tile === 'sand'"
-              :src="SandImg"
-              alt="sand"
-              class="tile-img"
-            />
-            <img
-              v-if="tile === 'crab'"
-              :src="CrabImg"
-              alt="crab"
-              class="tile-img"
-            />
-          </div>
-        </div></div>
+      <!-- Land ID Input -->
+      <div v-if="!landId">
+        <input
+          v-model="inputLandId"
+          placeholder="Enter Land ID"
+          class="land-id-input"
+        />
+        <button @click="submitLandId(inputLandId)">Submit</button>
+        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+      </div>
 
-      <button class="reset" @click="resetGrid">Reset</button>
+      <!-- Buttons -->
+      <div v-else>
+        <button @click="clearLandId">Change Land ID</button>
+        <button :disabled="isRefreshing" @click="refreshData">
+          Refresh Data From Server
+          <span v-if="isRefreshing">({{ refreshCountdown }}s)</span>
+        </button>
+      </div>
+
+      <!-- Grid -->
+      <Grid v-if="landId" />
     </main>
 
     <footer class="site-footer">
@@ -56,190 +48,18 @@
 
 <script setup>
 import { ref } from 'vue'
-import SandImg from './assets/images/Sand.png'
-import CrabImg from './assets/images/Crab.png'
+import { useLandData } from './composables/useLandData'
+import Grid from './components/Grid.vue'
 
-const gridSize = 10
-const deltas = [
-  [-1, 0], [1, 0], [0, -1], [0, 1]
-]
-const tiles = ref(Array(gridSize * gridSize).fill('empty'))
+const {
+  landId,
+  errorMessage,
+  isRefreshing,
+  refreshCountdown,
+  submitLandId,
+  clearLandId,
+  refreshData,
+} = useLandData()
 
-// convert between index ↔ coords
-const indexToCoord = i => [Math.floor(i / gridSize), i % gridSize]
-const coordToIndex = (x, y) => x * gridSize + y
-
-function toggleTile(idx) {
-  const cur = tiles.value[idx]
-
-  // safe = ignore
-  if (cur === 'safe') return
-
-  // risky → treasure
-  if (cur === 'risky') {
-    tiles.value[idx] = 'treasure'
-    return
-  }
-
-  // treasure → back to risky **only if** still next to a crab
-  if (cur === 'treasure') {
-    tiles.value[idx] = isNeighborOfCrab(idx) ? 'risky' : 'empty'
-    return
-  }
-
-  // empty → sand → crab → (directly) treasure
-  const next =
-       cur === 'empty' ? 'sand'
-     : cur === 'sand'  ? 'crab'
-     :                    'treasure'
-  tiles.value[idx] = next
-
-  // only sand/crab placement/removal touches highlights
-  recomputeHighlights()
-}
-
-function recomputeHighlights() {
-  // wipe old auto‐marks
-  tiles.value = tiles.value.map(t =>
-    (t === 'safe' || t === 'risky') ? 'empty' : t
-  )
-  // for each sand/crab, highlight its cardinal neighbors
-  tiles.value.forEach((t, idx) => {
-    if (t === 'sand' || t === 'crab') {
-      const [x, y] = indexToCoord(idx)
-      deltas.forEach(([dx, dy]) => {
-        const nx = x + dx, ny = y + dy
-        if (
-          nx >= 0 && nx < gridSize &&
-          ny >= 0 && ny < gridSize
-        ) {
-          const j = coordToIndex(nx, ny)
-          if (tiles.value[j] === 'empty') {
-            tiles.value[j] = (t === 'sand') ? 'safe' : 'risky'
-          }
-        }
-      })
-    }
-  })
-}
-
-function resetGrid() {
-  tiles.value = Array(gridSize * gridSize).fill('empty')
-}
-function isNeighborOfCrab(idx) {
-  const [x, y] = indexToCoord(idx)
-  return deltas.some(([dx, dy]) => {
-    const nx = x + dx, ny = y + dy
-    if (nx<0||nx>=gridSize||ny<0||ny>=gridSize) return false
-    return tiles.value[coordToIndex(nx, ny)] === 'crab'
-  })
-}
-
+const inputLandId = ref('')
 </script>
-
-<style>
-/* Container & layout */
-.container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  font-family: sans-serif;
-  margin: 0;
-}
-.site-header,
-.site-footer {
-  background: #333;
-  color: #fff;
-  text-align: center;
-  padding: 1rem;
-}
-.site-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-/* Instructions */
-.instructions {
-  margin-bottom: 1rem;
-  text-align: center;
-  font-size: 0.9rem;
-}
-.sand-label     { font-weight: bold; background-color: #fed7cc; padding: 2px 4px; }
-.crab-label     { font-weight: bold; background-color: #f1f1c9; padding: 2px 4px; }
-.treasure-label { font-weight: bold; background-color: #4ade80; padding: 2px 4px; }
-
-/* Grid & tiles */
-.contain-please {
-  max-width: 500px;
-  width: 100%;
-  margin: 0px auto;
-}
-.grid {
-  width: 100%; /* Ensure it doesn't exceed the parent container */
-  max-width: 100%; /* Prevent overflow */
-  display: grid;
-  grid-template-columns: repeat(10, 1fr); /* 10 equal columns */
-  gap: 2px; /* Space between grid items */
-}
-.tile.sand  { background-color: #fed7cc; }  /* light yellow */
-.tile.crab  {  background-color: #f1f1c9;}  /* yellow */
-.tile.safe  { background-color: #fed7cc; }  /* red */
-.tile.risky { background-color: #f1f1c9; }  /* orange */
-.tile.treasure { background: #4ade80; }
-
-.site-footer .github-link {
-  color: #fff;
-  text-decoration: underline;
-}
-.tile-img {
-  width: 60%;
-  height: 60%;
-  object-fit: contain;
-}
-
-/* Reset button */
-.reset {
-  padding: 0.5rem 1rem;
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-.reset:hover {
-  background: #dc2626;
-}
-
-.site-main .grid {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  display: grid;
-  grid-template-columns: repeat(10, 1fr); /* 10 equal columns */
-}
-
-/* Let each tile fill its cell & stay square */
-.tile {
-  width: 100%;
-  height: auto; /* Maintain aspect ratio if needed */
-  aspect-ratio: 1 / 1;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.1s;
-  background: white;
-  overflow: hidden; /* Prevent content overflow */
-}
-
-/* Optional: tweak gaps on small screens */
-@media (max-width: 400px) {
-  .site-main .grid {
-    gap: 0px;
-  }
-}
-</style>

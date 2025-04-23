@@ -1,0 +1,186 @@
+
+/* Container & layout */
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: sans-serif;
+  margin: 0;
+}
+.site-header,
+.site-footer {
+  background: #333;
+  color: #fff;
+  text-align: center;
+  padding: 1rem;
+}
+.site-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* Instructions */
+.instructions {
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.sand-label     { font-weight: bold; background-color: #fed7cc; padding: 2px 4px; }
+.crab-label     { font-weight: bold; background-color: #f1f1c9; padding: 2px 4px; }
+.treasure-label { font-weight: bold; background-color: #4ade80; padding: 2px 4px; }
+
+.tile.near-crab { background-color: #f3f3d7; border: 1px dashed #d4af37; }  /* yellow */
+.tile.near-sand  { background-color: #fed7cc; border: 1px dashed #f5a623;}  /* red */
+.tile.green { background: #78e9a2; }
+
+
+.tile.sand      { background-color: #fed7cc; }
+.tile.crab      { background-color: #f1f1c9; }
+.tile.treasure  { background: #78e9a2; }
+
+
+.tile.hint-sand {
+  background-color: #fed7cc;
+  border: 4px solid #fed7cc;
+}
+
+.tile.hint-crab {
+  background-color: #f3f3d7;
+  border: 4px solid #f1f1c9;
+}
+
+.tile.hint-sand {
+  background-image: url('@/assets/images/sand.png');
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.tile.hint-crab {
+  background-image: url('@/assets/images/crab.png');
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.tile.hint-treasure {
+  background-color: #78e9a2;
+  border: 4px solid #6ade95;
+}
+
+.tile.near-hint-sand:not(.treasure):not(.crab) {
+  background-color: #fed7cc;
+  border: 4px dashed #f4cabe;
+}
+.tile.near-hint-crab:not(.treasure):not(.near-sand) {
+  background-color: #f1f1c9;
+  border: 4px dashed #e8e8bb;
+}
+
+
+
+.treasure-indicator {
+  width: 50%;
+  height: 50%;
+  background-color: #4ade80;
+  border-radius: 50%;
+}
+/* Grid & tiles */
+.contain-please {
+  max-width: 500px;
+  width: 100%;
+  margin: 0px auto;
+}
+.grid {
+  width: 100%; /* Ensure it doesn't exceed the parent container */
+  max-width: 100%; /* Prevent overflow */
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* 10 equal columns */
+  gap: 2px; /* Space between grid items */
+}
+.site-footer .github-link {
+  color: #fff;
+  text-decoration: underline;
+}
+.tile-img {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+}
+
+/* Reset button */
+.reset {
+  padding: 0.5rem 1rem;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.reset:hover {
+  background: #dc2626;
+}
+
+.site-main .grid {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* 10 equal columns */
+}
+
+/* Let each tile fill its cell & stay square */
+.tile {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto; /* Maintain aspect ratio if needed */
+  aspect-ratio: 1 / 1;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.1s, background-image 0s;
+  background: white;
+  overflow: hidden; /* Prevent content overflow */
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Optional: tweak gaps on small screens */
+@media (max-width: 400px) {
+  .site-main .grid {
+    gap: 0px;
+  }
+}
+
+.land-id-input {
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 0.25rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+  background: #4ade80;
+  color: #fff;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.error {
+  color: red;
+  margin-top: 1rem;
+}
