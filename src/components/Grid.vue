@@ -34,6 +34,8 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useGrid } from '../composables/useGrid'
+const { updateGridFromData } = useGrid()
+
 
 const { tiles, loadFromLocalStorage, cycleHintAt } = useGrid()
 

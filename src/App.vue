@@ -20,10 +20,13 @@
       <!-- Buttons -->
       <div v-else>
         <button @click="clearLandId">Change Land ID</button>
-        <button :disabled="isRefreshing" @click="refreshData">
-          Refresh Data From Server
-          <span v-if="isRefreshing">({{ refreshCountdown }}s)</span>
+        <button
+          @click="refreshData"
+          :disabled="isRefreshing"
+        >
+          {{ isRefreshing ? `Refreshing... (${refreshCountdown})` : 'Refresh Data From Server' }}
         </button>
+
       </div>
 
       <!-- Grid -->

@@ -14,6 +14,7 @@ export function useLandData() {
       const data = await fetchDesertData(id)
       localStorage.setItem('landId', id)
       localStorage.setItem('desertData', JSON.stringify(data))
+      updateGridFromData(data) // 🔥 refresh the tiles
       landId.value = id
     } catch (error) {
       errorMessage.value = 'Error fetching data. Please try again later.'
@@ -42,6 +43,7 @@ export function useLandData() {
     try {
       const data = await fetchDesertData(landId.value)
       localStorage.setItem('desertData', JSON.stringify(data))
+      updateGridFromData(data) // 🔥 refresh the tiles
     } catch (error) {
       errorMessage.value = 'Error refreshing data. Please try again later.'
     }

@@ -1,10 +1,12 @@
 <template>
   <div>
     <button @click="$emit('clear')">Change Land ID</button>
-    <button :disabled="isRefreshing" @click="$emit('refresh')">
-      Refresh Data From Server
-      <span v-if="isRefreshing">({{ refreshCountdown }}s)</span>
-    </button>
+        <button
+          @click="$emit('refresh')"
+          :disabled="isRefreshing"
+        >
+          {{ isRefreshing ? `Refreshing... (${refreshCountdown})` : 'Refresh Data From Server' }}
+        </button>
   </div>
 </template>
 
