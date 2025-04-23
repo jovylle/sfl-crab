@@ -32,7 +32,7 @@
 
     <footer class="site-footer">
       <p>
-        &copy; 2025 - Tool by Community for Community -
+        &copy; 2025 - Tool for Community -
         <a
           href="https://github.com/jovylle"
           target="_blank"
