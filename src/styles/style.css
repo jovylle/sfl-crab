@@ -1,3 +1,6 @@
+body {
+    margin: 0px;
+}
 
 /* Container & layout */
 .container {
@@ -12,7 +15,7 @@
   background: #333;
   color: #fff;
   text-align: center;
-  padding: 1rem;
+  padding: 0.1rem;
 }
 .site-main {
   flex: 1;

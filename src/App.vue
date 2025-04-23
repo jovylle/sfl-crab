@@ -7,13 +7,14 @@
 
     <main class="site-main">
       <!-- Land ID Input -->
-      <div v-if="!landId">
+      <div v-if="!landId" class="" style="margin-bottom: 12px;">
         <input
           v-model="inputLandId"
           placeholder="Enter Land ID"
           class="land-id-input"
         />
         <button @click="submitLandId(inputLandId)">Submit</button>
+        <span>Enter a Land ID to load data</span>
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
       </div>
 
@@ -28,9 +29,9 @@
         </button>
 
       </div>
-
+      
       <!-- Grid -->
-      <Grid v-if="landId" />
+      <Grid />
     </main>
 
     <footer class="site-footer">

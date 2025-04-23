@@ -20,12 +20,6 @@
           alt="Sand"
           class="tile-img"
         />
-        <img
-          v-else-if="tile.includes('treasure')"
-          src="@/assets/images/treasure.png"
-          alt="Treasure"
-          class="tile-img"
-        />
       </div>
     </div>
   </div>
