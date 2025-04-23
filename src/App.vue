@@ -19,7 +19,7 @@
       </div>
 
       <!-- Buttons -->
-      <div v-else>
+      <div v-else style="margin: 0px -0.5rem 0px -0.5rem;">
         <button @click="clearLandId">Change Land ID</button>
         <button
           @click="refreshData"
