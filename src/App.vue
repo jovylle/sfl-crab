@@ -14,7 +14,7 @@
           class="land-id-input"
         />
         <button @click="submitLandId(inputLandId)">Submit</button>
-        <span>Enter a Land ID to load data</span>
+        <span class="instructions">Enter a Land ID to load data</span>
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
       </div>
 
@@ -32,6 +32,7 @@
       
       <!-- Grid -->
       <Grid />
+      <InfoFooter />
     </main>
 
     <footer class="site-footer">
@@ -54,6 +55,7 @@
 import { ref } from 'vue'
 import { useLandData } from './composables/useLandData'
 import Grid from './components/Grid.vue'
+import InfoFooter from './components/InfoFooter.vue'
 
 const {
   landId,
