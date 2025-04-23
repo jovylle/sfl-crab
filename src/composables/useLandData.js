@@ -1,5 +1,8 @@
 import { ref } from 'vue'
 import { fetchDesertData } from '../utils/api'
+import { useGrid } from './useGrid'
+const { updateGridFromData } = useGrid()
+
 
 export function useLandData() {
   const landId = ref(localStorage.getItem('landId') || '')
@@ -17,6 +20,7 @@ export function useLandData() {
       updateGridFromData(data) // 🔥 refresh the tiles
       landId.value = id
     } catch (error) {
+      console.error('Error fetching data:', error)
       errorMessage.value = 'Error fetching data. Please try again later.'
     }
   }

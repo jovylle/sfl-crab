@@ -24,7 +24,7 @@
           @click="refreshData"
           :disabled="isRefreshing"
         >
-          {{ isRefreshing ? `Refreshing... (${refreshCountdown})` : 'Refresh Data From Server' }}
+          {{ isRefreshing ? `Refresh Data From Server (${refreshCountdown})` : 'Refresh Data From Server' }}
         </button>
 
       </div>
