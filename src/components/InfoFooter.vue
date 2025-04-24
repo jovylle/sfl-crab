@@ -1,11 +1,15 @@
 <!-- src/components/InfoFooter.vue -->
 <template>
   <section class="info-section">
-    <p class="instructions">
-      💡 <strong>What is this?</strong><br />
+      
+    <div class="instructions">
+      <strong>💡 What is this?</strong> <br />
+      <p>
+        This is an alternative to <a href="https://sfl.world/land/1/treasures">https://sfl.world/land/1/treasures</a> digging guide of sfl.world. So first please try that out first.
+      </p>
       A personal tool to assist Sunflower Land players with digging.
       You can visualize hint patterns (sand, crab, treasure) and simulate digging logic with interactive tiles.
-    </p>
+    </div>
 
     <p class="instructions">
       🚀 Features:
