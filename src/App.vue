@@ -11,6 +11,9 @@
       <RefreshLandData />
       <UsernameViewer />
       <Grid />
+      <button class="btn btn-warning mt-4" @click="gridStore.clearCustomHints()">
+        🧹 Clear Manual Marks
+      </button>
       <InfoFooter />
     </main>
     <footer class="site-footer">
@@ -30,6 +33,7 @@
 </template>
 
 <script setup>
+import { gridStore } from '@/composables/gridStore'
 import LandLoader         from '@/components/LandLoader.vue'
 import RefreshLandData    from '@/components/RefreshLandData.vue'
 import UsernameViewer     from '@/components/UsernameViewer.vue'
