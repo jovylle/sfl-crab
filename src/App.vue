@@ -11,9 +11,10 @@
         <input
           v-model="inputLandId"
           placeholder="Enter Land ID"
+          @keyup.enter="redirectToLandId"
           class="land-id-input"
         />
-        <button @click="submitLandId(inputLandId)">Submit</button>
+        <button @click="redirectToLandId">Submit2</button>
         <span class="instructions">Enter a Land ID to load data</span>
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
       </div>
@@ -68,4 +69,24 @@ const {
 } = useLandData()
 
 const inputLandId = ref('')
+import { onMounted } from 'vue'
+
+
+onMounted(() => {
+  const path = window.location.pathname.replace('/', '')
+
+  if (path && !isNaN(path)) {
+    localStorage.setItem('landId', path)
+    landId.value = path
+    console.log('LandID loaded from URL:', path)
+  } else {
+    console.log('No valid LandID in URL, waiting for manual input')
+  }
+})
+
+const redirectToLandId = () => {
+  if (inputLandId.value.trim()) {
+    window.location.href = `/${inputLandId.value.trim()}`
+  }
+}
 </script>
