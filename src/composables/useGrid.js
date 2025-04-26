@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 export function useGrid (gridSize = 10) {
   const tiles = ref(Array(gridSize * gridSize).fill([]))
@@ -27,12 +27,6 @@ export function useGrid (gridSize = 10) {
     tiles.value = [...tiles.value]
   }
 
-  // WATCH TILES:
-  watch(tiles, (newTiles, oldTiles) => {
-    console.log('USEGRID FILE Tiles updated!')
-    console.log('New Tiles:', newTiles)
-    console.log('Old Tiles:', oldTiles)
-  })
   const hintCounts = ref(Array(gridSize * gridSize).fill(null).map(() => ({})))
 
   function applyHint (x, y, hintClass) {

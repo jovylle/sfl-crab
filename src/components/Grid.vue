@@ -26,19 +26,11 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
-import { useGrid } from '../composables/useGrid'
+import { onMounted } from 'vue'
 import { gridStore } from '@/composables/gridStore'
 
 const { tiles, loadFromLocalStorage, cycleHintAt } = gridStore
 
-// WATCH TILES:
-watch(tiles, (newTiles, oldTiles) => {
-  console.log('GRID Tiles updated!')
-  console.log('New Tiles:', newTiles)
-  console.log('Old Tiles:', oldTiles)
-  console.log('tiles Tiles:', tiles)
-})
 onMounted(() => {
   loadFromLocalStorage()
 })
