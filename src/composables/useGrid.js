@@ -1,17 +1,17 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 export function useGrid (gridSize = 10) {
   const tiles = ref(Array(gridSize * gridSize).fill([]))
 
-  function updateGridFromData (data) {
-    if (!data?.digging?.grid) {
-      console.warn('No valid digging.grid found in desertData:', data)
+  function updateGridFromData (grid) {
+    if (!grid) {
+      console.warn('No valid digging.grid found in desertData:', grid)
       return
     }
 
     tiles.value = Array(gridSize * gridSize).fill([])
 
-    data.digging.grid.forEach(tile => {
+    grid.forEach(tile => {
       const index = tile.y * gridSize + tile.x
 
       if (tile.items?.Crab) {
@@ -24,8 +24,15 @@ export function useGrid (gridSize = 10) {
         tiles.value[index] = ['treasure']
       }
     })
+    tiles.value = [...tiles.value]
   }
 
+  // WATCH TILES:
+  watch(tiles, (newTiles, oldTiles) => {
+    console.log('USEGRID FILE Tiles updated!')
+    console.log('New Tiles:', newTiles)
+    console.log('Old Tiles:', oldTiles)
+  })
   const hintCounts = ref(Array(gridSize * gridSize).fill(null).map(() => ({})))
 
   function applyHint (x, y, hintClass) {
@@ -105,18 +112,22 @@ export function useGrid (gridSize = 10) {
   }
 
   function loadFromLocalStorage () {
-    const saved = localStorage.getItem('desertData')
+    const saved = localStorage.getItem('landData')
     if (saved) {
       try {
         const data = JSON.parse(saved)
-        console.log('data haha', data)
-        updateGridFromData(data)
+        if (data?.state?.desert?.digging?.grid) {
+          updateGridFromData(data.state.desert.digging.grid)
+        } else {
+          console.warn('No valid state.desert.digging.grid found in landData:', data)
+        }
       } catch (e) {
-        console.error('error huhu', e)
-        console.error('Invalid desertData in localStorage')
+        console.error('Invalid landData in localStorage', e)
       }
     }
   }
+
+
 
   return {
     tiles,

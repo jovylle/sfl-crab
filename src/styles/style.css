@@ -1,11 +1,13 @@
+
 @import "tailwindcss";
+@plugin "daisyui";
 
 body {
     margin: 0px;
 }
 
 /* Container & layout */
-.container {
+.my-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -172,7 +174,7 @@ body {
   border-radius: 0.25rem;
 }
 
-button {
+button.old-button {
   padding: 0.5rem 1rem;
   margin:  0.5rem;
   background: #4ade80;
