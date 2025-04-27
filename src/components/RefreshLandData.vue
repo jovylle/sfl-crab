@@ -1,85 +1,110 @@
 <template>
-  <div class="flex flex-col items-center space-x-4">
+  <div class="flex flex-col items-center space-y-4">
     <div class="flex items-center space-x-4">
       <button
-        class="btn btn-outline btn-sm btn-error "
+        class="btn btn-outline btn-sm btn-error"
         @click="clearLandId"
       >
         ❌ Clear Land ID
       </button>
-      <button 
+
+      <button
         class="btn btn-success"
-        :disabled="!landId || loading.value || !canRefresh"
+        :disabled="!landId || loading || !canRefresh"
         @click="refresh"
       >
-        <span v-if="loading.value">Refreshing…</span>
-        <span v-else>🔄 Update Local Data</span>
+        <span v-if="loading">Refreshing…</span>
+        <span v-else-if="!canRefresh">
+          ⏳ Ready in {{ timeLeft }}s
+        </span>
+        <span v-else>
+          🔄 Update Local Data
+        </span>
       </button>
     </div>
-    <!-- <pre>
-      Land ID: {{ landId }}
-      loading: {{ loading.value }}
-      canRefresh: {{ canRefresh }}
-    </pre> -->
-    <div v-if="lastRefreshed" class="text-xs text-gray-500 mt-2">
+
+    <div v-if="lastRefreshed" class="text-xs text-gray-500">
       Local Data Last Update: {{ formattedLastRefreshed }}
     </div>
-
-    <div v-if="error.value" class="text-red-500 mt-2 text-sm">
-      {{ error.value }}
+    <div v-if="error" class="text-red-500 mt-2 text-sm">
+      {{ error }}
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getLandIdFromUrl } from '@/utils/getLandId'
 import { useLandService } from '@/composables/useLandService'
 import { gridStore } from '@/composables/gridStore'
 
-const landId = getLandIdFromUrl()
+const landId       = getLandIdFromUrl()
 const { loading, error, loadLandData } = useLandService()
 const { updateGridFromData } = gridStore
 
-// Track when we last refreshed
-const lastRefreshed = ref(0)
+// —— Reactive timestamps ——
 
-// Cooldown: only allow once every 10 seconds
-const canRefresh = computed(() => {
-  const last = Number(localStorage.getItem('lastLandRefresh') || 0)
-  return Date.now() - last > 10000
+// load previous timestamp (ms)
+const lastRefreshed = ref(
+  Number(localStorage.getItem('lastLandRefresh') || 0)
+)
+// a ticking “now” so we can compute elapsed
+const now = ref(Date.now())
+let ticker = null
+
+onMounted(() => {
+  // update now every second
+  ticker = setInterval(() => {
+    now.value = Date.now()
+  }, 1000)
 })
 
+onUnmounted(() => {
+  clearInterval(ticker)
+})
+
+// cooldown in milliseconds
+const COOLDOWN = 15_000
+
+// how many ms have passed since last
+const elapsed = computed(() => now.value - lastRefreshed.value)
+
+// whether we can refresh
+const canRefresh = computed(() => elapsed.value >= COOLDOWN)
+
+// seconds remaining until ready
+const timeLeft = computed(() =>
+  canRefresh.value ? 0 : Math.ceil((COOLDOWN - elapsed.value) / 1000)
+)
+
+// nicely formatted time
 const formattedLastRefreshed = computed(() =>
   lastRefreshed.value
     ? new Date(lastRefreshed.value).toLocaleTimeString()
     : ''
 )
 
+// —— Actions ——
+
 function clearLandId() {
-  // resets URL to “no land” state
   window.location.href = '/'
 }
+
 function refresh() {
-  if (!landId) return
+  if (!landId || loading.value) return
 
   loadLandData(landId).then(json => {
-    const now = Date.now()
-    lastRefreshed.value = now
-    localStorage.setItem('lastLandRefresh', now)
+    const nowMs = Date.now()
+    lastRefreshed.value = nowMs
+    localStorage.setItem('lastLandRefresh', String(nowMs))
 
     if (json?.state?.desert?.digging?.grid) {
       updateGridFromData(json.state.desert.digging.grid)
     }
   })
 }
-
-onMounted(() => {
-  // restore any previous timestamp
-  lastRefreshed.value = Number(localStorage.getItem('lastLandRefresh') || 0)
-})
 </script>
 
 <style scoped>
-/* optional tweaks */
+/* any tweaks you like */
 </style>
