@@ -18,7 +18,7 @@
     </main>
     <footer class="site-footer">
       <p>
-        &copy; 2025 - Tool for Community -
+        &copy; 2025 - By the community for community Tool -
         <a
           href="https://github.com/jovylle"
           target="_blank"
