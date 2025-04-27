@@ -12,10 +12,15 @@
 </template>
 
 <script setup>
-import { getLandIdFromUrl } from '@/utils/getLandId'
-import LandLoader from '@/components/LandLoader.vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+import LandLoader      from '@/components/LandLoader.vue'
 import RefreshLandData from '@/components/RefreshLandData.vue'
 
-const landId = getLandIdFromUrl()
+// 1) call useRoute() in setup, once
+const route = useRoute()
 
+// 2) wrap the param in a computed so it stays reactive
+const landId = computed(() => route.params.landId)
 </script>
