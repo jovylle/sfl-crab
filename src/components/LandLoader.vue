@@ -18,13 +18,16 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const inputLandId = ref('')
+const router       = useRouter()
 
 function goToLand() {
-  if (inputLandId.value.trim()) {
-    window.location.href = `/${inputLandId.value.trim()}`
-  }
+  const id = inputLandId.value.trim()
+  if (!id) return
+  // push to /:landId/digging
+  router.push({ name: 'Digging', params: { landId: id } })
 }
 </script>
 

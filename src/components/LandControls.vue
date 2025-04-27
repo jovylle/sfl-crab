@@ -12,10 +12,10 @@
 </template>
 
 <script setup>
-import { getLandIdFromUrl } from '@/utils/getLandId'
 import LandLoader from '@/components/LandLoader.vue'
 import RefreshLandData from '@/components/RefreshLandData.vue'
+import { useRoute } from 'vue-router'
 
-const landId = getLandIdFromUrl()
+const landId  = useRoute().params.landId  // string or undefined
 
 </script>

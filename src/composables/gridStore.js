@@ -1,5 +1,7 @@
 // src/composables/gridStore.js
 import { useGrid } from './useGrid'
 
-// SINGLE shared instance
-export const gridStore = useGrid()
+// export a function that you call inside setup()
+export function useGridStore () {
+  return useGrid()
+}

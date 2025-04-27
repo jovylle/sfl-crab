@@ -1,10 +1,11 @@
 // src/composables/useGrid.js
 import { ref } from 'vue'
-import { getLandIdFromUrl } from '@/utils/getLandId'
+// import { useRoute } from 'vue-router'
 
 export function useGrid (gridSize = 10) {
-  const landId = getLandIdFromUrl()
-  const STORAGE_KEY = `gridCustomHints_${landId}`
+
+  // const landId = useRoute().params.landId
+  const STORAGE_KEY = `gridCustomHints_${123}`
 
   // the tile classes array
   const tiles = ref(Array(gridSize * gridSize).fill([]))

@@ -27,8 +27,9 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { gridStore } from '@/composables/gridStore'
+import { useGridStore } from '@/composables/gridStore'
 
+const gridStore = useGridStore()
 const { tiles, loadFromLocalStorage, cycleHintAt } = gridStore
 
 onMounted(() => {

@@ -5,7 +5,7 @@
       <h1 class="text-5xl font-bold mb-8 text-center">
         Welcome to SFL Digging Assistant
       </h1>
-      <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center">
+      <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center space-x-2">
         <!-- Digging Card -->
         <router-link
           to="/digging"

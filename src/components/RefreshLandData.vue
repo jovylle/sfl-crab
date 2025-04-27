@@ -34,11 +34,16 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getLandIdFromUrl } from '@/utils/getLandId'
+import { useRoute, useRouter } from 'vue-router'
 import { useLandService } from '@/composables/useLandService'
-import { gridStore } from '@/composables/gridStore'
+import { useGridStore } from '@/composables/gridStore'
 
-const landId       = getLandIdFromUrl()
+const gridStore = useGridStore()
+
+const route  = useRoute()
+const router = useRouter()
+console.log('route on refresh', route)
+const landId  = route.params.landId  
 const { loading, error, loadLandData } = useLandService()
 const { updateGridFromData } = gridStore
 
@@ -87,7 +92,8 @@ const formattedLastRefreshed = computed(() =>
 // —— Actions ——
 
 function clearLandId() {
-  window.location.href = '/'
+  // go back to home
+  router.push({ name: 'Home' })
 }
 
 function refresh() {
