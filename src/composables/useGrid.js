@@ -1,129 +1,188 @@
 // src/composables/useGrid.js
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { getLandIdFromUrl } from '@/utils/getLandId'
 
 export function useGrid (gridSize = 10) {
   const landId = getLandIdFromUrl()
   const STORAGE_KEY = `gridCustomHints_${landId}`
 
+  // the tile classes array
   const tiles = ref(Array(gridSize * gridSize).fill([]))
+
+  // track neighbor hint counts so we know when to remove them
   const hintCounts = ref(
-    Array(gridSize * gridSize).fill(null).map(() => ({}))
+    Array(gridSize * gridSize)
+      .fill(null)
+      .map(() => ({}))
   )
 
-  // ─── Core API grid loader ───────────────────────────────────────────────────
+  // ─── apply / remove neighbor hints ────────────────────────────────────────
+  function applyHint (x, y, hintClass) {
+    const dirs = [
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 },
+    ]
+    dirs.forEach(({ dx, dy }) => {
+      const nx = x + dx, ny = y + dy
+      if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
+
+      const idx = ny * gridSize + nx
+      // bump the count
+      hintCounts.value[idx][hintClass] = (hintCounts.value[idx][hintClass] || 0) + 1
+
+      // if not already present, add it
+      if (!tiles.value[idx].includes(hintClass)) {
+        tiles.value[idx] = [...tiles.value[idx], hintClass]
+      }
+    })
+  }
+
+  function removeHint (x, y, hintClass) {
+    const dirs = [
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 },
+    ]
+    dirs.forEach(({ dx, dy }) => {
+      const nx = x + dx, ny = y + dy
+      if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
+
+      const idx = ny * gridSize + nx
+      const cnt = hintCounts.value[idx][hintClass] || 0
+      if (cnt <= 1) {
+        // remove entirely
+        delete hintCounts.value[idx][hintClass]
+        tiles.value[idx] = tiles.value[idx].filter(c => c !== hintClass)
+      } else {
+        // just decrement
+        hintCounts.value[idx][hintClass] = cnt - 1
+      }
+    })
+  }
+
+  // helper to get x,y from index
+  function getXY (idx) {
+    return { x: idx % gridSize, y: Math.floor(idx / gridSize) }
+  }
+
+  // ─── load the API grid, reset everything, then re-apply custom hints ───────
   function updateGridFromData (grid) {
-    if (!grid) {
-      console.warn('No valid digging.grid found in desertData:', grid)
-      return
-    }
+    if (!grid) return console.warn('No grid in data')
 
-    // reset base tiles
+    // 1) clear out base tiles & hints
     tiles.value = Array(gridSize * gridSize).fill([])
+    hintCounts.value = Array(gridSize * gridSize)
+      .fill(null)
+      .map(() => ({}))
 
+    // 2) lay down API items + neighbor hints
     grid.forEach(tile => {
       const idx = tile.y * gridSize + tile.x
       if (tile.items?.Crab) {
         tiles.value[idx] = ['crab']
         applyHint(tile.x, tile.y, 'near-crab')
-      } else if (tile.items?.Sand) {
+      }
+      else if (tile.items?.Sand) {
         tiles.value[idx] = ['sand']
         applyHint(tile.x, tile.y, 'near-sand')
-      } else {
+      }
+      else {
         tiles.value[idx] = ['treasure']
       }
     })
 
-    // make sure Vue sees the update
+    // force Vue to see the array change
     tiles.value = [...tiles.value]
 
-    // then re-apply any custom hints
+    // 3) overlay your saved hints on top
     loadCustomHints()
   }
 
-  // ─── Hint neighbor logic ──────────────────────────────────────────────────
-  function applyHint (x, y, hintClass) { /* unchanged… */ }
-  function removeHint (x, y, hintClass) { /* unchanged… */ }
-
-  function getXY (index) {
-    return { x: index % gridSize, y: Math.floor(index / gridSize) }
-  }
-
-  // ─── Cycle user-driven hints & persist ────────────────────────────────────
-  function cycleHintAt (index) {
-    const apiClasses = ['sand', 'near-sand', 'crab', 'treasure', 'near-hint-sand']
-    const current = tiles.value[index]
+  // ─── cycle user hints & persist ───────────────────────────────────────────
+  function cycleHintAt (idx) {
+    const apiClasses = ['sand', 'crab', 'treasure']
+    const current = tiles.value[idx]
     if (current.some(c => apiClasses.includes(c))) return
 
-    const { x, y } = getXY(index)
+    const { x, y } = getXY(idx)
     const cycle = ['hint-sand', 'hint-crab', 'hint-treasure', '']
-    const currentHint = cycle.find(h => current.includes(h)) || ''
-    const next = cycle[(cycle.indexOf(currentHint) + 1) % cycle.length]
+    const currHint = cycle.find(h => current.includes(h)) || ''
+    const nextHint = cycle[(cycle.indexOf(currHint) + 1) % cycle.length]
 
-    // strip old hint classes
-    const cleaned = current.filter(c => !cycle.includes(c))
-    tiles.value[index] = next ? [...cleaned, next] : cleaned
+    // remove old user hint + its neighbor hint
+    if (currHint === 'hint-sand') removeHint(x, y, 'near-hint-sand')
+    if (currHint === 'hint-crab') removeHint(x, y, 'near-hint-crab')
 
-    // update neighbor counts
-    if (currentHint === 'hint-sand') removeHint(x, y, 'near-hint-sand')
-    if (currentHint === 'hint-crab') removeHint(x, y, 'near-hint-crab')
-    if (next === 'hint-sand') applyHint(x, y, 'near-hint-sand')
-    if (next === 'hint-crab') applyHint(x, y, 'near-hint-crab')
+    // strip out any existing hint- classes
+    const clean = current.filter(c => !cycle.includes(c))
+    tiles.value[idx] = nextHint ? [...clean, nextHint] : clean
 
-    // persist only the “hint-…” classes
+    // add new neighbor hint if needed
+    if (nextHint === 'hint-sand') applyHint(x, y, 'near-hint-sand')
+    if (nextHint === 'hint-crab') applyHint(x, y, 'near-hint-crab')
+
+    // persist only `hint-…` entries
     saveCustomHints()
   }
 
-  // ─── Persistence helpers ───────────────────────────────────────────────────
+  // ─── persist & restore just the `hint-…` bits ─────────────────────────────
   function saveCustomHints () {
-    const payload = {}
+    const out = {}
     tiles.value.forEach((classes, i) => {
-      const custom = classes.filter(c => c.startsWith('hint-'))
-      if (custom.length) payload[i] = custom
+      const hints = classes.filter(c => c.startsWith('hint-'))
+      if (hints.length) out[i] = hints
     })
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(out))
   }
 
   function loadCustomHints () {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return
     try {
-      const hints = JSON.parse(raw)
-      Object.entries(hints).forEach(([idx, classes]) => {
-        const i = Number(idx)
-        tiles.value[i] = [
-          ...tiles.value[i].filter(c => !c.startsWith('hint-')),
+      const obj = JSON.parse(raw)
+      Object.entries(obj).forEach(([i, classes]) => {
+        const idx = Number(i)
+        tiles.value[idx] = [
+          ...tiles.value[idx].filter(c => !c.startsWith('hint-')),
           ...classes
         ]
+        // also rebuild neighbor counts for these hints
+        const { x, y } = getXY(idx)
+        classes.forEach(h => {
+          const neighborCls = h.replace('hint-', 'near-')
+          applyHint(x, y, neighborCls)
+        })
       })
-      // trigger reactivity
       tiles.value = [...tiles.value]
     } catch {
-      console.warn('Invalid custom hints in localStorage')
+      console.warn('Bad custom-hints payload')
     }
   }
 
   function clearCustomHints () {
     localStorage.removeItem(STORAGE_KEY)
+    // strip only hint-… classes
     tiles.value = tiles.value.map(list =>
       list.filter(c => !c.startsWith('hint-'))
     )
-    // reset neighbor counts if you like:
+    // reset neighbor hint counts (so API hints stay, user hints go)
     hintCounts.value = Array(gridSize * gridSize)
       .fill(null).map(() => ({}))
   }
 
-  // ─── Initial load from localStorage API blob ──────────────────────────────
+  // ─── initial load from your saved API blob ────────────────────────────────
   function loadFromLocalStorage () {
     const raw = localStorage.getItem('landData')
     if (!raw) return
     try {
       const data = JSON.parse(raw)
-      if (data?.state?.desert?.digging?.grid) {
-        updateGridFromData(data.state.desert.digging.grid)
-      }
+      const grid = data?.state?.desert?.digging?.grid
+      if (grid) updateGridFromData(grid)
     } catch (e) {
-      console.error('Invalid landData in localStorage', e)
+      console.error('Invalid landData', e)
     }
   }
 

@@ -85,7 +85,7 @@ body {
   background-color: #fed7cc;
   border: 4px dashed #f4cabe;
 }
-.tile.near-hint-crab:not(.treasure):not(.near-sand):not(.near-hint-sand):not(.hint-treasure) {
+.tile.near-hint-crab:not(.treasure):not(.sand):not(.near-sand):not(.near-hint-sand):not(.hint-treasure) {
   background-color: #f1f1c9;
   border: 4px dashed #e8e8bb;
 }
