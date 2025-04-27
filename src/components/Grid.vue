@@ -1,7 +1,19 @@
 <script setup>
-import { useGridStore } from '@/composables/gridStore'
+import { watch } from 'vue'
 
-const { tiles, cycleHintAt } = useGridStore()
+import { inject } from 'vue'
+
+const gridStore = inject('gridStore')
+
+const { tiles, cycleHintAt } = gridStore
+
+
+watch(
+  () => tiles.value.map(t => t.join(',')),
+  newVal => {
+    console.log('🟢 Tiles now:', newVal.slice(0,10), '…') // log first 10 for brevity
+  }
+)
 </script>
 
 <template>

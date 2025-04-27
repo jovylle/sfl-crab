@@ -18,7 +18,9 @@ import UsernameViewer  from '@/components/UsernameViewer.vue'
 import Grid            from '@/components/Grid.vue'
 import InfoFooter      from '@/components/InfoFooter.vue'
 import { useGridStore } from '@/composables/gridStore'
+import { provide } from 'vue'
 
 const gridStore = useGridStore()
+provide('gridStore', gridStore)
 
 </script>

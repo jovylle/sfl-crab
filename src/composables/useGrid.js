@@ -101,7 +101,8 @@ export function useGrid (landId, gridSize = 10) {
     loadCustomHints()
     
     triggerSoftReload()
-    console.log('Grid updated from API data')
+    console.log('Grid UI DOM updated from API data')
+    // console.log('tiles', tiles.value)
   }
 
   // ─── cycle user hints & persist ───────────────────────────────────────────

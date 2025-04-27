@@ -36,9 +36,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLandService } from '@/composables/useLandService'
-import { useGridStore } from '@/composables/gridStore'
+import { inject } from 'vue'
 
-const gridStore = useGridStore()
+const gridStore = inject('gridStore')
 import { triggerSoftReload } from '@/composables/useSoftReload'  // ← import this
 
 const route  = useRoute()
@@ -97,20 +97,19 @@ function clearLandId() {
   triggerSoftReload()
 }
 
+
 function refresh() {
   if (!landId || loading.value) return
-
   loadLandData(landId).then(json => {
-    lastRefreshed.value = Date.now()
-    localStorage.setItem('lastLandRefresh', String(lastRefreshed.value))
-
     const grid = json?.state?.desert?.digging?.grid
     if (grid) {
-      console.log('grid data found in response:', json)
+      console.log('🔄 RefreshData → updateGridFromData', grid)
       gridStore.updateGridFromData(grid)
-    }else{
-      console.log('No grid data found in response:', json)
     }
+    
+    const nowMs = Date.now()
+    lastRefreshed.value = nowMs
+    localStorage.setItem('lastLandRefresh', String(nowMs))
   })
 }
 </script>
