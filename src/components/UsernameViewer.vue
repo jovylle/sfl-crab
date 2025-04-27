@@ -7,21 +7,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { useLandData } from '@/composables/useLandData'
 
-const username = ref('')
-
-onMounted(() => {
-  const saved = localStorage.getItem('landData')
-  if (saved) {
-    try {
-      const data = JSON.parse(saved)
-      username.value = data?.state?.username || ''
-    } catch (e) {
-      console.error('Invalid landData for username', e)
-    }
-  }
-})
+const { username } = useLandData()
 </script>
 
 <style scoped>

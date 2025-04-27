@@ -1,7 +1,15 @@
 // src/composables/gridStore.js
 import { useGrid } from './useGrid'
+import { useRoute } from 'vue-router'
 
-// export a function that you call inside setup()
+const cache = {}
+
 export function useGridStore () {
-  return useGrid()
+  const landId = useRoute().params.landId
+  if (!cache[landId]) {
+    cache[landId] = useGrid(landId)
+    // preload the API grid once:
+    cache[landId].loadFromLocalStorage()
+  }
+  return cache[landId]
 }

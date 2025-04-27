@@ -5,7 +5,8 @@
       <h1 class="text-5xl font-bold mb-8 text-center">
         Welcome to SFL Digging Assistant
       </h1>
-      <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center space-x-2">
+      <div class="flex justify-center space-x-2">
+      <!-- <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center justify-center space-x-2"> -->
         <!-- Digging Card -->
         <router-link
           to="/digging"
@@ -27,7 +28,7 @@
           </div>
         </router-link>
 
-        <!-- Placeholder Card 1 -->
+        <!-- Placeholder Card 1
         <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
           <figure class="p-4">
             <div
@@ -40,10 +41,10 @@
             <h2 class="card-title">Coming Soon</h2>
             <p>Under construction</p>
           </div>
-        </div>
+        </div> -->
 
         <!-- Placeholder Card 2 -->
-        <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
+        <!-- <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
           <figure class="p-4">
             <div
               class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
@@ -55,10 +56,10 @@
             <h2 class="card-title">Coming Soon</h2>
             <p>Under construction</p>
           </div>
-        </div>
+        </div> -->
 
         <!-- Placeholder Card 3 -->
-        <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
+        <!-- <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
           <figure class="p-4">
             <div
               class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
@@ -70,7 +71,7 @@
             <h2 class="card-title">Coming Soon</h2>
             <p>Under construction</p>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </section>

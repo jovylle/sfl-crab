@@ -21,7 +21,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const inputLandId = ref('')
-const router       = useRouter()
+const router      = useRouter()
 
 function goToLand() {
   const id = inputLandId.value.trim()

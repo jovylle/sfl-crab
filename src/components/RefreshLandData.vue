@@ -39,13 +39,13 @@ import { useLandService } from '@/composables/useLandService'
 import { useGridStore } from '@/composables/gridStore'
 
 const gridStore = useGridStore()
+import { triggerSoftReload } from '@/composables/useSoftReload'  // ← import this
 
 const route  = useRoute()
 const router = useRouter()
-console.log('route on refresh', route)
+
 const landId  = route.params.landId  
 const { loading, error, loadLandData } = useLandService()
-const { updateGridFromData } = gridStore
 
 // —— Reactive timestamps ——
 
@@ -93,19 +93,23 @@ const formattedLastRefreshed = computed(() =>
 
 function clearLandId() {
   // go back to home
-  router.push({ name: 'Home' })
+  router.push({ name: 'Digging' })
+  triggerSoftReload()
 }
 
 function refresh() {
   if (!landId || loading.value) return
 
   loadLandData(landId).then(json => {
-    const nowMs = Date.now()
-    lastRefreshed.value = nowMs
-    localStorage.setItem('lastLandRefresh', String(nowMs))
+    lastRefreshed.value = Date.now()
+    localStorage.setItem('lastLandRefresh', String(lastRefreshed.value))
 
-    if (json?.state?.desert?.digging?.grid) {
-      updateGridFromData(json.state.desert.digging.grid)
+    const grid = json?.state?.desert?.digging?.grid
+    if (grid) {
+      console.log('grid data found in response:', json)
+      gridStore.updateGridFromData(grid)
+    }else{
+      console.log('No grid data found in response:', json)
     }
   })
 }

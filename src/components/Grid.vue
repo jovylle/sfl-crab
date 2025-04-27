@@ -1,3 +1,9 @@
+<script setup>
+import { useGridStore } from '@/composables/gridStore'
+
+const { tiles, cycleHintAt } = useGridStore()
+</script>
+
 <template>
   <div class="contain-please">
     <div class="grid">
@@ -24,15 +30,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { onMounted } from 'vue'
-import { useGridStore } from '@/composables/gridStore'
-
-const gridStore = useGridStore()
-const { tiles, loadFromLocalStorage, cycleHintAt } = gridStore
-
-onMounted(() => {
-  loadFromLocalStorage()
-})
-</script>
