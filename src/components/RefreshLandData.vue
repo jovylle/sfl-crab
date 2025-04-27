@@ -1,13 +1,21 @@
 <template>
-  <div class="flex flex-col items-center mt-4">
-    <button 
-      class="btn btn-secondary"
-      :disabled="!landId || loading.value || !canRefresh"
-      @click="refresh"
-    >
-      <span v-if="loading.value">Refreshing…</span>
-      <span v-else>🔄 Update Local Data</span>
-    </button>
+  <div class="flex flex-col items-center space-x-4">
+    <div class="flex items-center space-x-4">
+      <button
+        class="btn btn-outline btn-sm btn-error "
+        @click="clearLandId"
+      >
+        ❌ Clear Land ID
+      </button>
+      <button 
+        class="btn btn-success"
+        :disabled="!landId || loading.value || !canRefresh"
+        @click="refresh"
+      >
+        <span v-if="loading.value">Refreshing…</span>
+        <span v-else>🔄 Update Local Data</span>
+      </button>
+    </div>
     <!-- <pre>
       Land ID: {{ landId }}
       loading: {{ loading.value }}
@@ -48,6 +56,10 @@ const formattedLastRefreshed = computed(() =>
     : ''
 )
 
+function clearLandId() {
+  // resets URL to “no land” state
+  window.location.href = '/'
+}
 function refresh() {
   if (!landId) return
 
