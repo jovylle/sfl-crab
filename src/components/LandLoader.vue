@@ -1,9 +1,9 @@
 <template>
-  <div class="flex flex-col items-center mt-8">
+  <div class="flex flex-row space-x-4 items-center">
     <input
       v-model="inputLandId"
       placeholder="Enter Land ID"
-      class="input input-bordered mb-4"
+      class="input input-bordered"
     />
 
     <button 

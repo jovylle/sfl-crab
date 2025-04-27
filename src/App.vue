@@ -7,8 +7,7 @@
 
     <main class="site-main">
        
-      <LandLoader />
-      <RefreshLandData />
+      <LandControls />
       <UsernameViewer />
       <Grid />
       <button class="btn btn-warning mt-4" @click="gridStore.clearCustomHints()">
@@ -39,5 +38,6 @@ import RefreshLandData    from '@/components/RefreshLandData.vue'
 import UsernameViewer     from '@/components/UsernameViewer.vue'
 import Grid               from '@/components/Grid.vue'
 import InfoFooter         from '@/components/InfoFooter.vue'
+import LandControls    from '@/components/LandControls.vue'
 </script>
 
