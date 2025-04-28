@@ -81,6 +81,11 @@ body {
   border: 4px solid #6ade95;
 }
 
+.tile.hint-nothing {
+  background-color: #fed7cc;
+  border: 4px solid #f4cabe;
+}
+
 .tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(.hint-treasure) {
   background-color: #fed7cc;
   border: 4px dashed #f4cabe;
