@@ -112,7 +112,7 @@ export function useGrid (landId, gridSize = 10) {
     if (current.some(c => apiClasses.includes(c))) return
 
     const { x, y } = getXY(idx)
-    const cycle = ['hint-sand', 'hint-crab', 'hint-treasure', '']
+    const cycle = ['hint-sand', 'hint-crab', 'hint-treasure', 'hint-nothing', '']
     const currHint = cycle.find(h => current.includes(h)) || ''
     const nextHint = cycle[(cycle.indexOf(currHint) + 1) % cycle.length]
 
