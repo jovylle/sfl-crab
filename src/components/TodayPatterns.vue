@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-4">
+  <div v-if="patternKeys" class="mt-4">
     <h2 class="text-xl font-bold mb-4">Today's Treasure Patterns </h2>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
       <div
