@@ -1,6 +1,6 @@
 <!-- src/components/InfoFooter.vue -->
 <template>
-  <section class="card bg-base-100 shadow-md p-6 mt-8 mx-4 md:mx-auto max-w-3xl">
+  <section class="card bg-base-100 shadow-md p-6 mt-4 sm:mt-8 mx-4 md:mx-auto max-w-3xl">
     <div class="card-body space-y-6">
       <!-- “What is this?” -->
       <div>

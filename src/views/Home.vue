@@ -1,7 +1,7 @@
 <!-- src/views/Home.vue -->
 <template>
   <section class="py-12 flex flex-col items-center px-4">
-    <div class="w-full max-w-5xl mx-auto">
+    <div class="w-full max-w-screen-lg mx-auto">
       <h1 class="text-5xl font-bold mb-8 text-center">
         Welcome to SFL Digging Assistant
       </h1>

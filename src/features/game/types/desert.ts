@@ -1,6 +1,4 @@
-import { getKeys } from "./decorations";
 import { GameState, InventoryItemName } from "./game";
-import { getCurrentSeason, SeasonName } from "./seasons";
 import { BeachBountySeasonalArtefact } from "./treasure";
 
 export const DESERT_GRID_HEIGHT = 10;
@@ -10,10 +8,19 @@ type FormationPlot = { x: number; y: number; name: InventoryItemName };
 
 export type DiggingFormation = FormationPlot[];
 
-export const SEASONAL_ARTEFACT: Record<
-  SeasonName,
-  BeachBountySeasonalArtefact
-> = {
+type SeasonName =
+  | "Solar Flare"
+  | "Dawn Breaker"
+  | "Witches' Eve"
+  | "Catch the Kraken"
+  | "Spring Blossom"
+  | "Clash of Factions"
+  | "Pharaoh's Treasure"
+  | "Bull Run"
+  | "Winds of Change"
+  | "Great Bloom"
+  
+export const SEASONAL_ARTEFACT: Record<SeasonName, BeachBountySeasonalArtefact> = {
   "Bull Run": "Cow Skull",
   "Pharaoh's Treasure": "Scarab",
   "Solar Flare": "Scarab",
@@ -26,7 +33,7 @@ export const SEASONAL_ARTEFACT: Record<
 
   // TODO: Add Great Bloom artefact
   "Great Bloom": "Broken Pillar",
-};
+}
 
 export const DIGGING_FORMATIONS = {
   // Horizontal Zig Zag - X Coins
@@ -339,23 +346,6 @@ function secondsTillNextHour() {
   const secondsUntilNextHour = Math.floor(timeUntilNextHour / 1000);
 
   return secondsUntilNextHour;
-}
-
-export function getTreasuresFound({ game }: { game: GameState }) {
-  return game.desert.digging.grid
-    .flat()
-    .filter((hole) => {
-      return (
-        getKeys(hole.items)[0] !== "Sand" && getKeys(hole.items)[0] !== "Crab"
-      );
-    })
-    .map((hole) => getKeys(hole.items)[0]);
-}
-
-export function getArtefactsFound({ game }: { game: GameState }) {
-  return game.desert.digging.grid.flat().filter((hole) => {
-    return getKeys(hole.items)[0] === "Broken Pillar";
-  }).length;
 }
 
 export function getTreasureCount({ game }: { game: GameState }) {

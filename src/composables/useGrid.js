@@ -81,18 +81,22 @@ export function useGrid (landId, gridSize = 10) {
     // 2) lay down API items + neighbor hints
     grid.forEach(tile => {
       const idx = tile.y * gridSize + tile.x
+
+      const itemName = Object.keys(tile.items || {})[0]
+      const slug = itemName?.toLowerCase().replace(/\s+/g, '_') || 'unknown'
+      const tileImageClass = `tileImage:${slug}`
+
       if (tile.items?.Crab) {
-        tiles.value[idx] = ['crab']
+        tiles.value[idx] = ['crab', tileImageClass]
         applyHint(tile.x, tile.y, 'near-crab')
-      }
-      else if (tile.items?.Sand) {
-        tiles.value[idx] = ['sand']
+      } else if (tile.items?.Sand) {
+        tiles.value[idx] = ['sand', tileImageClass]
         applyHint(tile.x, tile.y, 'near-sand')
-      }
-      else {
-        tiles.value[idx] = ['treasure']
+      } else {
+        tiles.value[idx] = ['treasure', tileImageClass]
       }
     })
+
 
     // force Vue to see the array change
     tiles.value = [...tiles.value]
