@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/fetch-patterns.js",
     "dev": "vite",
+    "prebuild": "node scripts/fetch-patterns.js",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -16,7 +18,10 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.4",
     "@vitejs/plugin-vue": "^5.2.2",
+    "node-fetch": "^3.3.2",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4.1.4",
+    "ts-morph": "^25.0.1",
     "vite": "^6.3.1"
   }
 }
