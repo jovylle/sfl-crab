@@ -7,6 +7,12 @@ const gridStore = inject('gridStore')
 
 const { tiles, cycleHintAt } = gridStore
 
+function getTileImage(tile) {
+  const match = tile.find(cls => cls.startsWith('tileImage:'))
+  if (!match) return null
+  const slug = match.split(':')[1]
+  return `/world/${slug}.webp`
+}
 
 watch(
   () => tiles.value.map(t => t.join(',')),
@@ -27,15 +33,9 @@ watch(
         @click="cycleHintAt(index)"
       >
         <img
-          v-if="tile.includes('crab')"
-          src="@/assets/images/crab.png"
-          alt="Crab"
-          class="tile-img"
-        />
-        <img
-          v-else-if="tile.includes('sand')"
-          src="@/assets/images/sand.png"
-          alt="Sand"
+          v-if="getTileImage(tile)"
+          :src="getTileImage(tile)"
+          :alt="getTileImage(tile)"
           class="tile-img"
         />
       </div>

@@ -109,7 +109,7 @@ body {
   width: 100%;
   margin: 0px auto;
 }
-.grid {
+ .contain-please .grid {
   width: 100%; /* Ensure it doesn't exceed the parent container */
   max-width: 100%; /* Prevent overflow */
   display: grid;
@@ -139,7 +139,7 @@ body {
   background: #dc2626;
 }
 
-.site-main .grid {
+.site-main .contain-please .grid {
   width: 100%;
   aspect-ratio: 1 / 1;
   display: grid;
@@ -167,7 +167,7 @@ body {
 
 /* Optional: tweak gaps on small screens */
 @media (max-width: 400px) {
-  .site-main .grid {
+  .site-main  .contain-please .grid {
     gap: 0px;
   }
 }
