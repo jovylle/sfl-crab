@@ -1,3 +1,21 @@
+<script setup>
+import { watch } from 'vue'
+
+import { inject } from 'vue'
+
+const gridStore = inject('gridStore')
+
+const { tiles, cycleHintAt } = gridStore
+
+
+watch(
+  () => tiles.value.map(t => t.join(',')),
+  newVal => {
+    console.log('🟢 Tiles now:', newVal.slice(0,10), '…') // log first 10 for brevity
+  }
+)
+</script>
+
 <template>
   <div class="contain-please">
     <div class="grid">
@@ -24,14 +42,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { onMounted } from 'vue'
-import { gridStore } from '@/composables/gridStore'
-
-const { tiles, loadFromLocalStorage, cycleHintAt } = gridStore
-
-onMounted(() => {
-  loadFromLocalStorage()
-})
-</script>

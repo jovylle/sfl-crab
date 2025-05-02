@@ -1,9 +1,9 @@
 // src/composables/useGrid.js
 import { ref } from 'vue'
-import { getLandIdFromUrl } from '@/utils/getLandId'
+import { triggerSoftReload } from './useSoftReload'  // ← import this
 
-export function useGrid (gridSize = 10) {
-  const landId = getLandIdFromUrl()
+export function useGrid (landId, gridSize = 10) {
+
   const STORAGE_KEY = `gridCustomHints_${landId}`
 
   // the tile classes array
@@ -99,6 +99,10 @@ export function useGrid (gridSize = 10) {
 
     // 3) overlay your saved hints on top
     loadCustomHints()
+    
+    triggerSoftReload()
+    console.log('Grid UI DOM updated from API data')
+    // console.log('tiles', tiles.value)
   }
 
   // ─── cycle user hints & persist ───────────────────────────────────────────
@@ -108,7 +112,7 @@ export function useGrid (gridSize = 10) {
     if (current.some(c => apiClasses.includes(c))) return
 
     const { x, y } = getXY(idx)
-    const cycle = ['hint-sand', 'hint-crab', 'hint-treasure', '']
+    const cycle = ['hint-sand', 'hint-crab', 'hint-treasure', 'hint-nothing', '']
     const currHint = cycle.find(h => current.includes(h)) || ''
     const nextHint = cycle[(cycle.indexOf(currHint) + 1) % cycle.length]
 
@@ -152,7 +156,7 @@ export function useGrid (gridSize = 10) {
         // also rebuild neighbor counts for these hints
         const { x, y } = getXY(idx)
         classes.forEach(h => {
-          const neighborCls = h.replace('hint-', 'near-')
+          const neighborCls = h.replace('hint-', 'near-hint-')
           applyHint(x, y, neighborCls)
         })
       })
@@ -163,15 +167,22 @@ export function useGrid (gridSize = 10) {
   }
 
   function clearCustomHints () {
+    // 1) Remove the stored manual hints
     localStorage.removeItem(STORAGE_KEY)
-    // strip only hint-… classes
-    tiles.value = tiles.value.map(list =>
-      list.filter(c => !c.startsWith('hint-'))
-    )
-    // reset neighbor hint counts (so API hints stay, user hints go)
+
+    // 2) Reset neighbor hint counts so no stray near-… classes remain
     hintCounts.value = Array(gridSize * gridSize)
-      .fill(null).map(() => ({}))
+      .fill(null)
+      .map(() => ({}))
+
+    // 3) Rebuild the base grid from your landData blob in localStorage
+    loadFromLocalStorage()
+
+    // 4) Force a tiles array refresh if needed
+    tiles.value = [...tiles.value]
   }
+
+
 
   // ─── initial load from your saved API blob ────────────────────────────────
   function loadFromLocalStorage () {
@@ -185,7 +196,9 @@ export function useGrid (gridSize = 10) {
       console.error('Invalid landData', e)
     }
   }
-
+  // onSoftReload('useGrid.reloadFromStorage', () => {
+  //   loadFromLocalStorage()
+  // })
   return {
     tiles,
     updateGridFromData,

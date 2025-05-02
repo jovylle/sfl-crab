@@ -34,13 +34,18 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getLandIdFromUrl } from '@/utils/getLandId'
+import { useRoute, useRouter } from 'vue-router'
 import { useLandService } from '@/composables/useLandService'
-import { gridStore } from '@/composables/gridStore'
+import { inject } from 'vue'
 
-const landId       = getLandIdFromUrl()
+const gridStore = inject('gridStore')
+import { triggerSoftReload } from '@/composables/useSoftReload'  // ← import this
+
+const route  = useRoute()
+const router = useRouter()
+
+const landId  = route.params.landId  
 const { loading, error, loadLandData } = useLandService()
-const { updateGridFromData } = gridStore
 
 // —— Reactive timestamps ——
 
@@ -87,20 +92,24 @@ const formattedLastRefreshed = computed(() =>
 // —— Actions ——
 
 function clearLandId() {
-  window.location.href = '/'
+  // go back to home
+  router.push({ name: 'Digging' })
+  triggerSoftReload()
 }
+
 
 function refresh() {
   if (!landId || loading.value) return
-
   loadLandData(landId).then(json => {
+    const grid = json?.state?.desert?.digging?.grid
+    if (grid) {
+      console.log('🔄 RefreshData → updateGridFromData', grid)
+      gridStore.updateGridFromData(grid)
+    }
+    
     const nowMs = Date.now()
     lastRefreshed.value = nowMs
     localStorage.setItem('lastLandRefresh', String(nowMs))
-
-    if (json?.state?.desert?.digging?.grid) {
-      updateGridFromData(json.state.desert.digging.grid)
-    }
   })
 }
 </script>
