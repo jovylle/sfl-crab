@@ -12,3 +12,29 @@ To pull in the latest `desert.ts` (and its companions) from the official Sunflow
 1. **Add the upstream remote (if you haven’t already):**
    ```bash
    git remote add sunflower https://github.com/sunflower-land/sunflower-land.git
+
+
+Import the types folder via Git subtree:
+
+bash
+Copy
+Edit
+git subtree add \
+  --prefix src/features/game/types \
+  sunflower main \
+  --squash \
+  --message "Import Sunflower-Land game types"
+
+
+To pull in future updates:
+
+bash
+Copy
+Edit
+git subtree pull \
+  --prefix src/features/game/types \
+  sunflower main \
+  --squash
+bash
+Copy
+Edit
