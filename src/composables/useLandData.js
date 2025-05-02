@@ -42,11 +42,17 @@ export function useLandData () {
     () => landData.value.state?.desert?.digging?.grid || []
   )
 
+  // ← new: today’s pattern keys
+  const patternKeys = computed(
+    () => landData.value.state?.desert?.digging?.patterns || []
+  )
+
   return {
     // full blob, plus whatever you need
     landData,
     username,
     bumpkinId,
     grid,
+    patternKeys
   }
 }

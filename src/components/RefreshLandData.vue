@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col items-center space-y-4">
-    <div class="flex items-center space-x-4">
+    <div class="flex flex-col sm:flex-row items-center gap-4">
       <button
         class="btn btn-outline btn-sm btn-error"
         @click="clearLandId"
