@@ -16,17 +16,17 @@
     <!-- Drawer Content -->
     <div class="drawer-side">
       <label for="main-drawer" class="drawer-overlay"></label>
-      <div class="menu p-4 w-80 min-h-full bg-base-200 text-base-content">
-        <h2 class="text-xl font-bold mb-4">Main Menu</h2>
+      <div class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
+        <h2 class="text-xl font-bold mb-4">Menu</h2>
         <ul class="space-y-2">
-          <li><button class="btn btn-sm btn-block">Theme Toggle</button></li>
+          <!-- <li><button class="btn btn-sm btn-block">Theme Toggle</button></li>
           <li><button class="btn btn-sm btn-block">Reset Game</button></li>
-          <li><button class="btn btn-sm btn-block">Show Legend</button></li>
-          <li>
-            <ThemeToggle />
-          </li>
+          <li><button class="btn btn-sm btn-block">Show Legend</button></li> -->
           <!-- Add more controls here -->
         </ul>
+        <div>
+            <ThemeToggle />
+        </div>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center space-y-4">
+  <div class="">
     <div class="items-center">
       <button
         class="btn btn-outline btn-sm btn-error inline-block m-2"
@@ -9,7 +9,7 @@
       </button>
 
       <button
-        class="btn btn-success inline-block m-2"
+        class="btn btn-primary inline-block m-2"
         :disabled="!landId || loading || !canRefresh"
         @click="refresh"
       >

@@ -14,7 +14,7 @@
         >
           <figure class="p-4">
             <div
-              class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
+              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
             >
               <span class="text-6xl">⛏️</span>
             </div>
@@ -32,7 +32,7 @@
         <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
           <figure class="p-4">
             <div
-              class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
+              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
             >
               <span class="text-6xl">🚧</span>
             </div>
@@ -47,7 +47,7 @@
         <!-- <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
           <figure class="p-4">
             <div
-              class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
+              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
             >
               <span class="text-6xl">🚧</span>
             </div>
@@ -62,7 +62,7 @@
         <!-- <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
           <figure class="p-4">
             <div
-              class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
+              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
             >
               <span class="text-6xl">🚧</span>
             </div>

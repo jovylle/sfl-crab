@@ -1,14 +1,21 @@
 <!-- src/views/Digging.vue -->
 <template>
-  <div class="flex flex-col items-center sm:py-6">
-    <!-- <h1 class="text-3xl font-bold mb-4">Digging Page</h1> -->
-    <UsernameViewer />
-    <LandControls />
-    <Grid />
-    <button class="btn btn-warning mt-4" @click="gridStore.clearCustomHints()">
-      🧹 Clear Manual Marks
-    </button>
+  <div class="flex flex-col items-center sm:py-6 gap-4">
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <UsernameViewer />
+        <LandControls />
+      </div>
+    </div>
     <TodayPatterns />
+    <div class="card bg-base-100 shadow-sm w-full max-w-xl">
+      <div class="card-body">
+        <Grid />
+        <button class="btn btn-warning mt-4" @click="gridStore.clearCustomHints()">
+          🧹 Clear Manual Marks
+        </button>
+      </div>
+    </div>
     <InfoFooter />
   </div>
 </template>

@@ -46,12 +46,6 @@
           Feedback Form
         </a>
       </div>
-      <div>
-        <select class="select select-bordered" onchange="document.documentElement.setAttribute('data-theme', this.value)">
-          <option value="lightsoft">Light</option>
-          <option value="darkdim">Dark</option>
-        </select>
-      </div>
     </div>
   </section>
 </template>
