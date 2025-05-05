@@ -1,7 +1,7 @@
 <!-- src/components/InfoFooter.vue -->
 <template>
-  <section class="card bg-base-100 shadow-md p-6 mt-4 sm:mt-8 mx-4 md:mx-auto max-w-3xl">
-    <div class="card-body space-y-6">
+  <section class="card bg-base-100">
+    <div class="card-body space-y-4">
       <!-- “What is this?” -->
       <div>
         <h3 class="text-xl font-bold flex items-center">

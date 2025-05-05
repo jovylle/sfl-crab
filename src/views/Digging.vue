@@ -7,15 +7,15 @@
         <LandControls />
       </div>
     </div>
-    <TodayPatterns />
     <div class="card bg-base-100 shadow-sm w-full max-w-xl">
       <div class="card-body">
-        <Grid />
-        <button class="btn btn-warning mt-4" @click="gridStore.clearCustomHints()">
+        <button class="btn btn-warning mb-4 max-w-[300px] mx-auto" @click="gridStore.clearCustomHints()">
           🧹 Clear Manual Marks
         </button>
+        <Grid />
       </div>
     </div>
+    <TodayPatterns />
     <InfoFooter />
   </div>
 </template>
