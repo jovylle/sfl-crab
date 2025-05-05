@@ -1,5 +1,5 @@
 <template>
-  <div v-if="patternKeys" class="mt-4">
+  <div v-if="patternKeys && patternKeys.length > 0" class="mt-4">
     <div
       tabindex="0"
       class="collapse collapse-arrow bg-base-100 border-base-300 border "
