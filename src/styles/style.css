@@ -1,6 +1,9 @@
-
 @import "tailwindcss";
-@plugin "daisyui";
+
+@plugin "daisyui" {
+  themes: all;
+  logs: true;
+}
 
 body {
     margin: 0px;
@@ -158,7 +161,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: background-color 0.1s, background-image 0s;
-  background: white;
+  background-color: var(--b1);
   overflow: hidden; /* Prevent content overflow */
   user-select: none;
   -webkit-user-select: none;

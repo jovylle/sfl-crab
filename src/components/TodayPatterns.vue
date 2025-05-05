@@ -1,31 +1,36 @@
 <template>
   <div v-if="patternKeys" class="mt-4">
-    <h2 class="text-xl font-bold mb-4">Today's Treasure Patterns </h2>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-      <div
-        v-for="key in patternKeys"
-        :key="key"
-        class="border rounded border-gray-300 p-2 cursor-pointer hover:shadow transition-shadow"
-        :class="{
-          'bg-[#78e9a2]': isMarked(key),
-          'bg-white':      !isMarked(key)
-        }"
-        @click="toggleMark(key)"
-      >
-        <h4 class="text-sm font-medium mb-2 truncate text-center">{{ key.replace(/_/g, ' ') }}</h4>
-        <!-- 4×4 preview box -->
-        <div class="w-18 h-18 grid gap-0.5 grid-cols-4 mx-auto">
+    <div class="collapse bg-base-100 border-base-300 border">
+      <input type="checkbox" />
+      <div class="collapse-title font-semibold">Today's Treasure Patterns</div>
+      <div class="collapse-content text-sm">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <div
-            v-for="cell in 16"
-            :key="cell"
-            class="border bg-white border-gray-300 flex items-center justify-center aspect-square"
+            v-for="key in patternKeys"
+            :key="key"
+            class="border rounded border-gray-300 p-2 cursor-pointer hover:shadow transition-shadow"
+            :class="{
+              'bg-[#78e9a2]': isMarked(key),
+              'bg-white':      !isMarked(key)
+            }"
+            @click="toggleMark(key)"
           >
-            <img
-              v-if="getPlotAt(key, cell)"
-              :src="getImageUrl(getPlotAt(key, cell).name)"
-              :alt="getPlotAt(key, cell).name"
-              class="max-w-full max-h-full object-contain"
-            />
+            <h4 class="text-sm font-medium mb-2 truncate text-center">{{ key.replace(/_/g, ' ') }}</h4>
+            <!-- 4×4 preview box -->
+            <div class="w-18 h-18 grid gap-0.5 grid-cols-4 mx-auto">
+              <div
+                v-for="cell in 16"
+                :key="cell"
+                class="border bg-white border-gray-300 flex items-center justify-center aspect-square"
+              >
+                <img
+                  v-if="getPlotAt(key, cell)"
+                  :src="getImageUrl(getPlotAt(key, cell).name)"
+                  :alt="getPlotAt(key, cell).name"
+                  class="max-w-full max-h-full object-contain"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
