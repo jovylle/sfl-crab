@@ -1,31 +1,41 @@
 <template>
   <div v-if="patternKeys" class="mt-4">
-    <h2 class="text-xl font-bold mb-4">Today's Treasure Patterns </h2>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-      <div
-        v-for="key in patternKeys"
-        :key="key"
-        class="border rounded border-gray-300 p-2 cursor-pointer hover:shadow transition-shadow"
-        :class="{
-          'bg-[#78e9a2]': isMarked(key),
-          'bg-white':      !isMarked(key)
-        }"
-        @click="toggleMark(key)"
-      >
-        <h4 class="text-sm font-medium mb-2 truncate text-center">{{ key.replace(/_/g, ' ') }}</h4>
-        <!-- 4×4 preview box -->
-        <div class="w-18 h-18 grid gap-0.5 grid-cols-4 mx-auto">
+    <div
+      tabindex="0"
+      class="collapse collapse-arrow bg-base-100 border-base-300 border "
+    >
+      <input type="checkbox" />
+      <div class="collapse-title font-semibold">Today's Treasure Patterns</div>
+      <div class="collapse-content text-sm max-w-xl">
+        <div class="">
           <div
-            v-for="cell in 16"
-            :key="cell"
-            class="border bg-white border-gray-300 flex items-center justify-center aspect-square"
+            v-for="(key, index) in patternKeys"
+            :key="index"
+            class="border border-base-300 m-2 inline-block rounded p-2 cursor-pointer hover:shadow transition-shadow"
+            :class="{
+                  'bg-success': isMarked(index),
+                  'bg-base-100 dark:bg-neutral-content':      !isMarked(index)
+                }"
+            @click="toggleMark(index)"
           >
-            <img
-              v-if="getPlotAt(key, cell)"
-              :src="getImageUrl(getPlotAt(key, cell).name)"
-              :alt="getPlotAt(key, cell).name"
-              class="max-w-full max-h-full object-contain"
-            />
+            <!-- <h4 class="text-sm font-medium mb-2 truncate text-center">{{ key.replace(/_/g, ' ') }}</h4> -->
+            <!-- 4×4 preview box -->
+            <div
+              class="w-18 h-18 sm:w-24 sm:h-24 grid grid-cols-4 mx-auto border border-base-300"
+            >
+              <div
+                v-for="cell in 16"
+                :key="cell"
+                class="border border-base-300 flex items-center justify-center aspect-square"
+              >
+                <img
+                  v-if="getPlotAt(key, cell)"
+                  :src="getImageUrl(getPlotAt(key, cell).name)"
+                  :alt="getPlotAt(key, cell).name"
+                  class="max-w-full max-h-full object-contain"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -38,18 +48,19 @@ import { useLandData } from '../composables/useLandData'
 import { DIGGING_FORMATIONS } from '../features/game/types/desert'
 
 const { patternKeys } = useLandData()
-const marked = ref<Set<string>>(new Set())
+const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 
 const GRID_SIZE     = 4
 const CENTER_OFFSET = Math.floor(GRID_SIZE / 2) - 1 // = 2
 
-function toggleMark(key: string) {
-  marked.value.has(key)
-    ? marked.value.delete(key)
-    : marked.value.add(key)
+function toggleMark(index: number) {
+  marked.value.has(index)
+    ? marked.value.delete(index)
+    : marked.value.add(index)
 }
-function isMarked(key: string) {
-  return marked.value.has(key)
+
+function isMarked(index: number) {
+  return marked.value.has(index)
 }
 
 function getPlotAt(key: string, cellIndex: number) {
@@ -69,7 +80,6 @@ function getImageUrl(name: string) {
   return `/world/${name.toLowerCase().replace(/\s+/g, '_')}.webp`
 }
 </script>
-
 
 <style scoped>
 h3 {

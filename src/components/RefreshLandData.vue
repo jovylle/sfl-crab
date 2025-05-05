@@ -1,15 +1,15 @@
 <template>
-  <div class="flex flex-col items-center space-y-4">
-    <div class="flex flex-col sm:flex-row items-center gap-4">
+  <div class="">
+    <div class="items-center">
       <button
-        class="btn btn-outline btn-sm btn-error"
+        class="btn btn-outline btn-sm btn-error inline-block m-2"
         @click="clearLandId"
       >
         ❌ Clear Land ID
       </button>
 
       <button
-        class="btn btn-success"
+        class="btn btn-primary inline-block m-2"
         :disabled="!landId || loading || !canRefresh"
         @click="refresh"
       >

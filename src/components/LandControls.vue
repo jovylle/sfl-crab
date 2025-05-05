@@ -1,6 +1,6 @@
 <!-- src/components/LandControls.vue -->
 <template>
-  <div class="flex flex-col items-center mt-4 sm:mt-8">
+  <div class="">
     <!-- no landId? show input loader -->
     <LandLoader v-if="!landId" />
 

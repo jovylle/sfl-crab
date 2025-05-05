@@ -1,6 +1,6 @@
 <template>
-  <div v-if="username" class="mt-6 text-center">
-    <h2 class="text-xl font-bold text-gray-800">
+  <div v-if="username" class="">
+    <h2 class="text-xl font-bold">
       👤 Welcome, {{ username }}!
     </h2>
   </div>
