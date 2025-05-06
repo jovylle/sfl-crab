@@ -46,8 +46,9 @@
 import { ref } from 'vue'
 import { useLandData } from '../composables/useLandData'
 import { DIGGING_FORMATIONS } from '../features/game/types/desert'
-
-const { patternKeys } = useLandData()
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const { patternKeys } = useLandData(route.params.landId)
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 
 const GRID_SIZE     = 4

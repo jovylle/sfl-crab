@@ -45,7 +45,7 @@ const route  = useRoute()
 const router = useRouter()
 
 const landId  = route.params.landId  
-const { loading, error, loadLandData } = useLandService()
+const { loading, error, loadLandData } = useLandService(landId)
 
 // —— Reactive timestamps ——
 

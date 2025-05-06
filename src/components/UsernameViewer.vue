@@ -8,8 +8,10 @@
 
 <script setup>
 import { useLandData } from '@/composables/useLandData'
+import { useRoute } from 'vue-router'
 
-const { username } = useLandData()
+const route = useRoute()
+const { username } = useLandData(route.params.landId)
 </script>
 
 <style scoped>

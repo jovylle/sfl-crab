@@ -1,13 +1,10 @@
-// src/services/landService.js
-
-const STORAGE_KEY = 'landData'
-
-export function saveLandData (data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+// landService.js
+export function saveLandData (data, id) {
+  localStorage.setItem(`landData_${id}`, JSON.stringify(data))
 }
 
-export function getLandData () {
-  const raw = localStorage.getItem(STORAGE_KEY)
+export function getLandData (id) {
+  const raw = localStorage.getItem(`landData_${id}`)
   try {
     return raw ? JSON.parse(raw) : null
   } catch {
@@ -16,6 +13,6 @@ export function getLandData () {
   }
 }
 
-export function clearLandData () {
-  localStorage.removeItem(STORAGE_KEY)
+export function clearLandData (id) {
+  localStorage.removeItem(`landData_${id}`)
 }

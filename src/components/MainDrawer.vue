@@ -9,7 +9,7 @@
         for="main-drawer"
         class="btn btn-primary btn-lg btn-circle shadow-xl text-2xl"
       >
-        ☰
+        <span class="-mt-1 text-white dark:text-black">☰</span>
       </label>
     </div>
 

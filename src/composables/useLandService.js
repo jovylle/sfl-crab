@@ -1,19 +1,18 @@
-// src/composables/useLandService.js
+// useLandService.js
 import { ref } from 'vue'
 import { fetchLandData } from '@/api/landApi'
-import { saveLandData, getLandData, clearLandData } from '@/services/landService'
+import { saveLandData, clearLandData } from '@/services/landService'
 
-export function useLandService () {
+export function useLandService (landId) {
   const loading = ref(false)
   const error = ref('')
 
-  // Fetch and overwrite your `landData` blob in localStorage
-  async function loadLandData (id) {
+  async function loadLandData () {
     loading.value = true
     error.value = ''
     try {
-      const json = await fetchLandData(id)
-      saveLandData(json)
+      const json = await fetchLandData(landId)
+      saveLandData(json, landId)
       return json
     } catch (err) {
       console.error(err)
@@ -23,9 +22,8 @@ export function useLandService () {
     }
   }
 
-  // Wipe it out if you ever need to
   function clearLandDataCache () {
-    clearLandData()
+    clearLandData(landId)
   }
 
   return { loading, error, loadLandData, clearLandDataCache }
