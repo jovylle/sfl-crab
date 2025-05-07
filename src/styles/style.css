@@ -44,6 +44,43 @@
 @custom-variant dark (&:where([data-theme=dim], [data-theme=dim] *));
 
 
+.bg-stripes {
+  @apply bg-[length:40px_40px];
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-base-100),
+    var(--color-base-100) 10px,
+    var(--color-base-200) 10px,
+    var(--color-base-200) 20px
+  );
+}
+
+.bg-dots {
+  @apply bg-[length:20px_20px];
+  background-image: radial-gradient(var(--color-base-content) 1px, transparent 1px);
+}
+
+.bg-checker {
+  background-image:
+    linear-gradient(45deg, var(--color-base-100) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-base-100) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-base-100) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-base-100) 75%);
+  @apply bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0];
+}
+
+.bg-pixel-squares {
+  background-image: url('/src/assets/images/bright-squares.png');
+  @apply bg-repeat bg-[length:auto];
+}
+.bg-asfalt {
+  background-image: url('/src/assets/images/asfalt-dark.png');
+  @apply bg-repeat bg-[length:auto];
+}
+.bg-cross-lines {
+  background-image: url('/src/assets/images/noise-pattern-with-subtle-cross-lines.png');
+  @apply bg-repeat bg-[length:auto];
+}
 body {
     margin: 0px;
 }
