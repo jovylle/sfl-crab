@@ -1,58 +1,28 @@
-import { ref, computed } from 'vue'
-import { onSoftReload } from './softReloadRegistry'
+// src/composables/useLandData.js
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { getLocalStoredLandData } from '@/utils/storageHelpers'
 
-/**
- * Shared ref holding the parsed landData blob.
- * It gets reloaded automatically on every soft-reload.
- */
-const landData = ref({})
+const instances = new Map()  // landId -> { landData, inventory, desert, reload }
 
-function loadLandDataFromStorage () {
-  const raw = localStorage.getItem('landData')
-  if (raw) {
-    try {
-      landData.value = JSON.parse(raw)
-    } catch {
-      console.error('Invalid JSON in localStorage.landData')
-      landData.value = {}
+export function useLandData (defaults = {}) {
+  const route = useRoute()
+  const landId = route.params.landId
+
+  if (!instances.has(landId)) {
+    // create it once
+    const landData = ref({ ...defaults })
+    function reload () {
+      const stored = getLocalStoredLandData(landId)
+      landData.value = stored || { ...defaults }
     }
-  } else {
-    landData.value = {}
+    onMounted(reload)
+
+    const inventory = computed(() => landData.value.state?.inventory || {})
+    const desert = computed(() => landData.value.state?.desert || {})
+
+    instances.set(landId, { landData, inventory, desert, reload })
   }
-}
 
-// run on initial import
-loadLandDataFromStorage()
-
-// re-run on each soft-reload
-onSoftReload('useLandData.reload', loadLandDataFromStorage)
-
-/**
- * Composable to grab reactive slices of landData
- */
-export function useLandData () {
-  // e.g. username
-  const username = computed(() => landData.value.state?.username || '')
-
-  // bumpkin id
-  const bumpkinId = computed(() => landData.value.state?.bumpkin?.id || '')
-
-  // the digging grid array
-  const grid = computed(
-    () => landData.value.state?.desert?.digging?.grid || []
-  )
-
-  // ← new: today’s pattern keys
-  const patternKeys = computed(
-    () => landData.value.state?.desert?.digging?.patterns || []
-  )
-
-  return {
-    // full blob, plus whatever you need
-    landData,
-    username,
-    bumpkinId,
-    grid,
-    patternKeys
-  }
+  return instances.get(landId)
 }

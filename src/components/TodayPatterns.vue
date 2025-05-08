@@ -1,5 +1,5 @@
 <template>
-  <div v-if="patternKeys" class="mt-4">
+  <div v-if="patternKeys && patternKeys.length > 0" class="mt-4">
     <div
       tabindex="0"
       class="collapse collapse-arrow bg-base-100 border-base-300 border "
@@ -45,9 +45,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useLandData } from '../composables/useLandData'
-import { DIGGING_FORMATIONS } from '../features/game/types/desert'
-
-const { patternKeys } = useLandData()
+import { DIGGING_FORMATIONS } from '../../src_other/features/game/types/desert'
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const { patternKeys } = useLandData(route.params.landId)
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 
 const GRID_SIZE     = 4

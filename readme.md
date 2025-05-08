@@ -14,27 +14,32 @@ To pull in the latest `desert.ts` (and its companions) from the official Sunflow
    git remote add sunflower https://github.com/sunflower-land/sunflower-land.git
 
 
-Import the types folder via Git subtree:
+## Creating a ZIP of Core Project Files
 
-bash
-Copy
-Edit
-git subtree add \
-  --prefix src/features/game/types \
-  sunflower main \
-  --squash \
-  --message "Import Sunflower-Land game types"
+You can bundle just your Vite config, the `src/` folder, and `package.json` into a ZIP using the commands below.
 
+### macOS / Linux
 
-To pull in future updates:
+```bash
+zip -r project-core-$(date +%F).zip vite.config.js src package.json api_response.json
+````
 
-bash
-Copy
-Edit
-git subtree pull \
-  --prefix src/features/game/types \
-  sunflower main \
-  --squash
-bash
-Copy
-Edit
+* `-r` recursively includes the `src/` directory
+* `project-core.zip` is the output file
+
+---
+
+### Windows PowerShell
+
+```powershell
+# generate a date string in YYYY-MM-DD format
+$date = Get-Date -Format yyyy-MM-dd
+# compress files into "project-core-YYYY-MM-DD.zip"
+Compress-Archive -Path vite.config.js, src, package.json -DestinationPath "project-core-$date.zip"
+
+```
+
+* `-Path` takes a comma-separated list of files/folders
+* `-DestinationPath` specifies the ZIP file name
+
+```

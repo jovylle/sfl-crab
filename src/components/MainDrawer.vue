@@ -9,7 +9,7 @@
         for="main-drawer"
         class="btn btn-primary btn-lg btn-circle shadow-xl text-2xl"
       >
-        ☰
+        <span class="-mt-1 text-white dark:text-black">☰</span>
       </label>
     </div>
 
@@ -24,8 +24,13 @@
           <li><button class="btn btn-sm btn-block">Show Legend</button></li> -->
           <!-- Add more controls here -->
         </ul>
-        <div>
-            <ThemeToggle />
+        <div class="divider divider-info">Land Sync</div>
+        <div class="mx-4">
+          <LandControls />
+        </div>
+        <div class="divider divider-info">Theme</div>
+        <div class="mx-4">
+          <ThemeToggle />
         </div>
       </div>
     </div>
@@ -35,4 +40,6 @@
 <script setup>
 // optional: inject actions via props or composables later
 import ThemeToggle from '@/components/ThemeToggle.vue'
+
+import LandControls    from '@/components/LandControls.vue'
 </script>

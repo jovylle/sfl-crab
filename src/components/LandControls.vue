@@ -1,26 +1,39 @@
 <!-- src/components/LandControls.vue -->
 <template>
-  <div class="">
-    <!-- no landId? show input loader -->
+  <div>
+    <!-- No landId? Show input loader -->
     <LandLoader v-if="!landId" />
 
-    <!-- we have a landId? show refresh + clear -->
-    <template v-else>
+    <!-- We have a landId → show refresh + clear -->
+    <div v-else class="space-x-2">
       <RefreshLandData />
-    </template>
+      <button
+        type="button"
+        class="btn btn-sm btn-error tooltip"
+        data-tip="Clear Land ID"
+        @click="clearLandId"
+      >
+        Clear ID
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import LandLoader      from '@/components/LandLoader.vue'
 import RefreshLandData from '@/components/RefreshLandData.vue'
 
-// 1) call useRoute() in setup, once
-const route = useRoute()
+const route  = useRoute()
+const router = useRouter()
 
-// 2) wrap the param in a computed so it stays reactive
+// Reactive landId (undefined when on /digging)
 const landId = computed(() => route.params.landId)
+
+// Redirect back to the “no-ID” digging page
+function clearLandId() {
+  router.push({ name: 'Digging' })
+}
 </script>
