@@ -1,37 +1,28 @@
-// useLandData.js
-import { ref, computed } from 'vue'
-import { onSoftReload } from './softReloadRegistry'
+// src/composables/useLandData.js
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { getLocalStoredLandData } from '@/utils/storageHelpers'
 
-export function useLandData (landId) {
-  const landData = ref({})
+const instances = new Map()  // landId -> { landData, inventory, desert, reload }
 
-  function loadLandDataFromStorage () {
-    const raw = localStorage.getItem(`landData_${landId}`)
-    if (raw) {
-      try {
-        landData.value = JSON.parse(raw)
-      } catch {
-        console.error(`Invalid JSON in localStorage.landData_${landId}`)
-        landData.value = {}
-      }
-    } else {
-      landData.value = {}
+export function useLandData (defaults = {}) {
+  const route = useRoute()
+  const landId = route.params.landId
+
+  if (!instances.has(landId)) {
+    // create it once
+    const landData = ref({ ...defaults })
+    function reload () {
+      const stored = getLocalStoredLandData(landId)
+      landData.value = stored || { ...defaults }
     }
+    onMounted(reload)
+
+    const inventory = computed(() => landData.value.state?.inventory || {})
+    const desert = computed(() => landData.value.state?.desert || {})
+
+    instances.set(landId, { landData, inventory, desert, reload })
   }
 
-  loadLandDataFromStorage()
-  onSoftReload(`useLandData.reload.${landId}`, loadLandDataFromStorage)
-
-  const username = computed(() => landData.value.state?.username || '')
-  const bumpkinId = computed(() => landData.value.state?.bumpkin?.id || '')
-  const grid = computed(() => landData.value.state?.desert?.digging?.grid || [])
-  const patternKeys = computed(() => landData.value.state?.desert?.digging?.patterns || [])
-
-  return {
-    landData,
-    username,
-    bumpkinId,
-    grid,
-    patternKeys
-  }
+  return instances.get(landId)
 }

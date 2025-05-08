@@ -1,119 +1,69 @@
 <template>
-  <div class="">
-    <div class="items-center">
-      <button
-        class="btn btn-outline btn-sm btn-error inline-block m-2"
-        @click="clearLandId"
-      >
-        ❌ Clear Land ID
-      </button>
-
-      <button
-        class="btn btn-primary inline-block m-2"
-        :disabled="!landId || loading || !canRefresh"
-        @click="refresh"
-      >
-        <span v-if="loading">Refreshing…</span>
-        <span v-else-if="!canRefresh">
-          ⏳ Ready in {{ timeLeft }}s
-        </span>
-        <span v-else>
-          🔄 Update Local Data
-        </span>
-      </button>
-    </div>
-
-    <div v-if="lastRefreshed" class="text-xs text-gray-500">
-      Local Data Last Update: {{ formattedLastRefreshed }}
-    </div>
-    <div v-if="error" class="text-red-500 mt-2 text-sm">
-      {{ error }}
-    </div>
-  </div>
+  <button :disabled="isRefreshDisabled" @click="handleRefresh" class="refresh-btn">
+    <span v-if="isRefreshing" class="loading">⏳</span>
+    <span v-else-if="isCooldown">Wait {{ remaining }}s</span>
+    <span v-else>Refresh From Server</span>
+  </button>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useLandService } from '@/composables/useLandService'
-import { inject } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue';
+import { useLandSync } from '@/composables/useLandSync';
+import { useLandData } from '@/composables/useLandData';
+import { useRoute }    from 'vue-router';
 
-const gridStore = inject('gridStore')
-import { triggerSoftReload } from '@/composables/useSoftReload'  // ← import this
+const { isRefreshing, isCooldown, isRefreshDisabled, refresh } = useLandSync();
 
-const route  = useRoute()
-const router = useRouter()
+// Bring in reload() so we can pull fresh data into Vue after sync
+const { reload } = useLandData({
+  state: { inventory: {}, desert: { digging: { grid: [] } } }
+});
+const landId = useRoute().params.landId;
 
-const landId  = route.params.landId  
-const { loading, error, loadLandData } = useLandService(landId)
+// Cooldown timer logic (unchanged)
+const remaining = ref(0);
+let intervalId;
+watch(isCooldown, (cool) => {
+  if (cool) {
+    const end = Date.now() + 15000;
+    remaining.value = Math.ceil((end - Date.now()) / 1000);
+    intervalId = setInterval(() => {
+      remaining.value = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      if (remaining.value === 0) clearInterval(intervalId);
+    }, 1000);
+  } else {
+    remaining.value = 0;
+    clearInterval(intervalId);
+  }
+});
+onBeforeUnmount(() => clearInterval(intervalId));
 
-// —— Reactive timestamps ——
-
-// load previous timestamp (ms)
-const lastRefreshed = ref(
-  Number(localStorage.getItem('lastLandRefresh') || 0)
-)
-// a ticking “now” so we can compute elapsed
-const now = ref(Date.now())
-let ticker = null
-
-onMounted(() => {
-  // update now every second
-  ticker = setInterval(() => {
-    now.value = Date.now()
-  }, 1000)
-})
-
-onUnmounted(() => {
-  clearInterval(ticker)
-})
-
-// cooldown in milliseconds
-const COOLDOWN = 15_000
-
-// how many ms have passed since last
-const elapsed = computed(() => now.value - lastRefreshed.value)
-
-// whether we can refresh
-const canRefresh = computed(() => elapsed.value >= COOLDOWN)
-
-// seconds remaining until ready
-const timeLeft = computed(() =>
-  canRefresh.value ? 0 : Math.ceil((COOLDOWN - elapsed.value) / 1000)
-)
-
-// nicely formatted time
-const formattedLastRefreshed = computed(() =>
-  lastRefreshed.value
-    ? new Date(lastRefreshed.value).toLocaleTimeString()
-    : ''
-)
-
-// —— Actions ——
-
-function clearLandId() {
-  // go back to home
-  router.push({ name: 'Digging' })
-  triggerSoftReload()
-}
-
-
-function refresh() {
-  if (!landId || loading.value) return
-  loadLandData(landId).then(json => {
-    const grid = json?.state?.desert?.digging?.grid
-    if (grid) {
-      console.log('🔄 RefreshData → updateGridFromData', grid)
-      gridStore.updateGridFromData(grid)
-    }
-    
-    const nowMs = Date.now()
-    lastRefreshed.value = nowMs
-    localStorage.setItem('lastLandRefresh', String(nowMs))
-  })
+// Wrapper click handler: sync → log → reload
+async function handleRefresh() {
+  console.log('⚙️ Starting refresh for land', landId);
+  await refresh();  
+  // console.log('📥 After sync, localStorage:', localStorage.getItem(`landData_${landId}`));
+  reload();
+  // console.log('✅ landData ref reloaded');
 }
 </script>
 
 <style scoped>
-/* any tweaks you like */
+.refresh-btn {
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: .25rem;
+  background: var(--color-primary);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+.refresh-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.loading {
+  font-size: 1em;
+}
 </style>

@@ -1,10 +1,11 @@
+<!-- src/components/Grid.vue -->
 <script setup>
-import { watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useGridStore } from '@/composables/useGridStore'
 
-import { inject } from 'vue'
-
-const gridStore = inject('gridStore')
-
+const route = useRoute()
+const landId    = route.params.landId
+const gridStore = useGridStore(landId)
 const { tiles, cycleHintAt } = gridStore
 
 function getTileImage(tile) {
@@ -14,12 +15,12 @@ function getTileImage(tile) {
   return `/world/${slug}.webp`
 }
 
-watch(
-  () => tiles.value.map(t => t.join(',')),
-  newVal => {
-    console.log('🟢 Tiles now:', newVal.slice(0,10), '…') // log first 10 for brevity
-  }
-)
+// Debug log: now tiles is always an Array
+// watch(
+//   tiles,
+//   t => console.log('🟢 Tiles now:', t.slice(0,50)),
+//   { immediate: true }
+// )
 </script>
 
 <template>
@@ -42,3 +43,7 @@ watch(
     </div>
   </div>
 </template>
+
+<style scoped>
+/* your .grid, .tile, .tile-img styles */
+</style>

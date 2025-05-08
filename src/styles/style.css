@@ -6,7 +6,7 @@
 }
 
 @plugin "daisyui/theme" {
-  name: "nord-mine";
+  name: "nord";
   default: true;
   prefersdark: true;
   color-scheme: "light";
@@ -26,9 +26,9 @@
   --color-info-content: oklch(13.841% 0.012 332.664);
   --color-success: oklch(72% 0.219 149.579);
   --color-success-content: oklch(15.365% 0.014 131.063);
-  --color-warning: oklch(85.486% 0.089 84.093);
+  --color-warning: oklch(0.92 0.0703 95.617);
   --color-warning-content: oklch(17.097% 0.017 84.093);
-  --color-error: oklch(60.61% 0.12 15.341);
+  --color-error: oklch(0.77 0.1316 22.21);
   --color-error-content: oklch(12.122% 0.024 15.341);
   --radius-selector: 1rem;
   --radius-field: 0.25rem;
@@ -39,6 +39,7 @@
   --depth: 0;
   --noise: 0;
 }
+
 
 
 @custom-variant dark (&:where([data-theme=dim], [data-theme=dim] *));
@@ -117,27 +118,31 @@ body {
   text-align: center;
   font-size: 0.9rem;
 }
-.sand-label     { font-weight: bold; background-color: #fed7cc; padding: 2px 4px; }
-.crab-label     { font-weight: bold; background-color: #f1f1c9; padding: 2px 4px; }
-.treasure-label { font-weight: bold; background-color: #4ade80; padding: 2px 4px; }
+.sand-label     { font-weight: bold; @apply bg-error; padding: 2px 4px; }
+.crab-label     { font-weight: bold; @apply bg-warning; padding: 2px 4px; }
+.treasure-label { font-weight: bold; @apply bg-success; padding: 2px 4px; }
 
-.tile.near-crab { background-color: #f3f3d7; border: 1px dashed #d4af37; }  /* yellow */
-.tile.near-sand  { background-color: #fed7cc; border: 1px dashed #f5a623;}  /* red */
-.tile.green { background: #78e9a2; }
+.tile.near-crab { @apply bg-warning; border: 1px dashed #d4af37; }  /* yellow */
+.tile.near-sand  { @apply bg-error; border: 1px dashed #f5a623;}  /* red */
+.tile.green { 
+  @apply bg-success;
+ }
 
 
-.tile.sand      { background-color: #fed7cc; }
-.tile.crab      { background-color: #f1f1c9; }
-.tile.treasure  { background: #78e9a2; }
+.tile.sand.treasure      { @apply bg-error; }
+.tile.crab.treasure      { @apply bg-warning; }
+.tile.treasure  { 
+    @apply bg-success;
+ }
 
 
 .tile.hint-sand {
-  background-color: #fed7cc;
+  @apply bg-error;
   border: 4px solid #fed7cc;
 }
 
 .tile.hint-crab {
-  background-color: #f3f3d7;
+  @apply bg-warning;
   border: 4px solid #f1f1c9;
 }
 
@@ -156,21 +161,21 @@ body {
 }
 
 .tile.hint-treasure {
-  background-color: #78e9a2;
+  @apply bg-success;
   border: 4px solid #6ade95;
 }
 
 .tile.hint-nothing {
-  background-color: #fed7cc;
+  @apply bg-error;
   border: 4px solid #f4cabe;
 }
 
 .tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(.hint-treasure) {
-  background-color: #fed7cc;
+  @apply bg-error;
   border: 4px dashed #f4cabe;
 }
 .tile.near-hint-crab:not(.treasure):not(.sand):not(.near-sand):not(.near-hint-sand):not(.hint-sand):not(.hint-treasure) {
-  background-color: #f1f1c9;
+  @apply bg-warning;
   border: 4px dashed #e8e8bb;
 }
 
@@ -179,7 +184,7 @@ body {
 .treasure-indicator {
   width: 50%;
   height: 50%;
-  background-color: #4ade80;
+  @apply bg-success;
   border-radius: 50%;
 }
 /* Grid & tiles */
@@ -261,7 +266,7 @@ body {
 button.old-button {
   padding: 0.5rem 1rem;
   margin:  0.5rem;
-  background: #4ade80;
+  @apply bg-success;
   color: #fff;
   border: none;
   border-radius: 0.25rem;
