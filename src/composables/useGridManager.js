@@ -4,77 +4,73 @@ import { useHintsStorage } from './useHintsStorage'
 
 const cache = {}
 
-export function useGridManager (landId, gridSize = 10) {
-  if (!landId) {
-    throw new Error('landId is required in useGridManager')
-  }
+export function useGridManager (rawLandId, gridSize = 10) {
+  // 1️⃣ fall back to "0" if no landId provided
+  const landKey = rawLandId || '0'
 
-  if (!cache[landId]) {
-    // 1) grid engine
+  if (!cache[landKey]) {
+    // 2️⃣ core engine + storage
     const engine = useGridEngine(gridSize)
-    // 2) hints persistence
-    const storage = useHintsStorage(landId)
+    const storage = useHintsStorage(landKey)
 
-    // apply saved hints on top of engine.tiles
+    // 3️⃣ reapply without duplicating engine logic
     function applySavedHints () {
-      // strip old hint- and near-hint- classes
-      engine.tiles.value = engine.tiles.value.map(cell =>
-        cell.filter(c => !c.startsWith('hint-') && !c.startsWith('near-hint-'))
-      )
+      engine.clearEngineHints()
 
-      // overlay saved hints + neighbor markers
-      Object.entries(storage.hints.value).forEach(([i, classes]) => {
+      for (const [i, classes] of Object.entries(storage.hints.value)) {
         const idx = Number(i)
-        // overlay hint
         engine.tiles.value[idx] = [
           ...engine.tiles.value[idx],
           ...classes
         ]
-        // overlay neighbors
+
+        // neighbor markers
         classes.forEach(h => {
           const nearCls = `near-${h}`
           const x = idx % gridSize
           const y = Math.floor(idx / gridSize)
-            ;[[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([dx, dy]) => {
-              const nx = x + dx
-              const ny = y + dy
-              if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
-              const ni = ny * gridSize + nx
-              if (!engine.tiles.value[ni].includes(nearCls)) {
-                engine.tiles.value[ni] = [
-                  ...engine.tiles.value[ni],
-                  nearCls
-                ]
-              }
-            })
+          for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+            const nx = x + dx, ny = y + dy
+            if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) continue
+            const ni = ny * gridSize + nx
+            if (!engine.tiles.value[ni].includes(nearCls)) {
+              engine.tiles.value[ni] = [
+                ...engine.tiles.value[ni],
+                nearCls
+              ]
+            }
+          }
         })
-      })
+      }
 
       engine.tiles.value = [...engine.tiles.value]
     }
 
-    // API-driven update
+    // 4️⃣ initial overlay on the empty grid
+    applySavedHints()
+
+    // 5️⃣ wrap API updates
     function update (apiGrid) {
       engine.updateGridFromData(apiGrid)
       storage.load()
       applySavedHints()
     }
 
-    // user click
+    // 6️⃣ user clicks
     function cycle (idx) {
       engine.cycleEngineHint(idx)
-      const classes = engine.tiles.value[idx].filter(c => c.startsWith('hint-'))
-      storage.toggle(idx, classes)
+      const hints = engine.tiles.value[idx].filter(c => c.startsWith('hint-'))
+      storage.toggle(idx, hints)
       applySavedHints()
     }
 
-    // clear hints
+    // 7️⃣ clear
     function clear () {
       engine.clearEngineHints()
       storage.clear()
     }
 
-    cache[landId] = {
+    cache[landKey] = {
       tiles: engine.tiles,
       update,
       cycle,
@@ -82,5 +78,5 @@ export function useGridManager (landId, gridSize = 10) {
     }
   }
 
-  return cache[landId]
+  return cache[landKey]
 }

@@ -129,8 +129,8 @@ body {
  }
 
 
-.tile.sand.treasure      { @apply bg-error; }
-.tile.crab.treasure      { @apply bg-warning; }
+.tile.sand.treasure, .tile.sand { @apply bg-error; }
+.tile.crab.treasure, .tile.crab { @apply bg-warning; }
 .tile.treasure  { 
     @apply bg-success;
  }
@@ -138,12 +138,12 @@ body {
 
 .tile.hint-sand {
   @apply bg-error;
-  border: 4px solid #fed7cc;
+  border: 4px dashed oklch(0.85 0.1316 22.21);
 }
 
 .tile.hint-crab {
   @apply bg-warning;
-  border: 4px solid #f1f1c9;
+  border: 4px dashed oklch(0.88 0.0703 95.617);
 }
 
 .tile.hint-sand {
@@ -162,21 +162,22 @@ body {
 
 .tile.hint-treasure {
   @apply bg-success;
-  border: 4px solid #6ade95;
+  border: 4px dashed #6ade95;
+  
 }
 
 .tile.hint-nothing {
   @apply bg-error;
-  border: 4px solid #f4cabe;
+  border: 4px dashed #f4cabe;
 }
 
 .tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(.hint-treasure) {
   @apply bg-error;
-  border: 4px dashed #f4cabe;
+  border: 4px dashed oklch(0.85 0.1316 22.21);
 }
 .tile.near-hint-crab:not(.treasure):not(.sand):not(.near-sand):not(.near-hint-sand):not(.hint-sand):not(.hint-treasure) {
   @apply bg-warning;
-  border: 4px dashed #e8e8bb;
+  border: 4px dashed oklch(0.88 0.0703 95.617);
 }
 
 

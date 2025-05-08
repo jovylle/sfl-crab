@@ -3,7 +3,7 @@ import { useRoute }       from 'vue-router'
 import { useGridManager }  from '@/composables/useGridManager'
 
 const route   = useRoute()
-const landId  = route.params.landId
+const landId  = route.params.landId || '0' // default to guest key
 const grid    = useGridManager(landId)
 
 // convenience

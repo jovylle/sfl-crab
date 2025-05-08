@@ -1,39 +1,23 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
+import GuestDigging from '@/views/GuestDigging.vue'
+import LandDigging from '@/views/LandDigging.vue'
 import Home from '@/views/Home.vue'
 import LandProfile from '@/views/LandProfile.vue'
-import Digging from '@/views/Digging.vue'
 
 const routes = [
+  { path: '/', name: 'Home', component: Home },
+  { path: '/digging', name: 'GuestDigging', component: GuestDigging },
   {
-    path: '/',
-    name: 'Home',
-    component: Home,
+    path: '/:landId(\\d+)/digging',
+    name: 'LandDigging',
+    component: LandDigging
   },
-  {
-    // Optional landId: only digits, zero or one occurrence,
-    // so it matches both "/digging"  and "/123/digging"
-    path: '/:landId(\\d+)?/digging',
-    name: 'Digging',
-    component: Digging,
-    // pass landId (or undefined if none) as prop
-    props: route => ({ landId: route.params.landId }),
-  },
-  {
-    path: '/:landId(\\d+)',
-    name: 'LandProfile',
-    component: LandProfile,
-    props: true,
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    redirect: '/',
-  },
+  { path: '/:landId(\\d+)', name: 'LandProfile', component: LandProfile },
+  { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
-const router = createRouter({
+export default createRouter({
   history: createWebHistory(),
   routes
 })
-
-export default router

@@ -4,6 +4,11 @@
       👤 Welcome, {{ username }}!
     </h2>
   </div>
+  <div v-else class="">
+    <h2 class="text-xl font-bold">
+      Welcome to the Digging Guide!
+    </h2>
+  </div>
 </template>
 
 <script setup>
