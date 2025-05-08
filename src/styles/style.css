@@ -70,15 +70,15 @@
 }
 
 .bg-pixel-squares {
-  background-image: url('/src/assets/images/bright-squares.png');
+  background-image: url('/images/bright-squares.png');
   @apply bg-repeat bg-[length:auto];
 }
 .bg-asfalt {
-  background-image: url('/src/assets/images/asfalt-dark.png');
+  background-image: url('/images/asfalt-dark.png');
   @apply bg-repeat bg-[length:auto];
 }
 .bg-cross-lines {
-  background-image: url('/src/assets/images/noise-pattern-with-subtle-cross-lines.png');
+  background-image: url('/images/noise-pattern-with-subtle-cross-lines.png');
   @apply bg-repeat bg-[length:auto];
 }
 body {
@@ -142,14 +142,14 @@ body {
 }
 
 .tile.hint-sand {
-  background-image: url('../assets/images/sand.png');
+  background-image: url('/images/sand.png');
   background-size: 60%;
   background-repeat: no-repeat;
   background-position: center;
 }
 
 .tile.hint-crab {
-  background-image: url('../assets/images/crab.png');
+  background-image: url('/images/crab.png');
   background-size: 60%;
   background-repeat: no-repeat;
   background-position: center;
