@@ -14,18 +14,15 @@
           <button
             class="btn btn-warning tooltip"
             data-tip="🧹 Clear all custom marks"
-            @click="gridStore.clearCustomHints()"
+            @click="grid.clear()"
           >
             🧹 Clear Marks
           </button>
-          <button type="button">
-            <InputLandIdOrRefresh />
-          </button>
+          <InputLandIdOrRefresh />
         </div>
 
-        <!-- Your Grid.vue will pull from the singleton store internally -->
-        <Grid
-        />
+        <!-- Now simply render Grid.vue — it will read from our manager -->
+        <Grid />
       </div>
     </div>
 
@@ -35,36 +32,37 @@
 </template>
 
 <script setup>
-import { watch }        from 'vue'
-import { useRoute }     from 'vue-router'
+import { watch }            from 'vue'
+import { useRoute }         from 'vue-router'
 
-import UsernameViewer  from '@/components/UsernameViewer.vue'
-import Grid            from '@/components/Grid.vue'
-import TodayPatterns   from '@/components/TodayPatterns.vue'
-import InfoFooter      from '@/components/InfoFooter.vue'
-
-import { useLandData }   from '@/composables/useLandData'
-import { useGridStore }  from '@/composables/useGridStore'
+import UsernameViewer       from '@/components/UsernameViewer.vue'
+import Grid                 from '@/components/Grid.vue'
+import TodayPatterns        from '@/components/TodayPatterns.vue'
+import InfoFooter           from '@/components/InfoFooter.vue'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 
+import { useLandData }      from '@/composables/useLandData'
+import { useGridManager }   from '@/composables/useGridManager'
+
 // 1) Grab landId from the URL
-const route = useRoute()
+const route  = useRoute()
 const landId = route.params.landId
 
-// 2) Load your cached server data (with reload() on refresh)
+// 2) Pull in your land‐blob store so we can watch its grid
 const defaults = { state: { inventory: {}, desert: { digging: { grid: [] } } } }
 const { desert } = useLandData(defaults)
 
-// 3) Initialize your singleton grid store
-const gridStore = useGridStore(landId)
+// 3) Initialize your per‐land grid manager
+const grid = useGridManager(landId)
 
+// 4) Whenever the server grid changes, re‐populate & re‐overlay hints
 watch(
   () => desert.value.digging?.grid,
-  g => g && gridStore.updateGridFromData(g),
+  apiGrid => apiGrid && grid.update(apiGrid),
   { immediate: true }
 )
 </script>
 
 <style scoped>
-/* keep your Tailwind-based or custom styling */
+/* keep your Tailwind/custom styling */
 </style>

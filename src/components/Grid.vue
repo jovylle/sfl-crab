@@ -1,26 +1,14 @@
-<!-- src/components/Grid.vue -->
 <script setup>
-import { useRoute } from 'vue-router'
-import { useGridStore } from '@/composables/useGridStore'
+import { useRoute }       from 'vue-router'
+import { useGridManager }  from '@/composables/useGridManager'
 
-const route = useRoute()
-const landId    = route.params.landId
-const gridStore = useGridStore(landId)
-const { tiles, cycleHintAt } = gridStore
+const route   = useRoute()
+const landId  = route.params.landId
+const grid    = useGridManager(landId)
 
-function getTileImage(tile) {
-  const match = tile.find(cls => cls.startsWith('tileImage:'))
-  if (!match) return null
-  const slug = match.split(':')[1]
-  return `/world/${slug}.webp`
-}
-
-// Debug log: now tiles is always an Array
-// watch(
-//   tiles,
-//   t => console.log('🟢 Tiles now:', t.slice(0,50)),
-//   { immediate: true }
-// )
+// convenience
+const tiles       = grid.tiles
+const cycleHint   = grid.cycle
 </script>
 
 <template>
@@ -31,7 +19,7 @@ function getTileImage(tile) {
         :key="index"
         class="tile"
         :class="tile"
-        @click="cycleHintAt(index)"
+        @click="cycleHint(index)"
       >
         <img
           v-if="getTileImage(tile)"
@@ -44,6 +32,17 @@ function getTileImage(tile) {
   </div>
 </template>
 
+<script>
+// still inside the same file, below your setup
+function getTileImage(tile) {
+  if (!Array.isArray(tile)) return null
+  const match = tile.find(cls => cls.startsWith('tileImage:'))
+  if (!match) return null
+  const slug = match.split(':')[1]
+  return `/world/${slug}.webp`
+}
+</script>
+
 <style scoped>
-/* your .grid, .tile, .tile-img styles */
+/* your existing styles */
 </style>
