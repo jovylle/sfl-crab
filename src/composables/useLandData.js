@@ -20,8 +20,19 @@ export function useLandData (defaults = {}) {
 
     const inventory = computed(() => landData.value.state?.inventory || {})
     const desert = computed(() => landData.value.state?.desert || {})
+    // derive the pattern keys directly from the desert digging state
+    const patternKeys = computed(() =>
+      desert.value.digging?.patterns || []
+    )
 
-    instances.set(landId, { landData, inventory, desert, reload })
+    // store the full API surface for this landId
+    instances.set(landId, {
+      landData,
+      inventory,
+      desert,
+      patternKeys,
+      reload
+    })
   }
 
   return instances.get(landId)
