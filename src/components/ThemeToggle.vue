@@ -1,6 +1,6 @@
 <template>
-  <div class="dropdown mb-72 flex justify-end w-full px-4 pt-4">
-    <div tabindex="0" role="button" class="btn m-1">
+  <div class="dropdown flex w-full">
+    <div tabindex="0" role="button" class="btn">
       Theme
       <svg
         width="12px"

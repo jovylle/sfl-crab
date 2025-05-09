@@ -1,25 +1,14 @@
 <script setup>
-import { watch } from 'vue'
+import { useRoute }       from 'vue-router'
+import { useGridManager }  from '@/composables/useGridManager'
 
-import { inject } from 'vue'
+const route   = useRoute()
+const landId  = route.params.landId || '0' // default to guest key
+const grid    = useGridManager(landId)
 
-const gridStore = inject('gridStore')
-
-const { tiles, cycleHintAt } = gridStore
-
-function getTileImage(tile) {
-  const match = tile.find(cls => cls.startsWith('tileImage:'))
-  if (!match) return null
-  const slug = match.split(':')[1]
-  return `/world/${slug}.webp`
-}
-
-watch(
-  () => tiles.value.map(t => t.join(',')),
-  newVal => {
-    console.log('🟢 Tiles now:', newVal.slice(0,10), '…') // log first 10 for brevity
-  }
-)
+// convenience
+const tiles       = grid.tiles
+const cycleHint   = grid.cycle
 </script>
 
 <template>
@@ -30,7 +19,7 @@ watch(
         :key="index"
         class="tile"
         :class="tile"
-        @click="cycleHintAt(index)"
+        @click="cycleHint(index)"
       >
         <img
           v-if="getTileImage(tile)"
@@ -42,3 +31,18 @@ watch(
     </div>
   </div>
 </template>
+
+<script>
+// still inside the same file, below your setup
+function getTileImage(tile) {
+  if (!Array.isArray(tile)) return null
+  const match = tile.find(cls => cls.startsWith('tileImage:'))
+  if (!match) return null
+  const slug = match.split(':')[1]
+  return `/world/${slug}.webp`
+}
+</script>
+
+<style scoped>
+/* your existing styles */
+</style>

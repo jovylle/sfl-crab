@@ -1,5 +1,5 @@
 // src/utils/artefactIcons.ts
-const modules = import.meta.glob("/src/assets/icons/*.webp", {
+const modules = import.meta.glob("/src_other/assets/icons/*.webp", {
   eager: true,
   import: "default",
 })

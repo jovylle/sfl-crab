@@ -1,10 +1,10 @@
+<!-- src/views/GuestDigging.vue -->
 <template>
   <div class="flex flex-col items-center sm:py-6 gap-4">
     <!-- User info & controls -->
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body">
-        <UsernameViewer />
-        
+        <UsernameViewer :name="username" />
       </div>
     </div>
 
@@ -22,12 +22,12 @@
           <InputLandIdOrRefresh />
         </div>
 
-        <!-- Now simply render Grid.vue — it will read from our manager -->
+        <!-- Grid.vue will pull from our grid manager internally -->
         <Grid />
       </div>
     </div>
 
-    <TodayPatterns />
+    <TodayPatterns :patterns="patternKeys" />
     <InfoFooter />
   </div>
 </template>
@@ -45,25 +45,32 @@ import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useLandData }      from '@/composables/useLandData'
 import { useGridManager }   from '@/composables/useGridManager'
 
-// 1) Grab landId from the URL
+// 1) Choose a key: if there's no landId, use "0" (guest key)
 const route  = useRoute()
-const landId = route.params.landId
+const landId = route.params.landId || '0'
 
-// 2) Pull in your land‐blob store so we can watch its grid
-const defaults = { state: { inventory: {}, desert: { digging: { grid: [] } } } }
-const { desert } = useLandData(defaults)
+// 2) Get the reactive land‐blob slices (grid, username, patterns)
+const {
+  username,
+  patternKeys,
+  grid: landGrid
+} = useLandData()    // <— no parameters here!
 
-// 3) Initialize your per‐land grid manager
+// 3) Create (or reuse) the grid manager under "0"
 const grid = useGridManager(landId)
 
-// 4) Whenever the server grid changes, re‐populate & re‐overlay hints
+// 4) Whenever that underlying grid changes, update our manager
 watch(
-  () => desert.value.digging?.grid,
-  apiGrid => apiGrid && grid.update(apiGrid),
+  () => landGrid?.value,
+  apiGrid => {
+    if (apiGrid) {
+      grid.update(apiGrid)
+    }
+  },
   { immediate: true }
 )
 </script>
 
 <style scoped>
-/* keep your Tailwind/custom styling */
+/* your existing styles */
 </style>

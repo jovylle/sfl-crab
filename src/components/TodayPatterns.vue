@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useLandData } from '../composables/useLandData'
-import { DIGGING_FORMATIONS } from '../features/game/types/desert'
+import { DIGGING_FORMATIONS } from '../../src_other/features/game/types/desert'
 import { useRoute } from 'vue-router'
 const route = useRoute()
 const { patternKeys } = useLandData(route.params.landId)
