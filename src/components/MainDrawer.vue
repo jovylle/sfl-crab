@@ -18,18 +18,18 @@
       <label for="main-drawer" class="drawer-overlay"></label>
       <div class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
         <h2 class="text-xl font-bold mb-4">Menu</h2>
-        <ul class="space-y-2">
-          <!-- <li><button class="btn btn-sm btn-block">Theme Toggle</button></li>
-          <li><button class="btn btn-sm btn-block">Reset Game</button></li>
+        <!-- <div class="divider divider-info">Land Sync</div> -->
+        <div class="">
+          <LandControls />
+        </div>
+        <ul class="space-y-2 my-4 ">
+          <li><button class="btn btn-sm btn-block">Land Raw Details</button></li>
+          <!-- <li><button class="btn btn-sm btn-block">Reset Game</button></li>
           <li><button class="btn btn-sm btn-block">Show Legend</button></li> -->
           <!-- Add more controls here -->
         </ul>
-        <div class="divider divider-info">Land Sync</div>
-        <div class="mx-4">
-          <LandControls />
-        </div>
-        <div class="divider divider-info">Theme</div>
-        <div class="mx-4">
+        <!-- <div class="divider divider-info">Theme</div> -->
+        <div class="">
           <ThemeToggle />
         </div>
       </div>
