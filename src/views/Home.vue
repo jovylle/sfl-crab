@@ -5,16 +5,16 @@
       <h1 class="text-5xl font-bold mb-8 text-center">
         Welcome to SFL Digging Assistant
       </h1>
-      <div class="flex justify-center space-x-2">
-      <!-- <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center justify-center space-x-2"> -->
+
+      <div class="flex flex-wrap justify-center gap-6">
         <!-- Digging Card -->
         <router-link
           to="/digging"
-          class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200 h-auto max-h-80 w-64"
+          class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200 w-64"
         >
           <figure class="p-4">
             <div
-              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
+              class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
             >
               <span class="text-6xl">⛏️</span>
             </div>
@@ -28,59 +28,40 @@
           </div>
         </router-link>
 
-        <!-- Placeholder Card 1
-        <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
+        <!-- Details Card -->
+        <router-link
+          to="/details"
+          class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200 w-64"
+        >
           <figure class="p-4">
             <div
-              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
+              class="w-full h-32 flex items-center justify-center bg-base-200 rounded-lg"
             >
-              <span class="text-6xl">🚧</span>
+              <span class="text-6xl">📋</span>
             </div>
           </figure>
           <div class="card-body items-center text-center">
-            <h2 class="card-title">Coming Soon</h2>
-            <p>Under construction</p>
-          </div>
-        </div> -->
-
-        <!-- Placeholder Card 2 -->
-        <!-- <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
-          <figure class="p-4">
-            <div
-              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
-            >
-              <span class="text-6xl">🚧</span>
+            <h2 class="card-title">Details</h2>
+            <p>View raw land data</p>
+            <div class="card-actions">
+              <button class="btn btn-primary">Go Details</button>
             </div>
-          </figure>
-          <div class="card-body items-center text-center">
-            <h2 class="card-title">Coming Soon</h2>
-            <p>Under construction</p>
           </div>
-        </div> -->
-
-        <!-- Placeholder Card 3 -->
-        <!-- <div class="card bg-base-100 shadow-xl h-auto max-h-80 w-64">
-          <figure class="p-4">
-            <div
-              class="w-full h-32 flex items-center justify-center bg-base-100 rounded-lg"
-            >
-              <span class="text-6xl">🚧</span>
-            </div>
-          </figure>
-          <div class="card-body items-center text-center">
-            <h2 class="card-title">Coming Soon</h2>
-            <p>Under construction</p>
-          </div>
-        </div> -->
+        </router-link>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-// no extra logic needed here
+// No extra logic needed — links are static.
 </script>
 
 <style scoped>
-/* all horizontal padding is coming from the section’s px-4 */
+/* Increase gap on smaller screens */
+@media (max-width: 640px) {
+  .flex-wrap {
+    gap: 1rem;
+  }
+}
 </style>
