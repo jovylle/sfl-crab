@@ -18,18 +18,32 @@
       <label for="main-drawer" class="drawer-overlay"></label>
       <div class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
         <h2 class="text-xl font-bold mb-4">Menu</h2>
-        <!-- <div class="divider divider-info">Land Sync</div> -->
-        <div class="">
+        <div class="divider px-5">Pages</div>
+        <ul class="space-y-2 my-4">
+          <!-- Land Details Navigation -->
+          <li>
+            <button
+              class="btn btn-sm btn-block"
+              @click="goToDetails"
+            >
+              Land Raw Details
+            </button>
+          </li>
+          <li>
+            <button
+              class="btn btn-sm btn-block"
+              @click="goToDigging"
+            >
+              Digging
+            </button>
+          </li>
+        </ul>
+        <div class="divider px-5">Land Sync</div>
+        <div>
           <LandControls />
         </div>
-        <ul class="space-y-2 my-4 ">
-          <li><button class="btn btn-sm btn-block">Land Raw Details</button></li>
-          <!-- <li><button class="btn btn-sm btn-block">Reset Game</button></li>
-          <li><button class="btn btn-sm btn-block">Show Legend</button></li> -->
-          <!-- Add more controls here -->
-        </ul>
-        <!-- <div class="divider divider-info">Theme</div> -->
-        <div class="">
+        <div class="divider px-5">Theme</div>
+        <div>
           <ThemeToggle />
         </div>
       </div>
@@ -38,8 +52,31 @@
 </template>
 
 <script setup>
-// optional: inject actions via props or composables later
+import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import LandControls from '@/components/LandControls.vue'
 
-import LandControls    from '@/components/LandControls.vue'
+const route = useRoute()
+const router = useRouter()
+
+function goToDetails() {
+  const id = route.params.landId
+  if (id) {
+    // if we have a landId, go to /:id/details
+    router.push({ name: 'LandDetailsWithId', params: { landId: id } })
+  } else {
+    // otherwise, go to /details
+    router.push({ name: 'LandDetailsNoId' })
+  }
+}
+function goToDigging() {
+  const id = route.params.landId
+  if (id) {
+    // if we have a landId, go to /:id/details
+    router.push({ name: 'Digging', params: { landId: id } })
+  } else {
+    // otherwise, go to /details
+    router.push({ name: 'Digging' })
+  }
+}
 </script>
