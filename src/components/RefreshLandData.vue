@@ -1,8 +1,8 @@
 <template>
   <button :disabled="isRefreshDisabled" @click="handleRefresh" class="refresh-btn">
     <span v-if="isRefreshing" class="loading">⏳</span>
-    <span v-else-if="isCooldown">Wait {{ remaining }}s</span>
-    <span v-else>Refresh From Server</span>
+    <span data-tip="Wait a bit" class="tooltip" v-else-if="isCooldown">Wait {{ remaining }}s</span>
+    <span data-tip="Refresh From Server" class="tooltip" v-else>Refresh Data</span>
   </button>
 </template>
 
