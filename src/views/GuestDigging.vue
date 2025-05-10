@@ -28,7 +28,6 @@
     </div>
 
     <TodayPatterns :patterns="patternKeys" />
-    <InfoFooter />
   </div>
 </template>
 
@@ -39,7 +38,6 @@ import { useRoute }         from 'vue-router'
 import UsernameViewer       from '@/components/UsernameViewer.vue'
 import Grid                 from '@/components/Grid.vue'
 import TodayPatterns        from '@/components/TodayPatterns.vue'
-import InfoFooter           from '@/components/InfoFooter.vue'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 
 import { useLandData }      from '@/composables/useLandData'
