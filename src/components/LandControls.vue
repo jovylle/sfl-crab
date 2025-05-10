@@ -1,7 +1,7 @@
 <!-- src/components/LandControls.vue -->
 <template>
   <div>
-    <!-- No landId? Show input loader -->
+    <!-- No landId? Show the loader (which will set an ID) -->
     <LandLoader v-if="!landId" />
 
     <!-- We have a landId → show refresh + clear -->
@@ -29,11 +29,11 @@ import RefreshLandData from '@/components/RefreshLandData.vue'
 const route  = useRoute()
 const router = useRouter()
 
-// Reactive landId (undefined when on /digging)
+// landId is undefined on /details, or a string on /:landId/details
 const landId = computed(() => route.params.landId)
 
-// Redirect back to the “no-ID” digging page
+// If we click “Clear ID”, push us back to /details
 function clearLandId() {
-  router.push({ name: 'Digging' })
+  router.push({ name: 'LandDetailsNoId' })
 }
 </script>
