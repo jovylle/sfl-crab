@@ -1,4 +1,4 @@
-<!-- src/components/InfoFooter.vue -->
+<!-- src/components/footer.vue -->
 <template>
   <section class="card bg-base-100">
     <div class="card-body space-y-4">
@@ -6,7 +6,7 @@
       <div>
         <h3 class="text-xl font-bold flex items-center">
           <span class="text-2xl mr-2">💡</span>
-           What is this?
+          What is this?
         </h3>
         <p class="mt-2">
           This is an alternative to
@@ -18,10 +18,37 @@
           >
             sfl.world/land/1/treasures
           </a>
-          digging guide of sfl.world. A personal tool to assist Sunflower Land players
-          with digging. You can visualize hint patterns (sand, crab, treasure)
-          and simulate digging logic with interactive tiles.
+          digging guide of sfl.world. A personal tool to assist Sunflower Land
+          players with digging. You can visualize hint patterns (sand, crab,
+          treasure) and simulate digging logic with interactive tiles.
         </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h4 class="text-lg font-semibold">🔗 Quick Links:</h4>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li>
+            <a
+              href="https://sfl-digging.uft1.com/"
+              target="_blank"
+              rel="noopener"
+              class="link link-secondary"
+            >
+              Official Live Server
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://sfl-development.uft1.com/"
+              target="_blank"
+              rel="noopener"
+              class="link link-secondary"
+            >
+              Development Site
+            </a>
+          </li>
+        </ul>
       </div>
 
       <!-- Features -->
@@ -36,7 +63,9 @@
 
       <!-- Feedback -->
       <div>
-        <h4 class="text-lg font-semibold">💬 Send feedback, suggestions, or bug reports:</h4>
+        <h4 class="text-lg font-semibold">
+          💬 Send feedback, suggestions, or bug reports:
+        </h4>
         <a
           href="https://forms.gle/zJayANHdjJ2EQvyB9"
           target="_blank"
@@ -55,5 +84,5 @@
 </script>
 
 <style scoped>
-/* nothing extra—DaisyUI utilities handle the styling */
+/* DaisyUI utilities handle the styling */
 </style>
