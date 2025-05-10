@@ -1,3 +1,4 @@
+<!-- src/components/LandLoader.vue -->
 <template>
   <div class="flex flex-row space-x-4 items-center">
     <input
@@ -11,7 +12,7 @@
       @click="goToLand"
       :disabled="!inputLandId.trim()"
     >
-      Change Land ID
+      View Land Details
     </button>
   </div>
 </template>
@@ -26,8 +27,9 @@ const router      = useRouter()
 function goToLand() {
   const id = inputLandId.value.trim()
   if (!id) return
-  // push to /:landId/digging
-  router.push({ name: 'Digging', params: { landId: id } })
+
+  // Navigate to /:landId/details
+  router.push({ name: 'LandDetailsWithId', params: { landId: id } })
 }
 </script>
 
