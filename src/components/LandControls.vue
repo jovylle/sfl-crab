@@ -1,7 +1,7 @@
 <!-- src/components/LandControls.vue -->
 <template>
   <div>
-    <!-- No landId? Show the loader (which will set an ID) -->
+    <!-- No landId? Show the loader -->
     <LandLoader v-if="!landId" />
 
     <!-- We have a landId → show refresh + clear -->
@@ -29,11 +29,17 @@ import RefreshLandData from '@/components/RefreshLandData.vue'
 const route  = useRoute()
 const router = useRouter()
 
-// landId is undefined on /details, or a string on /:landId/details
+// landId is undefined on the no-id pages
 const landId = computed(() => route.params.landId)
 
-// If we click “Clear ID”, push us back to /details
+// Clear the ID, but stay on whatever “mode” we’re in
 function clearLandId() {
-  router.push({ name: 'LandDetailsNoId' })
+  if (route.name === 'Digging') {
+    // we’re on /:landId/digging → go to /digging
+    router.push({ name: 'Digging' })
+  } else {
+    // default to details no-id
+    router.push({ name: 'LandDetailsNoId' })
+  }
 }
 </script>

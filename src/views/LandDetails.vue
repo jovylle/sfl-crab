@@ -5,14 +5,13 @@
 
     <!-- Dropdown with checkboxes -->
     <div class="dropdown">
-      <label tabindex="0" class="btn m-1">
+      <label tabindex="0" class="btn btn-secondary m-1">
         Fields ({{ selectedKeys.length }})
       </label>
       <ul
-        tabindex="0"
         class="dropdown-content menu p-2 shadow bg-base-100 rounded-box
-               max-w-[500px] max-h-[500px] overflow-auto
-               grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]"
+               min-w-[310px] max-w-[520px] max-h-[600px] overflow-auto
+               grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(147px,1fr))] overflow-x-hidden"
       >
         <li v-for="key in stateKeys" :key="key">
           <label class="flex items-center space-x-2">
