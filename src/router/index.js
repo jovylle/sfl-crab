@@ -14,7 +14,6 @@ const routes = [
     component: Digging
   },
   { path: '/:landId(\\d+)', name: 'LandDetailsIdOnly', component: LandDetails },
-  { path: '/:pathMatch(.*)*', redirect: '/' },
   { path: '/details', component: LandDetails },
   {
     path: '/:landId(\\d+)/details',
@@ -27,6 +26,7 @@ const routes = [
     component: LandDetails,
     props: route => ({ landId: undefined }),
   },
+  { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
 export default createRouter({
