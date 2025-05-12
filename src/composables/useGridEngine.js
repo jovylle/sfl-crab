@@ -93,7 +93,7 @@ export function useGridEngine (gridSize = 10) {
 
     const x = idx % gridSize
     const y = Math.floor(idx / gridSize)
-    const cycle = ['hint-sand', 'hint-crab', 'hint-treasure', 'hint-nothing', '']
+    const cycle = ['hint-sand', 'hint-crab', 'hint-treasure', 'hint-nothing', 'hint-unset-white', '']
     const curr = cycle.find(h => cell.includes(h)) || ''
     const next = cycle[(cycle.indexOf(curr) + 1) % cycle.length]
 
