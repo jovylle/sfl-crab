@@ -5,70 +5,65 @@ import { useHintsStorage } from './useHintsStorage'
 const cache = {}
 
 export function useGridManager (rawLandId, gridSize = 10) {
-  // 1️⃣ fall back to "0" if no landId provided
   const landKey = rawLandId || '0'
 
   if (!cache[landKey]) {
-    // 2️⃣ core engine + storage
+    // 1️⃣ core engine + storage
     const engine = useGridEngine(gridSize)
     const storage = useHintsStorage(landKey)
 
-    // 3️⃣ reapply without duplicating engine logic
+    // reapply saved hints on-top of the engine’s base grid
     function applySavedHints () {
       engine.clearEngineHints()
-
-      for (const [i, classes] of Object.entries(storage.hints.value)) {
-        const idx = Number(i)
-        engine.tiles.value[idx] = [
-          ...engine.tiles.value[idx],
-          ...classes
-        ]
-
-        // neighbor markers
-        classes.forEach(h => {
-          const nearCls = `near-${h}`
-          const x = idx % gridSize
-          const y = Math.floor(idx / gridSize)
-          for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
-            const nx = x + dx, ny = y + dy
-            if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) continue
-            const ni = ny * gridSize + nx
-            if (!engine.tiles.value[ni].includes(nearCls)) {
-              engine.tiles.value[ni] = [
-                ...engine.tiles.value[ni],
-                nearCls
-              ]
-            }
-          }
+      for (const [idxStr, classes] of Object.entries(storage.hints.value)) {
+        const idx = Number(idxStr)
+        classes.forEach(hintClass => {
+          engine.pickEngineHint(idx, hintClass)
         })
       }
-
-      engine.tiles.value = [...engine.tiles.value]
     }
 
-    // 4️⃣ initial overlay on the empty grid
+    // initial load
     applySavedHints()
 
-    // 5️⃣ wrap API updates
+    // on API update: rebuild engine + reapply storage
     function update (apiGrid) {
       engine.updateGridFromData(apiGrid)
       storage.load()
       applySavedHints()
     }
 
-    // 6️⃣ user clicks
-    function cycle (idx) {
-      engine.cycleEngineHint(idx)
-      const hints = engine.tiles.value[idx].filter(c => c.startsWith('hint-'))
-      storage.toggle(idx, hints)
-      applySavedHints()
+    // inside src/composables/useGridManager.js
+    function cycle (index, hintClass = null) {
+      if (hintClass !== null) {
+        // explicit pick
+        engine.pickEngineHint(index, hintClass)
+        // persist to storage…
+        storage.hints.value[index] = hintClass ? [hintClass] : []
+        storage.save()
+      } else {
+        // fallback: cycle through the order
+        engine.cycleEngineHint(index)
+        // persist whichever hint is now applied (or clear)
+        const cell = engine.tiles.value[index]
+        const picked = cell.find(c => c.startsWith('hint-'))
+        if (picked) storage.hints.value[index] = [picked]
+        else delete storage.hints.value[index]
+        storage.save()
+      }
     }
 
-    // 7️⃣ clear
+
+    // clear everything
     function clear () {
+      // remove all hint-*/near-hint-* classes
       engine.clearEngineHints()
+      // wipe out stored hints
       storage.clear()
+      // write the empty map back to localStorage
+      storage.save()
     }
+
 
     cache[landKey] = {
       tiles: engine.tiles,

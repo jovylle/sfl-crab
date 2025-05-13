@@ -36,7 +36,7 @@ const landId = computed(() => route.params.landId)
 function clearLandId() {
   if (route.name === 'Digging') {
     // we’re on /:landId/digging → go to /digging
-    router.push({ name: 'Digging' })
+    router.push({ name: 'GuestDigging' })
   } else {
     // default to details no-id
     router.push({ name: 'LandDetailsNoId' })
