@@ -12,25 +12,34 @@
       @click="goToLand"
       :disabled="!inputLandId.trim()"
     >
-      View Land Details
+      Use Land ID
     </button>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+
+
+const route  = useRoute()
+const router = useRouter()
 
 const inputLandId = ref('')
-const router      = useRouter()
 
 function goToLand() {
   const id = inputLandId.value.trim()
   if (!id) return
 
-  // Navigate to /:landId/details
-  router.push({ name: 'LandDetailsWithId', params: { landId: id } })
+  
+  if (route.name === 'GuestDigging') {
+    router.push({ name: 'Digging', params: { landId: id } })
+  } else {
+    router.push({ name: 'LandDetailsWithId', params: { landId: id } })
+  }
 }
+
+
 </script>
 
 <style scoped>
