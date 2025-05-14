@@ -4,6 +4,7 @@ import GuestDigging from '@/views/GuestDigging.vue'
 import Digging from '@/views/Digging.vue'
 import Home from '@/views/Home.vue'
 import LandDetails from '@/views/LandDetails.vue'
+import TodaysChecklist from '@/views/TodaysChecklist.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -25,6 +26,20 @@ const routes = [
     name: 'LandDetailsNoId',
     component: LandDetails,
     props: route => ({ landId: undefined }),
+  },
+  // Today’s Checklist (no landId) — lets user input their own
+  {
+    path: '/todays-checklist',
+    name: 'TodaysChecklist',
+    component: TodaysChecklist,
+    props: { useParam: false }
+  },
+  // Today’s Checklist scoped under a known landId
+  {
+    path: '/:landId(\\w+)/todays-checklist',
+    name: 'TodaysChecklistWithId',
+    component: TodaysChecklist,
+    props: route => ({ useParam: true, landIdParam: route.params.landId })
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

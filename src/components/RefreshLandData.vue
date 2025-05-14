@@ -1,5 +1,5 @@
 <template>
-  <button :disabled="isRefreshDisabled" @click="handleRefresh" class="refresh-btn">
+  <button :disabled="isRefreshDisabled" @click="handleRefresh" class="refresh-btn btn btn-primary">
     <span v-if="isRefreshing" class="loading">⏳</span>
     <span data-tip="Wait a bit" class="tooltip" v-else-if="isCooldown">Wait {{ remaining }}s</span>
     <span data-tip="Refresh From Server" class="tooltip" v-else>Refresh Data</span>
@@ -11,6 +11,9 @@ import { ref, watch, onBeforeUnmount } from 'vue';
 import { useLandSync } from '@/composables/useLandSync';
 import { useLandData } from '@/composables/useLandData';
 import { useRoute }    from 'vue-router';
+import { useSoftReload } from '@/composables/useSoftReload'
+
+const { softReload } = useSoftReload()
 
 const { isRefreshing, isCooldown, isRefreshDisabled, refresh } = useLandSync();
 
@@ -44,21 +47,12 @@ async function handleRefresh() {
   await refresh();  
   // console.log('📥 After sync, localStorage:', localStorage.getItem(`landData_${landId}`));
   reload();
+  softReload();
   // console.log('✅ landData ref reloaded');
 }
 </script>
 
 <style scoped>
-.refresh-btn {
-  padding: .5rem 1rem;
-  border: none;
-  border-radius: .25rem;
-  background: var(--color-primary);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-}
 .refresh-btn:disabled {
   opacity: .5;
   cursor: not-allowed;

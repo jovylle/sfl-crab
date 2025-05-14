@@ -1,4 +1,3 @@
-<!-- src/components/MainDrawer.vue -->
 <template>
   <div class="drawer drawer-end z-50">
     <input id="main-drawer" type="checkbox" class="drawer-toggle" />
@@ -29,12 +28,22 @@
               Land Raw Details
             </button>
           </li>
+          <!-- Digging -->
           <li>
             <button
               class="btn btn-large py-6 btn-block"
               @click="goToDigging"
             >
               Digging
+            </button>
+          </li>
+          <!-- Today’s Checklist -->
+          <li>
+            <button
+              class="btn btn-large py-6 btn-block"
+              @click="goToChecklist"
+            >
+              Today’s Checklist
             </button>
           </li>
         </ul>
@@ -62,21 +71,27 @@ const router = useRouter()
 function goToDetails() {
   const id = route.params.landId
   if (id) {
-    // if we have a landId, go to /:id/details
     router.push({ name: 'LandDetailsWithId', params: { landId: id } })
   } else {
-    // otherwise, go to /details
     router.push({ name: 'LandDetailsNoId' })
   }
 }
+
 function goToDigging() {
   const id = route.params.landId
   if (id) {
-    // if we have a landId, go to /:id/details
     router.push({ name: 'Digging', params: { landId: id } })
   } else {
-    // otherwise, go to /details
     router.push({ name: 'Digging' })
+  }
+}
+
+function goToChecklist() {
+  const id = route.params.landId
+  if (id) {
+    router.push({ name: 'TodaysChecklistWithId', params: { landId: id } })
+  } else {
+    router.push({ name: 'TodaysChecklist' })
   }
 }
 </script>
