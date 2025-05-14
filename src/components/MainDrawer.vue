@@ -19,11 +19,11 @@
       <div class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
         <h2 class="text-xl font-bold mb-4">Menu</h2>
         <div class="divider px-5">Pages</div>
-        <ul class="space-y-2 my-4">
+        <ul class="space-y-2 my-4 mb-auto">
           <!-- Land Details Navigation -->
           <li>
             <button
-              class="btn btn-sm btn-block"
+              class="btn btn-large py-6 btn-block"
               @click="goToDetails"
             >
               Land Raw Details
@@ -31,7 +31,7 @@
           </li>
           <li>
             <button
-              class="btn btn-sm btn-block"
+              class="btn btn-large py-6 btn-block"
               @click="goToDigging"
             >
               Digging
@@ -43,7 +43,7 @@
           <LandControls />
         </div>
         <div class="divider px-5">Theme</div>
-        <div>
+        <div class="mb-8">
           <ThemeToggle />
         </div>
       </div>
