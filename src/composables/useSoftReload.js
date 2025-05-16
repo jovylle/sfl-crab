@@ -6,6 +6,7 @@ export function useSoftReload () {
   const router = useRouter()
 
   const softReload = () => {
+    console.log('softReload edd');
     router.replace({
       path: route.path,
       query: { ...route.query, __t: Date.now() }

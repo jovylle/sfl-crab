@@ -5,11 +5,11 @@
     <LandLoader v-if="!landId" />
 
     <!-- We have a landId → show refresh + clear -->
-    <div v-else class="space-x-2">
+    <div v-else class="space-x-2 mx-auto text-center">
       <RefreshLandData />
       <button
         type="button"
-        class="btn btn-sm btn-error tooltip"
+        class="btn btn-error tooltip"
         data-tip="Clear Land ID"
         @click="clearLandId"
       >
