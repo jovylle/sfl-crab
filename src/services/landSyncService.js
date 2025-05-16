@@ -1,14 +1,10 @@
-// File: src/services/landSyncService.js
-import { fetchLandDataFromServer } from '@/services/landApiService';
-import { setLocalStoredLandData } from '@/utils/storageHelpers';
+// src/services/landSyncService.js
+import { fetchLandDataFromServer } from '@/services/landApiService'
 
 /**
- * Fetches fresh data from the server and writes into localStorage.
- * Does NOT broadcast—caller must reload via `useLandData().reload()`.
+ * Pure fetch; doesn’t touch localStorage or refs.
  */
-export async function syncLandDataFromServerToLocalStorage (landID) {
-  if (!landID) throw new Error('landID is required');
-  const freshData = await fetchLandDataFromServer(landID);
-  setLocalStoredLandData(landID, freshData);
-  return freshData;
+export async function fetchLandData (landId) {
+  if (!landId) throw new Error('landId is required')
+  return fetchLandDataFromServer(landId)
 }

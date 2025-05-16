@@ -125,9 +125,9 @@ onMounted(() => {
   console.log('Today’s Checklist component mounted.')
   // Example: re-fetch or validate data
   if (!landId.value) {
-    console.warn('No landId set on mount.')
+    console.info('No landId set on mount.')
   }else{
-    console.warn('Yes land ID.')
+    console.info('Yes land ID.')
     // loadFromStorage(landId.value)
   }
 })

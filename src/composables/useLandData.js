@@ -1,39 +1,22 @@
 // src/composables/useLandData.js
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { getLocalStoredLandData } from '@/utils/storageHelpers'
-
-const instances = new Map()  // landId -> { landData, inventory, desert, reload }
+import { useStorage } from '@vueuse/core'
 
 export function useLandData (defaults = {}) {
   const route = useRoute()
   const landId = route.params.landId
 
-  if (!instances.has(landId)) {
-    // create it once
-    const landData = ref({ ...defaults })
-    function reload () {
-      const stored = getLocalStoredLandData(landId)
-      landData.value = stored || { ...defaults }
-    }
-    onMounted(reload)
+  // reactive + persisted ref
+  const landData = useStorage(
+    `landData_${landId}`,    // key in localStorage
+    { ...defaults }          // initial value if no stored data
+  )
 
-    const inventory = computed(() => landData.value.state?.inventory || {})
-    const desert = computed(() => landData.value.state?.desert || {})
-    // derive the pattern keys directly from the desert digging state
-    const patternKeys = computed(() =>
-      desert.value.digging?.patterns || []
-    )
+  // derived pieces
+  const inventory = computed(() => landData.value.state?.inventory || {})
+  const desert = computed(() => landData.value.state?.desert || {})
+  const patternKeys = computed(() => desert.value.digging?.patterns || [])
 
-    // store the full API surface for this landId
-    instances.set(landId, {
-      landData,
-      inventory,
-      desert,
-      patternKeys,
-      reload
-    })
-  }
-
-  return instances.get(landId)
+  return { landData, inventory, desert, patternKeys }
 }

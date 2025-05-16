@@ -1,39 +1,85 @@
 // src/composables/useLandSync.js
-import { ref, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { syncLandDataFromServerToLocalStorage } from '@/services/landSyncService'
 import { useLandData } from '@/composables/useLandData'
+import { fetchLandData } from '@/services/landSyncService'
 
-const syncInstances = new Map()  // landId -> { isRefreshing, isCooldown, isRefreshDisabled, refresh }
+const instances = new Map()
 
 export function useLandSync () {
   const route = useRoute()
   const landId = route.params.landId
+  const cooldownKey = `landCooldownEnd_${landId}`
 
-  if (!syncInstances.has(landId)) {
-    const isRefreshing = ref(false)
+  if (!instances.has(landId)) {
+    // 1️⃣ grab the landData ref once, at composable init:
+    const { landData } = useLandData()
+
+    // 2️⃣ shared reactive state
+    const isLoading = ref(false)
     const isCooldown = ref(false)
-    const isRefreshDisabled = computed(() => isRefreshing.value || isCooldown.value)
+    const remaining = ref(0)
+    let intervalId
 
-    // bring in the singleton reload
-    const { reload } = useLandData()
+    // helper to clear cooldown
+    function clearCooldown () {
+      isCooldown.value = false
+      remaining.value = 0
+      localStorage.removeItem(cooldownKey)
+      clearInterval(intervalId)
+    }
 
-    async function refresh () {
-      if (isRefreshDisabled.value) return
-      isRefreshing.value = true
+    // start countdown from an absolute endTime (ms)
+    function startCountdown (endTime) {
+      isCooldown.value = true
+      // tick down remaining
+      intervalId = setInterval(() => {
+        const msLeft = endTime - Date.now()
+        if (msLeft <= 0) {
+          clearCooldown()
+        } else {
+          remaining.value = Math.ceil(msLeft / 1000)
+        }
+      }, 250)
+    }
+
+    // on init, restore any in-flight cooldown from localStorage
+    const stored = Number(localStorage.getItem(cooldownKey))
+    if (stored > Date.now()) {
+      startCountdown(stored)
+    }
+
+    onBeforeUnmount(() => clearInterval(intervalId))
+
+    // 3️⃣ reload logic (never re-calls useLandData/useRoute)
+    async function reloadFromServer (opts = {}) {
+      const { force = false } = opts
+      if (isLoading.value || (isCooldown.value && !force)) return
+
+      isLoading.value = true
       try {
-        await syncLandDataFromServerToLocalStorage(landId)
-        reload()  // update the single shared landData
-        // start your 15s cooldown...
-        isCooldown.value = true
-        setTimeout(() => (isCooldown.value = false), 15000)
+        const fresh = await fetchLandData(landId)
+        // directly assign to the ref we grabbed above:
+        landData.value = fresh
       } finally {
-        isRefreshing.value = false
+        isLoading.value = false
+        if (!force && !isCooldown.value) {
+          const endTime = Date.now() + 15_000
+          localStorage.setItem(cooldownKey, String(endTime))
+          startCountdown(endTime)
+        }
       }
     }
 
-    syncInstances.set(landId, { isRefreshing, isCooldown, isRefreshDisabled, refresh })
+    // 4️⃣ on first mount, seed if no data
+    onMounted(() => {
+      if (!localStorage.getItem(`landData_${landId}`)) {
+        reloadFromServer()
+      }
+    })
+
+    instances.set(landId, { isLoading, isCooldown, remaining, reloadFromServer })
   }
 
-  return syncInstances.get(landId)
+  return instances.get(landId)
 }
