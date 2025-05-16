@@ -1,7 +1,12 @@
 <!-- src/views/TodaysChecklist.vue -->
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Today’s Checklist</h1>
+    <div class="mb-4 flex items-center justify-center gap-4">
+      <h1 class="text-2xl font-bold  inline-block my-auto ">
+        Today’s Checklist
+      </h1>
+      <HandySpot />
+    </div>
 
     <!-- No landId: reuse card + Choose Land button -->
     <div v-if="!landId" class="card bg-base-200 p-6 text-center">
@@ -11,68 +16,72 @@
       </button>
     </div>
 
-    <!-- Main Gift Checklist card -->
-    <div v-else class="card bg-base-100 shadow">
-      <div class="card-body space-y-4">
-        <h2 class="card-title">Gift Checklist</h2>
-
-        <!-- NPC Multi-Select Dropdown & Refresh -->
-        <div class="flex items-center space-x-4">
-          <div class="dropdown">
-            <label tabindex="0" class="btn btn-outline">Select NPCs</label>
-            <ul
-              tabindex="0"
-              class="dropdown-content menu p-4 shadow bg-base-100 rounded-box w-64 grid grid-cols-2 gap-2"
-            >
-              <li
-                v-for="npc in npcList"
-                :key="npc.id"
+    <div v-else class="space-x-4 space-y-4">
+      <!-- Main Gift Checklist card -->
+      <div class="card card-dash bg-base-100 max-w-sm   inline-block">
+        <div class="card-body space-y-4">
+          <!-- NPC Multi-Select Dropdown & Refresh -->
+          <div class="flex items-center space-x-4">
+            <div class="dropdown">
+              <div class="flex gap-4">
+                <h2 class="card-title my-auto">Gift/Flower Checklist</h2>
+                <label tabindex="0" class="btn btn-outline">Select NPCs</label>
+              </div>
+              <ul
+                tabindex="0"
+                class="dropdown-content menu p-4 shadow bg-base-100 rounded-box w-96 grid grid-cols-2 gap-2"
               >
-                <label class="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    class="checkbox"
-                    :value="npc.id"
-                    v-model="selectedNpcIds"
-                  />
-                  <span>{{ npc.displayName }}</span>
-                </label>
-              </li>
-            </ul>
+                <li v-for="npc in npcList" :key="npc.id">
+                  <label class="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      class="checkbox"
+                      :value="npc.id"
+                      v-model="selectedNpcIds"
+                    />
+                    <span>{{ npc.displayName }}</span>
+                  </label>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <button class="btn btn-secondary" @click="refresh">
-            Refresh
-          </button>
-        </div>
+          <!-- Zebra table of selected NPC statuses -->
+          <div v-if="selectedNpcs.length">
+            <table class="table w-full zebra">
+              <thead>
+                <tr>
+                  <th>NPC</th>
+                  <th class="text-center">Gifted Today</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="npc in selectedNpcs" :key="npc.id">
+                  <td>{{ npc.displayName }}</td>
+                  <td class="text-center">
+                    <input
+                      type="checkbox"
+                      class="checkbox"
+                      :checked="isGiftedToday(npc)"
+                      disabled
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <!-- Zebra table of selected NPC statuses -->
-        <div v-if="selectedNpcs.length">
-          <table class="table w-full zebra">
-            <thead>
-              <tr>
-                <th>NPC</th>
-                <th class="text-center">Gifted Today</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="npc in selectedNpcs" :key="npc.id">
-                <td>{{ npc.displayName }}</td>
-                <td class="text-center">
-                  <input
-                    type="checkbox"
-                    class="checkbox"
-                    :checked="isGiftedToday(npc)"
-                    disabled
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div v-else class="text-gray-500">No NPCs selected.</div>
         </div>
+      </div>
 
-        <div v-else class="text-gray-500">
-          No NPCs selected.
+      <div class="card card-dash bg-base-100 max-w-sm inline-block ">
+        <div class="card-body">
+          <h2 class="card-title">More to be added</h2>
+          <p>
+            A card component has a figure, a body part, and inside body there
+            are title and actions parts
+          </p>
         </div>
       </div>
     </div>
@@ -80,9 +89,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { openMainDrawer as openDrawer } from '@/utils/drawerToggle'
+import HandySpot from '../components/HandySpot.vue'
 
 // --- Keys & Route ---
 const route = useRoute()
@@ -99,7 +109,6 @@ function loadFromStorage(id) {
   const raw = localStorage.getItem(`landData_${id}`)
   landRaw.value = raw ? JSON.parse(raw) : { state: { npcs: {} } }
 }
-
 // --- landId logic (URL param wins) ---
 const landId = ref(
   route.params.landId ??
@@ -111,6 +120,17 @@ watch(
   () => route.params.landId,
   v => { if (v) landId.value = v }
 )
+
+onMounted(() => {
+  console.log('Today’s Checklist component mounted.')
+  // Example: re-fetch or validate data
+  if (!landId.value) {
+    console.warn('No landId set on mount.')
+  }else{
+    console.warn('Yes land ID.')
+    // loadFromStorage(landId.value)
+  }
+})
 
 watch(
   landId,
@@ -163,11 +183,6 @@ function isGiftedToday(npc) {
     now.getUTCDate()
   )
   return ts >= midnight
-}
-
-// --- Refresh handler ---
-function refresh() {
-  if (landId.value) loadFromStorage(landId.value)
 }
 </script>
 

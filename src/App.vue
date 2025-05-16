@@ -5,7 +5,7 @@
   >
     <MainDrawer />
     <main class="py-6 sm:py-8 px-4 w-full max-w-screen-lg mx-auto text-center">
-      <router-view />
+      <router-view :key="$route.fullPath"/>
     </main>
     <footer class="py-6 text-center text-sm">
       <div class="w-full max-w-screen-lg mx-auto px-4">
