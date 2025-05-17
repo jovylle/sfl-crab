@@ -196,16 +196,13 @@ body {
 }
 /* Grid & tiles */
 .contain-please {
-  max-width: 500px;
   width: 100%;
   margin: 0px auto;
 }
  .contain-please .grid {
-  width: 100%; /* Ensure it doesn't exceed the parent container */
   max-width: 100%; /* Prevent overflow */
   display: grid;
   grid-template-columns: repeat(10, 1fr); /* 10 equal columns */
-  gap: 2px; /* Space between grid items */
 }
 .site-footer .github-link {
   color: #fff;
@@ -239,18 +236,8 @@ body {
 
 /* Let each tile fill its cell & stay square */
 .tile {
-  box-sizing: border-box;
-  width: 100%;
-  height: auto; /* Maintain aspect ratio if needed */
-  aspect-ratio: 1 / 1;
-  border: 1px solid #ccc;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: background-color 0.1s, background-image 0s;
-  background-color: var(--b1);
-  overflow: hidden; /* Prevent content overflow */
   user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;

@@ -1,26 +1,10 @@
-<template>
-  <div class="flex flex-col items-center sm:py-6 gap-4">
-    <!-- User info & controls -->
-    <div class="card bg-base-100 shadow-sm">
-      <div class="card-body">
-        <UsernameViewer />
-        
-      </div>
-    </div>
-
+<!-- src/views/Digging.vue -->
+ <template>
+  <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
     <!-- Manual Marks clear & Grid -->
-    <div class="card bg-base-100 shadow-sm w-full max-w-xl">
-      <div class="card-body">
-        <div class="flex gap-4 mb-4 justify-center">
-          <button
-            class="btn btn-warning tooltip"
-            data-tip="🧹 Clear all custom marks"
-            @click="grid.clear()"
-          >
-            🧹 Clear Marks
-          </button>
-          <InputLandIdOrRefresh />
-        </div>
+    <div class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0">
+      <div class="card-body [@media(max-width:639px)]:p-3">
+        <ClearMarks />
 
         <!-- Now simply render Grid.vue — it will read from our manager -->
         <Grid />
@@ -28,19 +12,20 @@
     </div>
 
     <TodayPatterns />
+  </div>
+  <div>
     <InfoFooter />
   </div>
 </template>
 
 <script setup>
-import { watch }            from 'vue'
+import { onMounted, watch }            from 'vue'
 import { useRoute }         from 'vue-router'
 
-import UsernameViewer       from '@/components/UsernameViewer.vue'
+import ClearMarks from '@/components/ClearMarks.vue'
 import Grid                 from '@/components/Grid.vue'
 import TodayPatterns        from '@/components/TodayPatterns.vue'
 import InfoFooter           from '@/components/InfoFooter.vue'
-import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 
 import { useLandData }      from '@/composables/useLandData'
 import { useGridManager }   from '@/composables/useGridManager'
@@ -62,6 +47,16 @@ watch(
   apiGrid => apiGrid && grid.update(apiGrid),
   { immediate: true }
 )
+onMounted(() => {
+  console.log('Digging component mounted.')
+  // Example: re-fetch or validate data
+  if (!landId) {
+    console.info('No landId set on mount.')
+  }else{
+    console.info('Yes land ID.')
+    // loadFromStorage(landId.value)
+  }
+})
 </script>
 
 <style scoped>

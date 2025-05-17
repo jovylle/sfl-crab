@@ -1,34 +1,18 @@
 <!-- src/views/GuestDigging.vue -->
 <template>
-  <div class="flex flex-col items-center sm:py-6 gap-4">
-    <!-- User info & controls -->
-    <div class="card bg-base-100 shadow-sm">
-      <div class="card-body">
-        <UsernameViewer :name="username" />
-      </div>
-    </div>
-
+  <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
     <!-- Manual Marks clear & Grid -->
-    <div class="card bg-base-100 shadow-sm w-full max-w-xl">
-      <div class="card-body">
-        <div class="flex gap-4 mb-4 justify-center">
-          <button
-            class="btn btn-warning tooltip"
-            data-tip="🧹 Clear all custom marks"
-            @click="grid.clear()"
-          >
-            🧹 Clear Marks
-          </button>
-          <InputLandIdOrRefresh />
-        </div>
+    <div class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0">
+      <div class="card-body [@media(max-width:639px)]:p-3">
+        <ClearMarks />
 
         <!-- Grid.vue will pull from our grid manager internally -->
         <Grid />
       </div>
     </div>
-
+    
     <TodayPatterns :patterns="patternKeys" />
-    <InfoFooter />
+    <!-- <InfoFooter /> -->
   </div>
 </template>
 
@@ -36,14 +20,13 @@
 import { watch }            from 'vue'
 import { useRoute }         from 'vue-router'
 
-import UsernameViewer       from '@/components/UsernameViewer.vue'
 import Grid                 from '@/components/Grid.vue'
 import TodayPatterns        from '@/components/TodayPatterns.vue'
 import InfoFooter           from '@/components/InfoFooter.vue'
-import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 
 import { useLandData }      from '@/composables/useLandData'
 import { useGridManager }   from '@/composables/useGridManager'
+import ClearMarks from '@/components/ClearMarks.vue'
 
 // 1) Choose a key: if there's no landId, use "0" (guest key)
 const route  = useRoute()

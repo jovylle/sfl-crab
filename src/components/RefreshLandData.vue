@@ -2,13 +2,13 @@
   <button
     :disabled="isLoading || isCooldown"
     @click="reloadFromServer"
-    class="refresh-btn btn btn-primary"
+    class="refresh-btn btn btn-primary btn-sm sm:btn-md text-xs sm:text-sm text-nowrap"
   >
     <span v-if="isLoading" class="loading">⏳</span>
     <span v-else-if="isCooldown" class="tooltip">
       Wait {{ remaining }}s
     </span>
-    <span v-else class="tooltip">
+    <span v-else class="tooltip" data-tip="Refresh Land Data">
       Refresh Data
     </span>
   </button>
