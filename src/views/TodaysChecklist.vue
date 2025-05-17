@@ -18,7 +18,7 @@
 
     <div v-else class="space-x-4 space-y-4">
       <!-- Main Gift Checklist card -->
-      <div class="card card-dash bg-base-100 max-w-sm   inline-block">
+      <div class="card card-dash bg-emerald-100 max-w-sm shadow-sm inline-block">
         <div class="card-body space-y-4">
           <!-- NPC Multi-Select Dropdown & Refresh -->
           <div class="flex items-center space-x-4">
@@ -59,12 +59,8 @@
                 <tr v-for="npc in selectedNpcs" :key="npc.id">
                   <td>{{ npc.displayName }}</td>
                   <td class="text-center">
-                    <input
-                      type="checkbox"
-                      class="checkbox"
-                      :checked="isGiftedToday(npc)"
-                      disabled
-                    />
+                    <span v-if="isGiftedToday(npc)">✔️</span>
+                    <span v-else>❌</span>
                   </td>
                 </tr>
               </tbody>
@@ -75,7 +71,7 @@
         </div>
       </div>
 
-      <div class="card card-dash bg-base-100 max-w-sm inline-block ">
+      <div class="card card-dash bg-emerald-100 max-w-sm inline-block shadow-sm">
         <div class="card-body">
           <h2 class="card-title">More to be added</h2>
           <p>

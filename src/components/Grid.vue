@@ -46,11 +46,11 @@ const cycleHint = grid.cycle // for fallback or other use
 
 <template>
   <div class="contain-please relative">
-    <div class="grid">
+    <div class="grid w-full border border-base-300">
       <div
         v-for="(tile, index) in tiles"
         :key="index"
-        class="tile"
+        class="tile w-full border border-base-300 flex items-center justify-center aspect-square outline outline-base-300"
         :class="tile"
         @click="onTileClick($event, index)"
       >
@@ -75,7 +75,6 @@ const cycleHint = grid.cycle // for fallback or other use
         'hint-treasure',
         'hint-nothing',
         'hint-unset-white',
-        ''
       ]"
       @pick="onHintPicked"
     />
