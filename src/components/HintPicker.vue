@@ -17,10 +17,10 @@
         v-for="(hintClass, idx) in hints"
         :key="hintClass + idx"
         class="aspect-square flex items-center justify-center
-               border-base-300 border rounded"
+               rounded p-1"
         @click="selectHint(idx)"
       >
-        <div :class="['tile', hintClass, 'm-2', 'w-full', 'h-full']" />
+        <div :class="[hintClass, 'tile', 'w-full', 'h-full']" />
       </li>
     </ul>
   </div>

@@ -1,4 +1,3 @@
-<!-- src/components/MainDrawer.vue -->
 <template>
   <div class="drawer drawer-end z-50">
     <input id="main-drawer" type="checkbox" class="drawer-toggle" />
@@ -19,22 +18,32 @@
       <div class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
         <h2 class="text-xl font-bold mb-4">Menu</h2>
         <div class="divider px-5">Pages</div>
-        <ul class="space-y-2 my-4">
+        <ul class="space-y-2 my-4 mb-auto">
           <!-- Land Details Navigation -->
           <li>
             <button
-              class="btn btn-sm btn-block"
+              class="btn btn-large py-6 btn-block"
               @click="goToDetails"
             >
               Land Raw Details
             </button>
           </li>
+          <!-- Digging -->
           <li>
             <button
-              class="btn btn-sm btn-block"
+              class="btn btn-large py-6 btn-block"
               @click="goToDigging"
             >
               Digging
+            </button>
+          </li>
+          <!-- Today’s Checklist -->
+          <li>
+            <button
+              class="btn btn-large py-6 btn-block"
+              @click="goToChecklist"
+            >
+              Today’s Checklist
             </button>
           </li>
         </ul>
@@ -43,7 +52,7 @@
           <LandControls />
         </div>
         <div class="divider px-5">Theme</div>
-        <div>
+        <div class="mb-8">
           <ThemeToggle />
         </div>
       </div>
@@ -62,21 +71,27 @@ const router = useRouter()
 function goToDetails() {
   const id = route.params.landId
   if (id) {
-    // if we have a landId, go to /:id/details
     router.push({ name: 'LandDetailsWithId', params: { landId: id } })
   } else {
-    // otherwise, go to /details
     router.push({ name: 'LandDetailsNoId' })
   }
 }
+
 function goToDigging() {
   const id = route.params.landId
   if (id) {
-    // if we have a landId, go to /:id/details
     router.push({ name: 'Digging', params: { landId: id } })
   } else {
-    // otherwise, go to /details
     router.push({ name: 'Digging' })
+  }
+}
+
+function goToChecklist() {
+  const id = route.params.landId
+  if (id) {
+    router.push({ name: 'TodaysChecklistWithId', params: { landId: id } })
+  } else {
+    router.push({ name: 'TodaysChecklist' })
   }
 }
 </script>

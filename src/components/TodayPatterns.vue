@@ -1,40 +1,39 @@
 <template>
-  <div v-if="patternKeys && patternKeys.length > 0" class="mt-4">
-    <div
-      tabindex="0"
-      class="collapse collapse-arrow bg-base-100 border-base-300 border "
-    >
-      <input type="checkbox" />
-      <div class="collapse-title font-semibold">Today's Treasure Patterns</div>
-      <div class="collapse-content text-sm max-w-xl">
-        <div class="">
-          <div
-            v-for="(key, index) in patternKeys"
-            :key="index"
-            class="border border-base-300 m-2 inline-block rounded p-2 cursor-pointer hover:shadow transition-shadow"
-            :class="{
-                  'bg-success': isMarked(index),
-                  'bg-base-100 dark:bg-neutral-content':      !isMarked(index)
-                }"
-            @click="toggleMark(index)"
-          >
-            <!-- <h4 class="text-sm font-medium mb-2 truncate text-center">{{ key.replace(/_/g, ' ') }}</h4> -->
-            <!-- 4×4 preview box -->
+  <div v-if="patternKeys?.length" class="card grow max-w-md basis-[265px] mx-auto md:mx-0">
+    <div class="card-body [@media(max-width:639px)]:p-3 [@media(max-width:639px)]:pt-0">
+      <h2 class="card-title text-center text-sm sm:text-lg">Today's Treasure Patterns</h2>
+      <div
+        class="
+          flex flex-wrap         /* wrap into new rows */
+          gap-2 sm:gap-4                  /* consistent gutters */
+        "
+      >
+        <div
+          v-for="(key, i) in patternKeys"
+          :key="i"
+          @click="toggleMark(i)"
+          :class="[
+            'cursor-pointer transition-shadow',
+            isMarked(i)
+              ? 'bg-success'
+              : 'bg-base-100 dark:bg-neutral-content',
+            /* flex item sizing: */
+            'md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px]'
+          ]"
+        >
+          <!-- your existing 4×4 grid inside -->
+          <div class="grid grid-cols-4 mx-auto border border-base-300">
             <div
-              class="w-18 h-18 sm:w-24 sm:h-24 grid grid-cols-4 mx-auto border border-base-300"
+              v-for="cell in 16"
+              :key="cell"
+              class="border border-base-300 flex items-center justify-center aspect-square p-0.5"
             >
-              <div
-                v-for="cell in 16"
-                :key="cell"
-                class="border border-base-300 flex items-center justify-center aspect-square"
-              >
-                <img
-                  v-if="getPlotAt(key, cell)"
-                  :src="getImageUrl(getPlotAt(key, cell).name)"
-                  :alt="getPlotAt(key, cell).name"
-                  class="max-w-full max-h-full object-contain"
-                />
-              </div>
+              <img
+                v-if="getPlotAt(key, cell)"
+                :src="getImageUrl(getPlotAt(key, cell).name)"
+                :alt="getPlotAt(key, cell).name"
+                class="max-w-full max-h-full object-contain w-full"
+              />
             </div>
           </div>
         </div>
@@ -42,6 +41,7 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useLandData } from '../composables/useLandData'
@@ -71,7 +71,7 @@ function getPlotAt(key: string, cellIndex: number) {
   const row = Math.floor(idx / GRID_SIZE) // 0..3
 
   // center the origin on (CENTER_OFFSET, CENTER_OFFSET)
-  const x = col - CENTER_OFFSET
+  const x = col - CENTER_OFFSET + 1
   const y = row - CENTER_OFFSET
 
   return formation.find(plot => plot.x === x && plot.y === y) || null
@@ -81,11 +81,3 @@ function getImageUrl(name: string) {
   return `/world/${name.toLowerCase().replace(/\s+/g, '_')}.webp`
 }
 </script>
-
-<style scoped>
-h3 {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-</style>

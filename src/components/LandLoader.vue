@@ -8,7 +8,7 @@
     />
 
     <button 
-      class="btn btn-primary"
+      class="btn btn-primary dark:text-black"
       @click="goToLand"
       :disabled="!inputLandId.trim()"
     >
