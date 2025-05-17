@@ -54,7 +54,7 @@ const tabs = computed(() => {
     { label: 'Details',           to: landId
                                 ? { name: 'LandDetailsWithId', params: { landId } }
                                 : { name: 'LandDetailsNoId' } },
-    { label: "Checklist", to: landId
+    { label: "Focused Checklist", to: landId
                                 ? { name: 'TodaysChecklistWithId', params: { landId } }
                                 : { name: 'TodaysChecklist' } },
   ]

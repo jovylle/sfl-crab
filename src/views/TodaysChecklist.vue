@@ -3,7 +3,7 @@
   <div class="p-6">
     <div class="mb-4 flex items-center justify-center gap-4">
       <h1 class="text-2xl font-bold  inline-block my-auto ">
-        Today’s Checklist
+        Today’s Checklist to Focus
       </h1>
       <HandySpot />
     </div>
