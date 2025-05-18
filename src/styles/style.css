@@ -166,6 +166,24 @@ body {
   
 }
 
+
+.tile.hint-potential-treasure {
+  position: relative;
+}
+
+/* center “treasure dot” */
+.tile.hint-potential-treasure::after {
+  content: "";
+  width: 35%;
+  height: 35%;
+  @apply bg-success;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .tile.hint-unset-white {
   @apply bg-base-100;
   border: 4px dashed;

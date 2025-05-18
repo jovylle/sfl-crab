@@ -75,7 +75,7 @@ const cycleHint = grid.cycle // for fallback or other use
         'hint-treasure',
         'hint-nothing',
         'hint-unset-white',
-        '',
+        'hint-potential-treasure',
       ]"
       @pick="onHintPicked"
     />
