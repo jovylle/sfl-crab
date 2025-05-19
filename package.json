@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prerender": "node scripts/prerender.js"
   },
   "dependencies": {
     "@vueuse/core": "^13.2.0",
+    "@vueuse/head": "^2.0.0",
     "daisyui": "^5.0.28",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"
@@ -19,6 +21,7 @@
     "@vitejs/plugin-vue": "^5.2.2",
     "node-fetch": "^3.3.2",
     "prettier": "^3.5.3",
+    "puppeteer": "^24.8.2",
     "tailwindcss": "^4.1.4",
     "ts-morph": "^25.0.1",
     "vite": "^6.3.1"

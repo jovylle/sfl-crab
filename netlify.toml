@@ -1,0 +1,16 @@
+# netlify.toml
+[build]
+  # the command that builds + prerenders your SPA
+  command = "npm run build && npm run prerender"
+  # directory to deploy
+  publish = "dist"
+
+# Optional: if you need any environment vars, you can list them here
+[build.environment]
+  NODE_VERSION = "18.20.8"
+
+# Optional: pretty URLs for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
