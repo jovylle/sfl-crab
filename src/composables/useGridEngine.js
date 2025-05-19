@@ -96,28 +96,28 @@ export function useGridEngine (gridSize = 10) {
     ''
   ]
 
-  // Fallback cycle through hints
-  function cycleEngineHint (idx) {
-    const apiClasses = ['sand', 'crab', 'treasure']
-    const cell = tiles.value[idx]
-    if (cell.some(c => apiClasses.includes(c))) return
+  // // Fallback cycle through hints
+  // function cycleEngineHint (idx) {
+  //   const apiClasses = ['sand', 'crab', 'treasure']
+  //   const cell = tiles.value[idx]
+  //   if (cell.some(c => apiClasses.includes(c))) return
 
-    const x = idx % gridSize
-    const y = Math.floor(idx / gridSize)
-    const curr = cycleOrder.find(h => cell.includes(h)) || ''
-    const next = cycleOrder[(cycleOrder.indexOf(curr) + 1) % cycleOrder.length]
+  //   const x = idx % gridSize
+  //   const y = Math.floor(idx / gridSize)
+  //   const curr = cycleOrder.find(h => cell.includes(h)) || ''
+  //   const next = cycleOrder[(cycleOrder.indexOf(curr) + 1) % cycleOrder.length]
 
-    if (curr === 'hint-sand') removeHint(x, y, 'near-hint-sand')
-    if (curr === 'hint-crab') removeHint(x, y, 'near-hint-crab')
+  //   if (curr === 'hint-sand') removeHint(x, y, 'near-hint-sand')
+  //   if (curr === 'hint-crab') removeHint(x, y, 'near-hint-crab')
 
-    const clean = cell.filter(c => typeof c === 'string' && !cycleOrder.includes(c))
-    tiles.value[idx] = next ? [...clean, next] : clean
+  //   const clean = cell.filter(c => typeof c === 'string' && !cycleOrder.includes(c))
+  //   tiles.value[idx] = next ? [...clean, next] : clean
 
-    if (next === 'hint-sand') applyHint(x, y, 'near-hint-sand')
-    if (next === 'hint-crab') applyHint(x, y, 'near-hint-crab')
+  //   if (next === 'hint-sand') applyHint(x, y, 'near-hint-sand')
+  //   if (next === 'hint-crab') applyHint(x, y, 'near-hint-crab')
 
-    tiles.value = [...tiles.value]
-  }
+  //   tiles.value = [...tiles.value]
+  // }
 
   // Apply one specific picked hint
   function pickEngineHint (idx, hintClass) {
@@ -144,8 +144,16 @@ export function useGridEngine (gridSize = 10) {
     tiles.value[idx] = hintClass ? [...clean, hintClass] : clean
 
     // apply neighbor hints for the new hint
-    if (hintClass === 'hint-sand') applyHint(x, y, 'near-hint-sand')
-    if (hintClass === 'hint-crab') applyHint(x, y, 'near-hint-crab')
+    if (hintClass === 'hint-sand'){
+      applyHint(x, y, 'near-hint-sand')
+    }else{
+      removeHint(x, y, 'near-hint-sand')
+    }
+    if (hintClass === 'hint-crab'){
+      applyHint(x, y, 'near-hint-crab')
+    }else{
+      removeHint(x, y, 'near-hint-crab')
+    }
 
     tiles.value = [...tiles.value]
   }
@@ -166,7 +174,7 @@ export function useGridEngine (gridSize = 10) {
   return {
     tiles,
     updateGridFromData,
-    cycleEngineHint,
+    // cycleEngineHint, removed any cycle
     pickEngineHint,
     clearEngineHints
   }

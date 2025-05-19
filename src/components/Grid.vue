@@ -36,21 +36,22 @@ function onTileClick(event, index) {
 // when a hint is picked, call cycle with hint
 function onHintPicked({ tileIndex, hint }) {
   // hint is now the class string (e.g. 'hint-crab') or '' to clear
-  grid.cycle(tileIndex, hint)
+  // grid.cycle(tileIndex, hint)
+  grid.pick(tileIndex, hint)
   picker.value = null
 }
 
 const tiles     = grid.tiles
-const cycleHint = grid.cycle // for fallback or other use
+// const cycleHint = grid.cycle // for fallback or other use
 </script>
 
 <template>
   <div class="contain-please relative">
-    <div class="grid w-full border border-base-300">
+    <div class="grid w-full p-0.5 gap-0.5 bg-base-300">
       <div
         v-for="(tile, index) in tiles"
         :key="index"
-        class="tile w-full border border-base-300 flex items-center justify-center aspect-square outline outline-base-300"
+        class="tile w-full flex items-center bg-base-100 justify-center aspect-square"
         :class="tile"
         @click="onTileClick($event, index)"
       >
@@ -70,12 +71,13 @@ const cycleHint = grid.cycle // for fallback or other use
       :x="picker.x"
       :y="picker.y"
       :hints="[
-        'hint-sand',
-        'hint-crab',
-        'hint-treasure',
         'hint-nothing',
-        'hint-unset-white',
         'hint-potential-treasure',
+        'hint-crab',
+        'hint-sand',
+        'hint-treasure',
+        'hint-unset-white',
+        'no-hint-and-show-trash-icon',
       ]"
       @pick="onHintPicked"
     />
