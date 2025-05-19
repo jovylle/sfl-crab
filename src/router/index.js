@@ -1,5 +1,5 @@
 // src/router/index.js
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import GuestDigging from '@/views/GuestDigging.vue'
 import Digging from '@/views/Digging.vue'
 import Home from '@/views/Home.vue'
@@ -44,7 +44,11 @@ const routes = [
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
+const history = import.meta.env.SSR
+  ? createMemoryHistory()
+  : createWebHistory()
+
 export default createRouter({
-  history: createWebHistory(),
+  history,
   routes
 })
