@@ -33,25 +33,25 @@ export function useGridManager (rawLandId, gridSize = 10) {
       applySavedHints()
     }
 
-    // inside src/composables/useGridManager.js
-    function cycle (index, hintClass = null) {
-      if (hintClass !== null) {
-        // explicit pick
-        engine.pickEngineHint(index, hintClass)
-        // persist to storage…
-        storage.hints.value[index] = hintClass ? [hintClass] : []
-        storage.save()
-      } else {
-        // fallback: cycle through the order
-        engine.cycleEngineHint(index)
-        // persist whichever hint is now applied (or clear)
-        const cell = engine.tiles.value[index]
-        const picked = cell.find(c => c.startsWith('hint-'))
-        if (picked) storage.hints.value[index] = [picked]
-        else delete storage.hints.value[index]
-        storage.save()
-      }
-    }
+    // // inside src/composables/useGridManager.js
+    // function cycle (index, hintClass = null) {
+    //   if (hintClass !== null) {
+    //     // explicit pick
+    //     engine.pickEngineHint(index, hintClass)
+    //     // persist to storage…
+    //     storage.hints.value[index] = hintClass ? [hintClass] : []
+    //     storage.save()
+    //   } else {
+    //     // fallback: cycle through the order
+    //     engine.cycleEngineHint(index)
+    //     // persist whichever hint is now applied (or clear)
+    //     const cell = engine.tiles.value[index]
+    //     const picked = cell.find(c => c.startsWith('hint-'))
+    //     if (picked) storage.hints.value[index] = [picked]
+    //     else delete storage.hints.value[index]
+    //     storage.save()
+    //   }
+    // }
 
 
     // clear everything
@@ -68,7 +68,14 @@ export function useGridManager (rawLandId, gridSize = 10) {
     cache[landKey] = {
       tiles: engine.tiles,
       update,
-      cycle,
+      // cycle, removed
+      pick (index, hintClass) {
+        // apply the hint via the engine
+        engine.pickEngineHint(index, hintClass)
+        // persist exactly that one hint (or clear)
+        storage.hints.value[index] = hintClass ? [hintClass] : []
+        storage.save()
+      },
       clear
     }
   }

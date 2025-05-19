@@ -9,7 +9,7 @@
     <button class="btn btn-ghost p-0 w-0 h-0" ref="anchor" />
 
     <ul
-      class="dropdown-content !grid !grid-cols-3 !grid-rows-2 gap-0.5 p-0.5
+      class="dropdown-content !grid !grid-cols-3 !grid-rows-2
              bg-base-100 border border-base-300"
       style="min-width: 12rem;"
     >
@@ -17,10 +17,24 @@
         v-for="(hintClass, idx) in hints"
         :key="hintClass + idx"
         class="aspect-square flex items-center justify-center
-               rounded p-1"
+                p-1.5 border border-base-300"
         @click="selectHint(idx)"
       >
-        <div :class="[hintClass, 'tile', 'w-full', 'h-full']" />
+        <!-- <div
+          :class="[hintClass, 'tile', 'w-full', 'h-full border border-base-300']"
+          class=""
+        /> -->
+        <div
+          v-if="hintClass === 'no-hint-and-show-trash-icon'"
+          class="tooltip tooltip-warning flex justify-center items-center tile w-full h-full border border-base-300"
+          data-tip="remove manual hint"
+        >
+          <span class="text-3xl text-error">X</span>
+        </div>
+        <div
+          v-else
+          :class="[hintClass, 'tile w-full h-full border border-base-300']"
+        />
       </li>
     </ul>
   </div>
@@ -44,7 +58,7 @@ const visible = ref(true)
 
 const popoverStyle = computed(() => ({
   position:  'absolute',
-  top:       `${props.y -50}px`,
+  top:       `${props.y -110}px`,
   left:      `${props.x - 95.5}px`,
   transform: 'translate(-50%, -50%)',
   zIndex:    50
