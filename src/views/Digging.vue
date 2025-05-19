@@ -1,3 +1,4 @@
+
 <template>
   <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
     <!-- Manual Marks clear & Grid -->
@@ -5,7 +6,7 @@
       class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
     >
       <div class="card-body [@media(max-width:639px)]:p-3">
-        <DigToolSection />
+        <DigToolSection v-model:showTreasureOrder="showTreasureOrder" />
 
         <!-- Pass the toggle and map down into Grid -->
         <Grid
@@ -22,40 +23,33 @@
     <InfoFooter />
   </div>
 </template>
-
 <script setup>
-import { onMounted, watch, computed } from 'vue'
+import { watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useHead } from '@vueuse/head'
-
-import DigToolSection     from '@/components/DigToolSection.vue'
+import { useLocalStorage } from '@vueuse/core'
+import DigToolSection from '@/components/DigToolSection.vue'
 import Grid           from '@/components/Grid.vue'
 import TodayPatterns  from '@/components/TodayPatterns.vue'
 import InfoFooter     from '@/components/InfoFooter.vue'
+import { useLandData }    from '@/composables/useLandData'
+import { useGridManager } from '@/composables/useGridManager'
 
-import { useLandData }     from '@/composables/useLandData'
-import { useGridManager }  from '@/composables/useGridManager'
-
-// ── 1) Grab the landId
-const route  = useRoute()
+// 1) landId and persistent toggle
+const route = useRoute()
 const landId = route.params.landId || 'guest'
-
-// ── 3) Load the API digs & feed them into the engine
-const grid    = useGridManager(landId)
-const defaults = { state: { inventory: {}, desert: { digging: { grid: [] } } } }
-const { desert } = useLandData(defaults)
-
-watch(
-  () => desert.value.digging?.grid,
-  apiGrid => {
-    if (apiGrid) grid.update(apiGrid)
-  },
-  { immediate: true }
+const showTreasureOrder = useLocalStorage(
+  `showTreasureOrder-${landId}`, false
 )
 
-onMounted(() => {
-  console.log('Digging mounted for land', landId)
-})
+// 2) grid engine + API watch
+const grid = useGridManager(landId)
+const defaults = { state: { inventory: {}, desert: { digging: { grid: [] } } } }
+const { desert } = useLandData(defaults)
+watch(
+  () => desert.value.digging?.grid,
+  apiGrid => apiGrid && grid.update(apiGrid),
+  { immediate: true }
+)
 
 // ── 4) Build a 1D map (tileIndex → 1-based treasure order)
 const treasureOrderMap = computed(() => {
@@ -84,17 +78,5 @@ const treasureOrderMap = computed(() => {
   })
 
   return map
-})
-
-// ── 5) SEO / head
-useHead({
-  title: 'Digging – SFL CRAB',
-  meta: [
-    { name: 'description', content: 'Track your daily digs, find treasures, and compare patterns on the island grid.' },
-    { property: 'og:title',       content: 'Digging – SFL CRAB' },
-    { property: 'og:description', content: 'Track your daily digs, find treasures, and compare patterns on the island grid.' },
-    { property: 'og:image',       content: '/images/sample-grid.png' },
-    { name:     'twitter:image',  content: '/images/sample-grid.png' },
-  ]
 })
 </script>

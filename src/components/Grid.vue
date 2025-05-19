@@ -69,7 +69,7 @@ function getTileImage(tile) {
         <!-- treasure order badge -->
         <span
           v-if="showTreasureOrder && treasureOrderMap[index]"
-          class="absolute top-1 right-1
+          class="absolute top-0 right-0
                  bg-base-200 text-xs font-bold
                  w-5 h-5 flex items-center justify-center
                  rounded-full shadow z-10"
