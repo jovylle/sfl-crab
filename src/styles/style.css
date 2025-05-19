@@ -188,12 +188,12 @@ body {
   border: 4px dashed #6ade95;
 }
 
-.tile.hint-potential-treasure:not(.nullify-hint) {
+.tile.hint-potential-treasure {
   position: relative;
 }
 
 /* center “treasure dot” */
-.tile.hint-potential-treasure:not(.nullify-hint)::after {
+.tile.hint-potential-treasure::after {
   content: "";
   width: 35%;
   height: 35%;
@@ -204,7 +204,24 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
 }
-
+.hint-potential-treasure2{
+  position: relative;
+}
+.hint-potential-treasure2::after {
+  z-index: 0;
+  content: "";
+  width: 35%;
+  height: 35%;
+  @apply bg-warning;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.tile img{
+  z-index: 1;
+}
 .tile.hint-unset-white {
   @apply bg-base-100;
   border: 4px dashed;

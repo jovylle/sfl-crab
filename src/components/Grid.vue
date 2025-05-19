@@ -73,9 +73,10 @@ const tiles     = grid.tiles
       :hints="[
         'hint-nothing',
         'hint-potential-treasure',
-        'hint-crab',
+        'hint-potential-treasure2',
         'hint-sand',
         'hint-treasure',
+        'hint-crab',
         'hint-unset-white',
         'no-hint-and-show-trash-icon',
       ]"
