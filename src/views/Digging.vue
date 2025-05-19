@@ -47,7 +47,12 @@ const defaults = { state: { inventory: {}, desert: { digging: { grid: [] } } } }
 const { desert } = useLandData(defaults)
 watch(
   () => desert.value.digging?.grid,
-  apiGrid => apiGrid && grid.update(apiGrid),
+  rawGrid => {
+    if (!rawGrid) return
+    // flatten any nested arrays into one list of tile-digs
+    const flatGrid = rawGrid.flat(Infinity)
+    grid.update(flatGrid)
+  },
   { immediate: true }
 )
 
