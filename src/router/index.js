@@ -7,7 +7,7 @@ import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
 
 const routes = [
-  { path: '/', name: 'Home', component: Home },
+  { path: '/', name: 'Home', redirect: '/digging' },
   { path: '/digging', name: 'GuestDigging', component: GuestDigging },
   {
     path: '/:landId(\\d+)/digging',
