@@ -23,11 +23,11 @@ export function useGridEngine (gridSize = 10) {
       const foundTreasure = deltas.some(({ dx, dy }) => {
         const nx = x + dx
         const ny = y + dy
-        // out of bounds?
         if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return false
         const idx = ny * gridSize + nx
-        // if this neighbour already has a treasure, bail out
-        return tiles.value[idx].includes('treasure')
+        return tiles.value[idx].some(c =>
+          c === 'treasure' || c === 'hint-treasure'
+        )
       })
       if (foundTreasure) return
     }
@@ -48,6 +48,34 @@ export function useGridEngine (gridSize = 10) {
     })
   }
 
+  // New helper to clear existing near-crab hints
+  function clearCrabHints () {
+    tiles.value = tiles.value.map(classes =>
+      classes.filter(c => c !== 'near-crab' && c !== 'near-hint-crab')
+    )
+    hintCounts.value = hintCounts.value.map(() => ({}))
+  }
+
+  // The “rebuild” function
+  function rebuildCrabHints () {
+    clearCrabHints()
+    console.log('Rebuilding crab hints...')
+
+    // walk every tile
+    tiles.value.forEach((classes, idx) => {
+      const x = idx % gridSize
+      const y = Math.floor(idx / gridSize)
+
+      // if it’s a real crab, apply the standard near-crab
+      if (classes.includes('crab')) {
+        applyHint(x, y, 'near-crab')
+      }
+      // if it’s a manually-picked crab hint, apply near-hint-crab
+      if (classes.includes('hint-crab')) {
+        applyHint(x, y, 'near-hint-crab')
+      }
+    })
+  }
 
   // Remove neighbor hints
   function removeHint (x, y, hintClass) {
@@ -112,6 +140,7 @@ export function useGridEngine (gridSize = 10) {
 
     // 4️⃣ Trigger reactivity
     tiles.value = [...tiles.value]
+    rebuildCrabHints()
   }
 
 
@@ -185,6 +214,8 @@ export function useGridEngine (gridSize = 10) {
     }
 
     tiles.value = [...tiles.value]
+    rebuildCrabHints()
+
   }
 
   // Clear all hints
@@ -205,6 +236,7 @@ export function useGridEngine (gridSize = 10) {
     updateGridFromData,
     // cycleEngineHint, removed any cycle
     pickEngineHint,
-    clearEngineHints
+    clearEngineHints,
+    rebuildCrabHints
   }
 }
