@@ -11,6 +11,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        digging: path.resolve(__dirname, 'digging/index.html'),
+      }
+    }
+  },
   server: {
     proxy: {
       '/api': {
