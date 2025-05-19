@@ -21,6 +21,7 @@
 <script setup>
 import { onMounted, watch }            from 'vue'
 import { useRoute }         from 'vue-router'
+import { useHead } from '@vueuse/head'
 
 import ClearMarks from '@/components/ClearMarks.vue'
 import Grid                 from '@/components/Grid.vue'
@@ -56,6 +57,17 @@ onMounted(() => {
     console.info('Yes land ID.')
     // loadFromStorage(landId.value)
   }
+})
+
+useHead({
+  title: 'Digging – SFL CRAB',
+  meta: [
+    { name: 'description', content: 'Track your daily digs, find treasures, and compare patterns on the island grid.' },
+    { property: 'og:title',       content: 'Digging – SFL CRAB' },
+    { property: 'og:description', content: 'Track your daily digs, find treasures, and compare patterns on the island grid.' },
+    { property: 'og:image',       content: '/images/sample-grid.png' },
+    { name:     'twitter:image',  content: '/images/sample-grid.png' },
+  ]
 })
 </script>
 
