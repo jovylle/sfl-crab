@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build-old": "vite build",
-    "build": "vite-ssg build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "preview": "vite preview",
+    "prerender": "node scripts/prerender.js"
   },
   "dependencies": {
     "@vueuse/core": "^13.2.0",
@@ -21,9 +21,9 @@
     "@vitejs/plugin-vue": "^5.2.2",
     "node-fetch": "^3.3.2",
     "prettier": "^3.5.3",
+    "puppeteer": "^24.8.2",
     "tailwindcss": "^4.1.4",
     "ts-morph": "^25.0.1",
-    "vite": "^6.3.1",
-    "vite-ssg": "^27.0.0"
+    "vite": "^6.3.1"
   }
 }
