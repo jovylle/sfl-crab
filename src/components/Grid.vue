@@ -1,48 +1,51 @@
 <script setup>
-import { ref } from 'vue'
+import { defineProps, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
 
-const route = useRoute()
-const landId = route.params.landId || '0'
-const grid = useGridManager(landId)
+// 1️⃣ Accept the two new props directly
+const { showTreasureOrder, treasureOrderMap } = defineProps({
+  showTreasureOrder: { type: Boolean, default: false },
+  treasureOrderMap:  { type: Array,   default: () => [] },
+})
 
-// reactive picker state
+// 2️⃣ Set up route + grid manager
+const route  = useRoute()
+const landId = route.params.landId || '0'
+const grid   = useGridManager(landId)
+
+// 3️⃣ Reactive tiles and picker state
+const tiles  = grid.tiles
 const picker = ref(null)
 
-// click handler: open the picker instead of cycling immediately
+// 4️⃣ Click handler to open the hint-picker
 function onTileClick(event, index) {
-  // find the positioning container
-  const container = event.currentTarget.closest('.contain-please')
-  const containerRect = container.getBoundingClientRect()
+  const container   = event.currentTarget.closest('.contain-please')
+  const containerR  = container.getBoundingClientRect()
+  const tileR       = event.currentTarget.getBoundingClientRect()
+  const centerX     = tileR.left - containerR.left + tileR.width  / 2
+  const centerY     = tileR.top  - containerR.top  + tileR.height / 2
 
-  // get the clicked tile's bounding box
-  const tileRect = event.currentTarget.getBoundingClientRect()
-
-  // compute the center of the tile within the container
-  const centerX = tileRect.left - containerRect.left + tileRect.width  / 2
-  const centerY = tileRect.top  - containerRect.top  + tileRect.height / 2
-
-  // set the picker state
-  picker.value = {
-    tileIndex: index,
-    x: centerX,
-    y: centerY
-  }
+  picker.value = { tileIndex: index, x: centerX, y: centerY }
 }
 
-
-// when a hint is picked, call cycle with hint
+// 5️⃣ When user picks a manual hint
 function onHintPicked({ tileIndex, hint }) {
-  // hint is now the class string (e.g. 'hint-crab') or '' to clear
-  // grid.cycle(tileIndex, hint)
   grid.pick(tileIndex, hint)
   picker.value = null
 }
 
-const tiles     = grid.tiles
-// const cycleHint = grid.cycle // for fallback or other use
+// 6️⃣ Helper to resolve your tileImage: must live in setup!
+function getTileImage(tile) {
+  if (!Array.isArray(tile)) return null
+  const match = tile.find(
+    cls => typeof cls === 'string' && cls.startsWith('tileImage:')
+  )
+  if (!match) return null
+  const slug = match.split(':')[1]
+  return `/world/${slug}.webp`
+}
 </script>
 
 <template>
@@ -51,20 +54,39 @@ const tiles     = grid.tiles
       <div
         v-for="(tile, index) in tiles"
         :key="index"
-        class="tile w-full flex items-center bg-base-100 justify-center aspect-square"
+        class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative"
         :class="tile"
         @click="onTileClick($event, index)"
       >
+        <!-- underlying image -->
         <img
           v-if="getTileImage(tile)"
           :src="getTileImage(tile)"
           :alt="getTileImage(tile)"
           class="tile-img"
         />
+
+        <!-- treasure order badge -->
+        <span
+          v-if="showTreasureOrder && treasureOrderMap[index]"
+          class="absolute top-1 right-1
+                 bg-base-200 text-xs font-bold
+                 w-5 h-5 flex items-center justify-center
+                 rounded-full shadow z-10"
+        >
+          {{ treasureOrderMap[index] }}
+        </span>
       </div>
     </div>
-    <div v-if="picker" class="fixed inset-0 z-40" @click="picker = null"></div>
-    <!-- mount the picker -->
+
+    <!-- backdrop to close picker -->
+    <div
+      v-if="picker"
+      class="fixed inset-0 z-40"
+      @click="picker = null"
+    ></div>
+
+    <!-- hint picker popup -->
     <HintPicker
       v-if="picker"
       :tileIndex="picker.tileIndex"
@@ -78,26 +100,17 @@ const tiles     = grid.tiles
         'hint-treasure',
         'hint-crab',
         'hint-unset-white',
-        'no-hint-and-show-trash-icon',
+        'no-hint-and-show-trash-icon'
       ]"
       @pick="onHintPicked"
     />
   </div>
 </template>
 
-<script>
-// keep your getTileImage helper here (or import from utils)
-function getTileImage(tile) {
-  if (!Array.isArray(tile)) return null
-  const match = tile.find(
-    cls => typeof cls === 'string' && cls.startsWith('tileImage:')
-  )
-  if (!match) return null
-  const slug = match.split(':')[1]
-  return `/world/${slug}.webp`
-}
-</script>
-
 <style scoped>
-/* your existing styles */
+/* ensure each tile is position:relative for the badge */
+.tile.relative {
+  position: relative;
+}
+/* your other existing styles */
 </style>
