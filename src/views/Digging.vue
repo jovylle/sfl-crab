@@ -1,76 +1,87 @@
-<!-- src/views/Digging.vue -->
- <template>
+
+<template>
   <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
     <!-- Manual Marks clear & Grid -->
-    <div class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0">
+    <div
+      class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
+    >
       <div class="card-body [@media(max-width:639px)]:p-3">
-        <ClearMarks />
+        <DigToolSection v-model:showTreasureOrder="showTreasureOrder" />
 
-        <!-- Now simply render Grid.vue — it will read from our manager -->
-        <Grid />
+        <!-- Pass the toggle and map down into Grid -->
+        <Grid
+          :show-treasure-order="showTreasureOrder"
+          :treasure-order-map="treasureOrderMap"
+        />
       </div>
     </div>
 
     <TodayPatterns />
   </div>
+
   <div>
     <InfoFooter />
   </div>
 </template>
-
 <script setup>
-import { onMounted, watch }            from 'vue'
-import { useRoute }         from 'vue-router'
-import { useHead } from '@vueuse/head'
+import { watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useLocalStorage } from '@vueuse/core'
+import DigToolSection from '@/components/DigToolSection.vue'
+import Grid           from '@/components/Grid.vue'
+import TodayPatterns  from '@/components/TodayPatterns.vue'
+import InfoFooter     from '@/components/InfoFooter.vue'
+import { useLandData }    from '@/composables/useLandData'
+import { useGridManager } from '@/composables/useGridManager'
 
-import ClearMarks from '@/components/ClearMarks.vue'
-import Grid                 from '@/components/Grid.vue'
-import TodayPatterns        from '@/components/TodayPatterns.vue'
-import InfoFooter           from '@/components/InfoFooter.vue'
+// 1) landId and persistent toggle
+const route = useRoute()
+const landId = route.params.landId || 'guest'
+const showTreasureOrder = useLocalStorage(
+  `showTreasureOrder-${landId}`, false
+)
 
-import { useLandData }      from '@/composables/useLandData'
-import { useGridManager }   from '@/composables/useGridManager'
-
-// 1) Grab landId from the URL
-const route  = useRoute()
-const landId = route.params.landId
-
-// 2) Pull in your land‐blob store so we can watch its grid
+// 2) grid engine + API watch
+const grid = useGridManager(landId)
 const defaults = { state: { inventory: {}, desert: { digging: { grid: [] } } } }
 const { desert } = useLandData(defaults)
-
-// 3) Initialize your per‐land grid manager
-const grid = useGridManager(landId)
-
-// 4) Whenever the server grid changes, re‐populate & re‐overlay hints
 watch(
   () => desert.value.digging?.grid,
-  apiGrid => apiGrid && grid.update(apiGrid),
+  rawGrid => {
+    if (!rawGrid) return
+    // flatten any nested arrays into one list of tile-digs
+    const flatGrid = rawGrid.flat(Infinity)
+    grid.update(flatGrid)
+  },
   { immediate: true }
 )
-onMounted(() => {
-  console.log('Digging component mounted.')
-  // Example: re-fetch or validate data
-  if (!landId) {
-    console.info('No landId set on mount.')
-  }else{
-    console.info('Yes land ID.')
-    // loadFromStorage(landId.value)
-  }
-})
 
-useHead({
-  title: 'Digging – SFL CRAB',
-  meta: [
-    { name: 'description', content: 'Track your daily digs, find treasures, and compare patterns on the island grid.' },
-    { property: 'og:title',       content: 'Digging – SFL CRAB' },
-    { property: 'og:description', content: 'Track your daily digs, find treasures, and compare patterns on the island grid.' },
-    { property: 'og:image',       content: '/images/sample-grid.png' },
-    { name:     'twitter:image',  content: '/images/sample-grid.png' },
-  ]
+// ── 4) Build a 1D map (tileIndex → 1-based treasure order)
+const treasureOrderMap = computed(() => {
+  // grab the reactive tiles array
+  const tilesArray = grid.tiles.value   // should be an actual Array
+  const total = tilesArray.length       // number of cells
+
+  // build a guaranteed Array of length `total` filled with nulls
+  const map = Array.from({ length: total }, () => null)
+
+  // grab your digs (guarding in case it’s not there yet)
+  const digs = desert.value.digging?.grid || []
+
+  digs.forEach((tile, i) => {
+    // treat anything that isn’t Sand or Crab as treasure
+    if (!tile.items?.Sand && !tile.items?.Crab) {
+      const x = tile.x
+      const y = tile.y
+      // infer width/height
+      const size = Math.sqrt(total)
+      const idx = y * size + x
+      if (Number.isInteger(idx) && idx >= 0 && idx < total) {
+        map[idx] = i + 1
+      }
+    }
+  })
+
+  return map
 })
 </script>
-
-<style scoped>
-/* keep your Tailwind/custom styling */
-</style>

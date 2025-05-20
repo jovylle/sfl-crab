@@ -25,6 +25,7 @@
       <main class="block bg-base-100 p-2 lg:p-6 flex-1">
         <router-view />
       </main>
+      <EndSection />
       <footer class="py-6 text-center text-sm">
         <div class="w-full max-w-screen-lg mx-auto px-4">
           By the community for community Tool
@@ -38,6 +39,8 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import MainDrawer from '@/components/MainDrawer.vue'
+import EndSection from './components/EndSection.vue'
+
 
 // read the current route so we can rebuild tabs when params change
 const route = useRoute()

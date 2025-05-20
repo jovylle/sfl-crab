@@ -4,7 +4,7 @@
     <!-- Manual Marks clear & Grid -->
     <div class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0">
       <div class="card-body [@media(max-width:639px)]:p-3">
-        <ClearMarks />
+        <DigToolSection />
 
         <!-- Grid.vue will pull from our grid manager internally -->
         <Grid />
@@ -26,7 +26,7 @@ import InfoFooter           from '@/components/InfoFooter.vue'
 
 import { useLandData }      from '@/composables/useLandData'
 import { useGridManager }   from '@/composables/useGridManager'
-import ClearMarks from '@/components/ClearMarks.vue'
+import DigToolSection from '@/components/DigToolSection.vue'
 
 // 1) Choose a key: if there's no landId, use "0" (guest key)
 const route  = useRoute()
