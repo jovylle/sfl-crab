@@ -1,6 +1,5 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)  
-[![npm version](https://img.shields.io/npm/v/sfl-crab.svg)](https://www.npmjs.com/package/sfl-crab)  
 [![Netlify Status](https://api.netlify.com/api/v1/badges/e24fa8b5-f1d0-4674-bf2d-e227a4ce4a46/deploy-status)](https://app.netlify.com/projects/sfl-digging/deploys)
 
 # SFL CRAB Vue
