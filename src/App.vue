@@ -26,7 +26,7 @@
         <router-view />
       </main>
       <EndSection />
-      <footer class="py-6 text-center text-sm">
+      <footer class="py-6 text-center text-sm pb-1">
         <div class="w-full max-w-screen-lg mx-auto px-4">
           By the community for community Tool
         </div>
