@@ -33,19 +33,6 @@
           <li>Live grid state, reset, and refresh tools</li>
         </ul>
       </div>
-
-      <!-- Feedback -->
-      <div>
-        <h4 class="text-lg font-semibold">💬 Send feedback, suggestions, or bug reports:</h4>
-        <a
-          href="https://forms.gle/zJayANHdjJ2EQvyB9"
-          target="_blank"
-          rel="noopener"
-          class="btn btn-link btn-sm mt-2"
-        >
-          Feedback Form
-        </a>
-      </div>
     </div>
   </section>
 </template>
