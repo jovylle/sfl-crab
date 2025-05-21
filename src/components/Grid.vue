@@ -1,55 +1,23 @@
-<script setup>
-import { defineProps, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { useGridManager } from '@/composables/useGridManager'
-import HintPicker from '@/components/HintPicker.vue'
-
-// 1️⃣ Accept the two new props directly
-const { showTreasureOrder, treasureOrderMap } = defineProps({
-  showTreasureOrder: { type: Boolean, default: false },
-  treasureOrderMap:  { type: Array,   default: () => [] },
-})
-
-// 2️⃣ Set up route + grid manager
-const route  = useRoute()
-const landId = route.params.landId || '0'
-const grid   = useGridManager(landId)
-
-// 3️⃣ Reactive tiles and picker state
-const tiles  = grid.tiles
-const picker = ref(null)
-
-// 4️⃣ Click handler to open the hint-picker
-function onTileClick(event, index) {
-  const container   = event.currentTarget.closest('.contain-please')
-  const containerR  = container.getBoundingClientRect()
-  const tileR       = event.currentTarget.getBoundingClientRect()
-  const centerX     = tileR.left - containerR.left + tileR.width  / 2
-  const centerY     = tileR.top  - containerR.top  + tileR.height / 2
-
-  picker.value = { tileIndex: index, x: centerX, y: centerY }
-}
-
-// 5️⃣ When user picks a manual hint
-function onHintPicked({ tileIndex, hint }) {
-  grid.pick(tileIndex, hint)
-  picker.value = null
-}
-
-// 6️⃣ Helper to resolve your tileImage: must live in setup!
-function getTileImage(tile) {
-  if (!Array.isArray(tile)) return null
-  const match = tile.find(
-    cls => typeof cls === 'string' && cls.startsWith('tileImage:')
-  )
-  if (!match) return null
-  const slug = match.split(':')[1]
-  return `/world/${slug}.webp`
-}
-</script>
-
 <template>
-  <div class="contain-please relative">
+  <div class="contain-please relative mt-5 mx-auto">
+    <!-- COL LABELS OVERLAY -->
+    <div class="overlay-cols text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
+      <div
+        v-for="L in colLabels"
+        :key="L"
+        class="overlay-cell justify-center items-end"
+      >{{ L }}</div>
+    </div>
+
+    <!-- ROW LABELS OVERLAY -->
+    <div class="overlay-rows text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
+      <div
+        v-for="N in rowLabels"
+        :key="N"
+        class="overlay-cell justify-end items-center"
+      >{{ N }}</div>
+    </div>
+
     <div class="grid w-full p-0.5 gap-0.5 bg-base-300">
       <div
         v-for="(tile, index) in tiles"
@@ -70,9 +38,12 @@ function getTileImage(tile) {
         <span
           v-if="showTreasureOrder && treasureOrderMap[index]"
           class="absolute top-0 right-0
-                 bg-base-200 text-xs font-bold
-                 w-5 h-5 flex items-center justify-center
-                 rounded-full shadow z-10"
+            w-full h-full
+            transform origin-top-right scale-[0.33333]
+            flex items-center justify-center
+            bg-base-200 rounded-full shadow
+            text-2xl md:text-3xl p-1 font-bold
+            pointer-events-none overflow-hidden"
         >
           {{ treasureOrderMap[index] }}
         </span>
@@ -107,10 +78,111 @@ function getTileImage(tile) {
   </div>
 </template>
 
+<script setup>
+import { defineProps, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useGridManager } from '@/composables/useGridManager'
+import HintPicker from '@/components/HintPicker.vue'
+
+// your existing props
+const { showTreasureOrder, treasureOrderMap } = defineProps({
+  showTreasureOrder: { type: Boolean, default: false },
+  treasureOrderMap:  { type: Array,   default: () => [] },
+})
+
+// init grid manager
+const route  = useRoute()
+const landId = route.params.landId || '0'
+const grid   = useGridManager(landId)
+
+// reactive tiles & picker
+const tiles  = grid.tiles
+const picker = ref(null)
+
+// static labels for overlays
+const colLabels = computed(() =>
+  Array.from({ length: 10 }, (_, i) =>
+    String.fromCharCode(65 + i)  // A–J
+  )
+)
+const rowLabels = computed(() =>
+  Array.from({ length: 10 }, (_, i) => i + 1)  // 1–10
+)
+
+// click handler
+function onTileClick(event, index) {
+  const container   = event.currentTarget.closest('.contain-please')
+  const containerR  = container.getBoundingClientRect()
+  const tileR       = event.currentTarget.getBoundingClientRect()
+  const centerX     = tileR.left - containerR.left + tileR.width  / 2
+  const centerY     = tileR.top  - containerR.top  + tileR.height / 2
+
+  picker.value = { tileIndex: index, x: centerX, y: centerY }
+}
+
+// hint picked
+function onHintPicked({ tileIndex, hint }) {
+  grid.pick(tileIndex, hint)
+  picker.value = null
+}
+
+// image helper
+function getTileImage(tile) {
+  if (!Array.isArray(tile)) return null
+  const match = tile.find(
+    cls => typeof cls === 'string' && cls.startsWith('tileImage:')
+  )
+  if (!match) return null
+  const slug = match.split(':')[1]
+  return `/world/${slug}.webp`
+}
+</script>
+
 <style scoped>
-/* ensure each tile is position:relative for the badge */
-.tile.relative {
+.contain-please {
+  position: relative;
+  /* carve out 1-tile space (10%) for overlays */
+  --label-size: 10%;
+  --badge-size: 3%;
+  padding-top: 0px;
+  padding-left: 0px;
+}
+
+.overlay-cols {
+  position: absolute;
+  top: calc(var(--label-size) * -1 - 2px);
+  left: 0;
+  width: calc(100%);
+  height: var(--label-size);
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  pointer-events: none;
+}
+
+.overlay-rows {
+  position: absolute;
+  top: 0;
+  left: calc(var(--label-size) * -1 - 2px);
+  width: var(--label-size);
+  height: calc(100%);
+  display: grid;
+  grid-template-rows: repeat(10, 1fr);
+  pointer-events: none;
+}
+
+.overlay-cell {
+  display: flex;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+/* keep your existing tile-relative rule */
+.tile {
   position: relative;
 }
-/* your other existing styles */
+
+.badge {
+}
+
 </style>
