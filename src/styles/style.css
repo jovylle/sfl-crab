@@ -290,7 +290,6 @@ body {
 /* Grid & tiles */
 .contain-please {
   width: 100%;
-  margin: 0px auto;
 }
 .contain-please .grid {
   max-width: 100%; /* Prevent overflow */
