@@ -30,7 +30,7 @@
         <img
           v-if="getTileImage(tile)"
           :src="getTileImage(tile)"
-          :alt="getTileImage(tile)"
+          alt="treasure"
           class="tile-img"
         />
 

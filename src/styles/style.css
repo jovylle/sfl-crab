@@ -304,6 +304,7 @@ body {
   width: 60%;
   height: 60%;
   object-fit: contain;
+  max-width: 30px;
 }
 
 /* Reset button */
