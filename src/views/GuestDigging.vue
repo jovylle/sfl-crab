@@ -3,7 +3,7 @@
   <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
     <!-- Manual Marks clear & Grid -->
     <div class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0">
-      <div class="card-body [@media(max-width:639px)]:p-3">
+      <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
         <DigToolSection />
 
         <!-- Grid.vue will pull from our grid manager internally -->

@@ -1,5 +1,5 @@
 <template>
-  <div class="contain-please relative mt-5 mx-auto">
+  <div class="contain-please relative mt-1 sm:mt-4 mx-auto">
     <!-- COL LABELS OVERLAY -->
     <div class="overlay-cols text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
       <div
@@ -150,7 +150,7 @@ function getTileImage(tile) {
 
 .overlay-cols {
   position: absolute;
-  top: calc(var(--label-size) * -1 - 2px);
+  top: calc(var(--label-size) * -1 + 1px);
   left: 0;
   width: calc(100%);
   height: var(--label-size);

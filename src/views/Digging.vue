@@ -5,7 +5,7 @@
     <div
       class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
     >
-      <div class="card-body [@media(max-width:639px)]:p-3">
+      <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
         <DigToolSection v-model:showTreasureOrder="showTreasureOrder" />
 
         <!-- Pass the toggle and map down into Grid -->

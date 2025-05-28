@@ -1,6 +1,6 @@
 <template>
   <div v-if="patternKeys?.length" class="card grow max-w-md basis-[265px] mx-auto md:mx-0">
-    <div class="card-body [@media(max-width:639px)]:p-3 [@media(max-width:639px)]:pt-0">
+    <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1 [@media(max-width:639px)]:pt-0">
       <h2 class="card-title text-center text-sm sm:text-lg">Today's Treasure Patterns</h2>
       <div
         class="

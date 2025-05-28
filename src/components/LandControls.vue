@@ -9,7 +9,7 @@
       <RefreshLandData />
       <button
         type="button"
-        class="btn btn-error tooltip"
+        class="btn btn-error btn-sm tooltip"
         data-tip="Clear Land ID"
         @click="clearLandId"
       >
