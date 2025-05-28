@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset 
+    xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 
+                        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+  <!-- SFL CRAB pages on sfl.uft1.com -->
+  <url>
+    <loc>https://sfl.uft1.com/</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>1.00</priority>
+  </url>
+  <url>
+    <loc>https://sfl.uft1.com/digging</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sfl.uft1.com/details</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sfl.uft1.com/todays-checklist</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- Same pages on your alias d1g.uk -->
+  <url>
+    <loc>https://d1g.uk/</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>1.00</priority>
+  </url>
+  <url>
+    <loc>https://d1g.uk/digging</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://d1g.uk/details</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://d1g.uk/todays-checklist</loc>
+    <lastmod>2025-05-28</lastmod>
+    <priority>0.80</priority>
+  </url>
+
+</urlset>
