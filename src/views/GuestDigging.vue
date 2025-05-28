@@ -12,7 +12,9 @@
     </div>
     
     <TodayPatterns :patterns="patternKeys" />
-    <!-- <InfoFooter /> -->
+  </div>
+  <div>
+    <InfoFooter />
   </div>
 </template>
 
