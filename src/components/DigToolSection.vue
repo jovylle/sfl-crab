@@ -2,7 +2,7 @@
   <div class="flex gap-4 mb-1 justify-center items-center">
     <InputLandIdOrRefresh />
     <div class="dropdown">
-      <div tabindex="0" role="button" class="btn m-1 btn-sm btn-accent">
+      <div tabindex="0" role="button" class="btn m-1 btn-accent btn-sm sm:btn-md">
         More ⋮
       </div>
       <div
