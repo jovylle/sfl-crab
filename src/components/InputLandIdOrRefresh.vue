@@ -2,7 +2,11 @@
 <template>
   <div class="">
     <template v-if="!landId">
-      <button type="button" class="btn btn-primary btn-sm sm:btn-md" @click="openMainDrawer()">
+      <button
+        type="button"
+        class="btn text-base-100 btn-primary btn-sm sm:btn-md"
+        @click="openMainDrawer()"
+      >
         Input Land ID
       </button>
     </template>

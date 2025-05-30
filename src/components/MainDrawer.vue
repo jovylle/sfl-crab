@@ -15,7 +15,7 @@
     <!-- Drawer Content -->
     <div class="drawer-side">
       <label for="main-drawer" class="drawer-overlay"></label>
-      <div class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
+      <div class="menu p-4 w-60 sm:w-80 min-h-full bg-base-100 text-base-content">
         <h2 class="text-xl font-bold mb-4">Menu</h2>
         <div class="divider px-5">Pages</div>
         <ul class="space-y-2 my-4 mb-auto">

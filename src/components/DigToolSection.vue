@@ -1,12 +1,16 @@
 <template>
   <div class="flex gap-4 mb-1 justify-center items-center">
+    <InputLandIdOrRefresh />
     <div class="dropdown">
-      <div tabindex="0" role="button" class="btn m-1 btn-bg-accent">
-        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block h-5 w-5 stroke-current md:h-6 md:w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <div tabindex="0" role="button" class="btn m-1 btn-accent btn-sm sm:btn-md">
+        More ⋮
       </div>
-      <div tabindex="0" class="dropdown-content card card-sm bg-base-100 z-1 shadow-md">
+      <div
+        tabindex="0"
+        class="dropdown-content card card-sm bg-base-100 z-1 shadow-lg"
+      >
         <div class="card-body">
-          <div class="space-y-4 text-left">
+          <div class="space-y-2 text-left">
             <button
               class="btn btn-warning tooltip btn-sm text-nowrap"
               data-tip="🧹 Clear all custom marks"
@@ -16,31 +20,39 @@
             </button>
 
             <!-- Controlled checkbox -->
-            <label class="flex items-center mx-auto">
+            <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
               <input
                 type="checkbox"
                 :checked="showTreasureOrder"
                 @change="$emit('update:showTreasureOrder', $event.target.checked)"
-                class="checkbox mr-2"
+                class="checkbox checkbox-sm mr-1 text-nowrap "
               />
-              Show treasure order
+              Show Order
             </label>
+
+            <button
+              type="button"
+              class="btn btn-error btn-sm tooltip"
+              data-tip="Clear Land ID"
+              @click="clearLandId"
+            >
+              Clear Land ID
+            </button>
           </div>
         </div>
       </div>
     </div>
-
-    <InputLandIdOrRefresh />
   </div>
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
+import { useRoute, useRouter } from 'vue-router'
 
+const route  = useRoute()
+const router = useRouter()
 // grid.clear() still lives here
-const route = useRoute()
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
 
@@ -50,4 +62,15 @@ defineProps({
 })
 // we’ll emit update:showTreasureOrder via @change above
 defineEmits(['update:showTreasureOrder'])
+
+
+function clearLandId () {
+  if (route.name === 'Digging') {
+    // we’re on /:landId/digging → go to /digging
+    router.push({ name: 'GuestDigging' })
+  } else {
+    // default to details no-id
+    router.push({ name: 'LandDetailsNoId' })
+  }
+}
 </script>

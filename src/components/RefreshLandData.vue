@@ -2,7 +2,7 @@
   <button
     :disabled="isLoading || isCooldown"
     @click="reloadFromServer"
-    class="refresh-btn btn btn-primary btn-sm sm:btn-md text-xs sm:text-sm text-nowrap"
+    class="refresh-btn btn btn-primary btn-sm sm:btn-md text-xs sm:text-sm text-nowrap text-base-100"
   >
     <span v-if="isLoading" class="loading">⏳</span>
     <span v-else-if="isCooldown" class="tooltip">
