@@ -223,11 +223,10 @@ body {
   border: 4px dashed #6ade95;
 }
 
+/* center “treasure dot” */
 .tile.hint-potential-treasure {
   position: relative;
 }
-
-/* center “treasure dot” */
 .tile.hint-potential-treasure::after {
   content: "";
   width: 35%;
@@ -248,6 +247,21 @@ body {
   width: 35%;
   height: 35%;
   @apply bg-warning;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.hint-red-dot{
+  position: relative;
+}
+.hint-red-dot::after {
+  z-index: 0;
+  content: "";
+  width: 35%;
+  height: 35%;
+  @apply bg-error;
   border-radius: 50%;
   position: absolute;
   top: 50%;

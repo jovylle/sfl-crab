@@ -70,8 +70,9 @@
         'hint-sand',
         'hint-treasure',
         'hint-crab',
+        'hint-red-dot',
+        'no-hint-and-show-trash-icon',
         'hint-unset-white',
-        'no-hint-and-show-trash-icon'
       ]"
       @pick="onHintPicked"
     />
