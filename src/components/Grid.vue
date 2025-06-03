@@ -10,7 +10,7 @@
     </div>
 
     <!-- ROW LABELS OVERLAY -->
-    <div class="overlay-rows text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
+    <div class="overlay-rows text-base-content text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
       <div
         v-for="N in rowLabels"
         :key="N"
@@ -18,7 +18,7 @@
       >{{ N }}</div>
     </div>
 
-    <div class="grid w-full p-0.5 gap-0.5 bg-base-300">
+    <div class="grid w-full p-0.5 gap-0.5 bg-base-300 dark:bg-slate-500">
       <div
         v-for="(tile, index) in tiles"
         :key="index"
@@ -177,8 +177,6 @@ function getTileImage(tile) {
 
 .overlay-cell {
   display: flex;
-  font-weight: bold;
-  color: rgba(0, 0, 0, 0.5);
   user-select: none;
 }
 
