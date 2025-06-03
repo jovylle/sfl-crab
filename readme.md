@@ -20,7 +20,7 @@ A small Vue 3 + Vite app for visualizing and “digging” a land grid in the Su
 
 ## Demo
 
-Official Sunflower Land Digging Utility Links:
+This SunflowerLand Project Official Links:
 
 **Production**  
 - https://sfl.uft1.com  
