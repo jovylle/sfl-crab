@@ -70,7 +70,7 @@ const treasureOrderMap = computed(() => {
 
   digs.forEach((tile, i) => {
     // treat anything that isn’t Sand or Crab as treasure
-    if (!tile.items?.Sand && !tile.items?.Crab) {
+    // if (!tile.items?.Sand && !tile.items?.Crab) {
       const x = tile.x
       const y = tile.y
       // infer width/height
@@ -79,7 +79,7 @@ const treasureOrderMap = computed(() => {
       if (Number.isInteger(idx) && idx >= 0 && idx < total) {
         map[idx] = i + 1
       }
-    }
+    // }
   })
 
   return map
