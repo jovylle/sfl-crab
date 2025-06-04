@@ -22,7 +22,7 @@
           ]"
         >
           <!-- your existing 4×4 grid inside -->
-          <div class="grid grid-cols-4 mx-auto border border-base-300">
+          <div class="grid grid-cols-4 mx-auto border border-base-300 dark:border-slate-500">
             <div
               v-for="cell in 16"
               :key="cell"
