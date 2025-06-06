@@ -57,31 +57,44 @@ watch(
 )
 
 // ── 4) Build a 1D map (tileIndex → 1-based treasure order)
+/**
+ * Updated treasureOrderMap:
+ * 1. Flattens any nested arrays inside `digging.grid`.
+ * 2. Sorts all digs by `dugAt` (timestamp) so ordering is strictly chronological.
+ * 3. Builds a map of length `total` that assigns each (x,y) cell its "dig order index".
+ */
 const treasureOrderMap = computed(() => {
-  // grab the reactive tiles array
-  const tilesArray = grid.tiles.value   // should be an actual Array
-  const total = tilesArray.length       // number of cells
+  const tilesArray = grid.tiles.value;   // should be a flat Array of all cells
+  const total = tilesArray.length;
+  const map = Array.from({ length: total }, () => null);
 
-  // build a guaranteed Array of length `total` filled with nulls
-  const map = Array.from({ length: total }, () => null)
+  // get raw grid data (may include nested arrays)
+  const rawGrid = desert.value.digging?.grid || [];
 
-  // grab your digs (guarding in case it’s not there yet)
-  const digs = desert.value.digging?.grid || []
+  // flatten any nested arrays into one single array of tile‐objects
+  const allDigs = rawGrid.reduce((acc, entry) => {
+    if (Array.isArray(entry)) {
+      return acc.concat(entry);
+    } else {
+      acc.push(entry);
+      return acc;
+    }
+  }, []);
 
-  digs.forEach((tile, i) => {
-    // treat anything that isn’t Sand or Crab as treasure
-    // if (!tile.items?.Sand && !tile.items?.Crab) {
-      const x = tile.x
-      const y = tile.y
-      // infer width/height
-      const size = Math.sqrt(total)
-      const idx = y * size + x
-      if (Number.isInteger(idx) && idx >= 0 && idx < total) {
-        map[idx] = i + 1
-      }
-    // }
-  })
+  // sort by dugAt (older first → lower index)
+  allDigs.sort((a, b) => a.dugAt - b.dugAt);
 
-  return map
-})
+  // assign order based on sorted index (i + 1)
+  allDigs.forEach((tile, sortedIndex) => {
+    const x = tile.x;
+    const y = tile.y;
+    const size = Math.sqrt(total);
+    const idx = y * size + x;
+    if (Number.isInteger(idx) && idx >= 0 && idx < total) {
+      map[idx] = sortedIndex + 1;
+    }
+  });
+
+  return map;
+});
 </script>
