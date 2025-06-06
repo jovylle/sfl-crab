@@ -78,8 +78,8 @@
     />
     
     
-    <!-- Watermark component -->
-    <Watermark />
+    <!-- BottomGridInfo component -->
+    <BottomGridInfo />
   </div>
 </template>
 
@@ -88,7 +88,7 @@ import { defineProps, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
-import Watermark from './Watermark.vue'
+import BottomGridInfo from './BottomGridInfo.vue'
 
 // your existing props
 const { showTreasureOrder, treasureOrderMap } = defineProps({
