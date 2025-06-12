@@ -5,6 +5,7 @@ import Digging from '@/views/Digging.vue'
 import Home from '@/views/Home.vue'
 import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
+import FeedbackGallery from '@/views/FeedbackGallery.vue'
 
 const routes = [
   { path: '/', name: 'Home', redirect: '/digging' },
@@ -45,6 +46,11 @@ const routes = [
     name: 'TodaysChecklistWithId',
     component: TodaysChecklist,
     props: route => ({ useParam: true, landIdParam: route.params.landId })
+  },
+  {
+    path: '/feedbacks',
+    name: 'FeedbackGallery',
+    component: FeedbackGallery
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
