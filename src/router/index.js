@@ -14,7 +14,12 @@ const routes = [
     name: 'Digging',
     component: Digging
   },
-  { path: '/:landId(\\d+)', name: 'LandDetailsIdOnly', component: LandDetails },
+  {
+    path: '/:landId(\\d+)', name: 'DiggingAsHome',
+    redirect: to => {
+      return `/${to.params.landId}/digging`
+    },
+  },
   { path: '/details', component: LandDetails },
   {
     path: '/:landId(\\d+)/details',
