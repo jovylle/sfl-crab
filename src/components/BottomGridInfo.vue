@@ -15,7 +15,7 @@
         alt="Shovel"
         class="w-4 h-4"
       />
-      <span class="ml-0.5 font-medium text-nowrap">Digs left: {{ totalRemaining }} </span>
+      <!-- <span class="ml-0.5 font-medium text-nowrap">Digs left: {{ totalRemaining }} </span> -->
       <span class="ml-0.5 font-medium text-nowrap">Digs made: {{ usedDigs }} </span>
     </span>
   </div>
