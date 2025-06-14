@@ -6,9 +6,14 @@ import { fetchLandData } from '@/services/landSyncService'
 
 const instances = new Map()
 
-export function useLandSync () {
-  const route = useRoute()
-  const landId = route.params.landId
+export function useLandSync (opts = {}) {
+  let landId 
+  if (opts.landId) {
+     landId = opts.landId || null
+  } else {
+    const route = useRoute()
+    landId = route.params.landId
+  }
   const cooldownKey = `landCooldownEnd_${landId}`
 
   if (!instances.has(landId)) {
@@ -53,12 +58,13 @@ export function useLandSync () {
 
     // 3️⃣ reload logic (never re-calls useLandData/useRoute)
     async function reloadFromServer (opts = {}) {
-      const { force = false } = opts
+      const { force = false, landId: overrideLandId } = opts
+      const targetLandId = overrideLandId || landId
       if (isLoading.value || (isCooldown.value && !force)) return
 
       isLoading.value = true
       try {
-        const fresh = await fetchLandData(landId)
+        const fresh = await fetchLandData(targetLandId)
         // directly assign to the ref we grabbed above:
         landData.value = fresh
       } finally {
