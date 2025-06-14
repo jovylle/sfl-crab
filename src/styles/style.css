@@ -173,7 +173,6 @@ body {
 
 .tile.near-crab {
   @apply bg-warning;
-
 } /* yellow */
 .tile.near-sand {
   @apply bg-error;
@@ -237,8 +236,10 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  border: 2px dashed #6ade95;
+  @apply outline-2 outline-base-100;
 }
-.hint-potential-treasure2{
+.hint-potential-treasure2 {
   position: relative;
 }
 .hint-potential-treasure2::after {
@@ -246,14 +247,15 @@ body {
   content: "";
   width: 35%;
   height: 35%;
-  @apply bg-warning;
-  border-radius: 50%;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px dashed oklch(0.9265 0.0735 95.617);
+  @apply bg-warning outline-2 outline-base-100 ;
 }
-.hint-red-dot{
+.hint-red-dot {
   position: relative;
 }
 .hint-red-dot::after {
@@ -268,7 +270,7 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
 }
-.tile img{
+.tile img {
   z-index: 1;
 }
 .tile.hint-unset-white {
