@@ -20,6 +20,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useLandSync } from '@/composables/useLandSync'
+
 
 
 const route  = useRoute()
@@ -27,19 +29,30 @@ const router = useRouter()
 
 const inputLandId = ref('')
 
+
 function goToLand() {
   const id = inputLandId.value.trim()
   if (!id) return
 
+  const hasCached = localStorage.getItem(`landData_${id}`)
   
   if (route.name === 'GuestDigging') {
     router.push({ name: 'Digging', params: { landId: id } })
   } else {
     router.push({ name: 'LandDetailsWithId', params: { landId: id } })
   }
+
+  // Trigger full reload if first time
+  if (!hasCached) {
+  console.log("first")
+    setTimeout(() => {
+      const { reloadFromServer } = useLandSync({ landId: id })
+      reloadFromServer({ landId: id })
+    }, 300)
+  }else{
+    console.log("not first")
+  }
 }
-
-
 </script>
 
 <style scoped>
