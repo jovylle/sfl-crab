@@ -4,22 +4,22 @@
     <div class="card-body space-y-2">
       <h5 class="font-bold text-base">Official Sunflower Land Digging Utility Links</h5>
 
-      <div>
+      <div class="">
         <span class="italic">Production:</span>
-        <a href="https://sfl.uft1.com" class="link link-secondary ml-2">sfl.uft1.com</a>
+        <a href="https://sfl.uft1.com" class="link link-secondary ml-2 inline-block">sfl.uft1.com</a>
         <span class="mx-1">|</span>
-        <a href="https://sfl-digging.uft1.com" class="link link-secondary">sfl-digging.uft1.com</a>
+        <a href="https://sfl-digging.uft1.com" class="link link-secondary inline-block">sfl-digging.uft1.com</a>
         <span class="mx-1">|</span>
-        <a href="https://d1g.uk" class="link link-secondary">d1g.uk</a>
+        <a href="https://d1g.uk" class="link link-secondary inline-block">d1g.uk</a>
       </div>
 
-      <div>
+      <div class="">
         <span class="italic">Development / Beta:</span>
-        <a href="https://sfl-development.uft1.com" class="link link-secondary ml-2">sfl-development.uft1.com</a>
+        <a href="https://sfl-development.uft1.com" class="link link-secondary ml-2 inline-block">sfl-development.uft1.com</a>
         <span class="mx-1">|</span>
-        <a href="https://development.d1g.uk" class="link link-secondary">development.d1g.uk</a>
+        <a href="https://development.d1g.uk" class="link link-secondary inline-block">development.d1g.uk</a>
         <span class="mx-1">|</span>
-        <a href="https://beta.d1g.uk" class="link link-secondary">beta.d1g.uk</a>
+        <a href="https://beta.d1g.uk" class="link link-secondary inline-block">beta.d1g.uk</a>
       </div>
 
       <!-- New: Contribute & Report Issues -->
