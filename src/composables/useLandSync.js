@@ -66,7 +66,10 @@ export function useLandSync (opts = {}) {
       try {
         const fresh = await fetchLandData(targetLandId)
         // directly assign to the ref we grabbed above:
-        landData.value = fresh
+        landData.value = {
+          date: new Date().toISOString().slice(0, 10),
+          ...fresh
+        }
       } finally {
         isLoading.value = false
         if (!force && !isCooldown.value) {
