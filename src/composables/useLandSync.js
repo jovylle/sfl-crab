@@ -80,13 +80,6 @@ export function useLandSync (opts = {}) {
       }
     }
 
-    // 4️⃣ on first mount, seed if no data
-    onMounted(() => {
-      if (!localStorage.getItem(`landData_${landId}`)) {
-        reloadFromServer()
-      }
-    })
-
     instances.set(landId, { isLoading, isCooldown, remaining, reloadFromServer })
   }
 
