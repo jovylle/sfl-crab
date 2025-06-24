@@ -24,7 +24,7 @@
   </div>
 </template>
 <script setup>
-import { watch, computed } from 'vue'
+import { watch, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import DigToolSection from '@/components/DigToolSection.vue'
@@ -33,6 +33,7 @@ import TodayPatterns  from '@/components/TodayPatterns.vue'
 import InfoFooter     from '@/components/InfoFooter.vue'
 import { useLandData }    from '@/composables/useLandData'
 import { useGridManager } from '@/composables/useGridManager'
+import { useLandSync } from '@/composables/useLandSync'
 
 // 1) landId and persistent toggle
 const route = useRoute()
@@ -97,4 +98,25 @@ const treasureOrderMap = computed(() => {
 
   return map;
 });
+
+
+// 🔁 Auto-reload landData if stale on initial app load
+onMounted(() => {
+  console.log("App mounted, checking landData for stale state...")
+  const landId = route.params.landId
+  const today = new Date().toISOString().slice(0, 10)
+
+  if (landId) {
+    const raw = JSON.parse(localStorage.getItem(`landData_${landId}`) || '{}')
+    const isStale = raw?.date !== today || !raw?.state
+    console.log("Checking landData for ID:", raw?.date , "Stale:", raw?.state)
+    if (isStale) {
+      const { reloadFromServer } = useLandSync({ landId })
+      reloadFromServer({ landId })
+    }
+  }else {
+    console.log("No landId provided, skipping stale check.")
+  }
+})
+
 </script>

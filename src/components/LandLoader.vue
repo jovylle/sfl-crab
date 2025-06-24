@@ -29,30 +29,29 @@ const router = useRouter()
 
 const inputLandId = ref('')
 
-
 function goToLand() {
   const id = inputLandId.value.trim()
   if (!id) return
 
-  const hasCached = localStorage.getItem(`landData_${id}`)
-  
+  const raw = JSON.parse(localStorage.getItem(`landData_${id}`) || '{}')
+  const today = new Date().toISOString().slice(0, 10)
+  const isStale = raw?.date !== today
+  const isMissingState = !raw?.state
+
   if (route.name === 'GuestDigging') {
     router.push({ name: 'Digging', params: { landId: id } })
   } else {
     router.push({ name: 'LandDetailsWithId', params: { landId: id } })
   }
 
-  // Trigger full reload if first time
-  if (!hasCached) {
-  console.log("first")
+  if (isMissingState || isStale) {
     setTimeout(() => {
       const { reloadFromServer } = useLandSync({ landId: id })
       reloadFromServer({ landId: id })
     }, 300)
-  }else{
-    console.log("not first")
   }
 }
+
 </script>
 
 <style scoped>

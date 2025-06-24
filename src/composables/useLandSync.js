@@ -63,12 +63,19 @@ export function useLandSync (opts = {}) {
       if (isLoading.value || (isCooldown.value && !force)) return
 
       isLoading.value = true
+
       try {
         const fresh = await fetchLandData(targetLandId)
-        // directly assign to the ref we grabbed above:
-        landData.value = fresh
+        landData.value = {
+          date: new Date().toISOString().slice(0, 10),
+          ...fresh
+        }
+      } catch (err) {
+        // 👇 Show a friendly alert for the 429 error or anything else
+        alert(err.message || 'An unexpected error occurred while loading land data.')
       } finally {
         isLoading.value = false
+
         if (!force && !isCooldown.value) {
           const endTime = Date.now() + 15_000
           localStorage.setItem(cooldownKey, String(endTime))
@@ -76,13 +83,7 @@ export function useLandSync (opts = {}) {
         }
       }
     }
-
-    // 4️⃣ on first mount, seed if no data
-    onMounted(() => {
-      if (!localStorage.getItem(`landData_${landId}`)) {
-        reloadFromServer()
-      }
-    })
+    
 
     instances.set(landId, { isLoading, isCooldown, remaining, reloadFromServer })
   }
