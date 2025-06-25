@@ -6,16 +6,22 @@
         v-for="L in colLabels"
         :key="L"
         class="overlay-cell justify-center items-end"
-      >{{ L }}</div>
+      >
+        {{ L }}
+      </div>
     </div>
 
     <!-- ROW LABELS OVERLAY -->
-    <div class="overlay-rows text-base-content text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
+    <div
+      class="overlay-rows text-base-content text-[0.45rem] sm:text-[0.5rem] lg:text-xs"
+    >
       <div
         v-for="N in rowLabels"
         :key="N"
         class="overlay-cell justify-end items-center"
-      >{{ N }}</div>
+      >
+        {{ N }}
+      </div>
     </div>
 
     <div class="grid w-full p-0.5 gap-0.5 bg-base-300 dark:bg-slate-500">
@@ -23,13 +29,13 @@
         v-for="(tile, index) in tiles"
         :key="index"
         class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative"
-        :class="tile"
+        :class="normalizeTile(tile)"
         @click="onTileClick($event, index)"
       >
         <!-- underlying image -->
         <img
-          v-if="getTileImage(tile)"
-          :src="getTileImage(tile)"
+          v-if="getTileImage(normalizeTile(tile))"
+          :src="getTileImage(normalizeTile(tile))"
           alt="treasure"
           class="tile-img"
         />
@@ -51,11 +57,7 @@
     </div>
 
     <!-- backdrop to close picker -->
-    <div
-      v-if="picker"
-      class="fixed inset-0 z-40"
-      @click="picker = null"
-    ></div>
+    <div v-if="picker" class="fixed inset-0 z-40" @click="picker = null"></div>
 
     <!-- hint picker popup -->
     <HintPicker
@@ -67,17 +69,17 @@
         'hint-nothing',
         'hint-potential-treasure',
         'hint-potential-treasure2',
-        'hint-sand',
+        'hint-sand tileImage:sand',
         'hint-treasure',
-        'hint-crab',
+        'hint-crab tileImage:crab',
         'hint-red-dot',
         'no-hint-and-show-trash-icon',
         'hint-unset-white',
       ]"
       @pick="onHintPicked"
+      :possibleTreasures="possibleTreasures"
     />
-    
-    
+
     <!-- BottomGridInfo component -->
     <BottomGridInfo />
   </div>
@@ -90,6 +92,10 @@ import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
 import BottomGridInfo from './BottomGridInfo.vue'
 
+import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
+
+const possibleTreasures = useTodayTreasureNames();
+console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
 // your existing props
 const { showTreasureOrder, treasureOrderMap } = defineProps({
   showTreasureOrder: { type: Boolean, default: false },
@@ -126,22 +132,28 @@ function onTileClick(event, index) {
   picker.value = { tileIndex: index, x: centerX, y: centerY }
 }
 
-// hint picked
 function onHintPicked({ tileIndex, hint }) {
   grid.pick(tileIndex, hint)
   picker.value = null
 }
 
+
 // image helper
 function getTileImage(tile) {
   if (!Array.isArray(tile)) return null
   const match = tile.find(
-    cls => typeof cls === 'string' && cls.startsWith('tileImage:')
+    cls => typeof cls === 'string' && cls.includes('tileImage:')
   )
   if (!match) return null
   const slug = match.split(':')[1]
   return `/world/${slug}.webp`
 }
+
+function normalizeTile(tile) {
+  if (Array.isArray(tile)) return tile;
+  return String(tile).split(" ");
+}
+
 </script>
 
 <style scoped>
@@ -188,5 +200,4 @@ function getTileImage(tile) {
 
 .badge {
 }
-
 </style>

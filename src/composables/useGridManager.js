@@ -70,11 +70,22 @@ export function useGridManager (rawLandId, gridSize = 10) {
       update,
       // cycle, removed
       pick (index, hintClass) {
-        // apply the hint via the engine
-        engine.pickEngineHint(index, hintClass)
-        // persist exactly that one hint (or clear)
-        storage.hints.value[index] = hintClass ? [hintClass] : []
-        storage.save()
+        engine.pickEngineHint(index, hintClass);
+
+        // 🔒 Normalize to a flat array
+        const flat = Array.isArray(hintClass)
+          ? hintClass
+          : [hintClass];
+
+        // 🛡️ Optional extra flatten check
+        if (Array.isArray(flat[0])) {
+          console.warn("🚨 Nested hintClass array detected:", flat);
+          storage.hints.value[index] = flat[0]; // flatten manually
+        } else {
+          storage.hints.value[index] = flat;
+        }
+
+        storage.save();
       },
       clear
     }
