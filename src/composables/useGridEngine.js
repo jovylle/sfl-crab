@@ -65,6 +65,7 @@ export function useGridEngine (gridSize = 10) {
 
     // walk every tile
     tiles.value.forEach((classes, idx) => {
+      console.log(`Processing tile ${idx} with classes:`, classes)
       const x = idx % gridSize
       const y = Math.floor(idx / gridSize)
 
@@ -73,7 +74,7 @@ export function useGridEngine (gridSize = 10) {
         applyHint(x, y, 'near-crab')
       }
       // if it’s a manually-picked crab hint, apply near-hint-crab
-      if (classes.includes('hint-crab')) {
+      if (classes.includes('hint-crab tileImage:crab')) {
         applyHint(x, y, 'near-hint-crab')
       }
       // if it’s a real sand, apply the standard near-sand
@@ -81,7 +82,7 @@ export function useGridEngine (gridSize = 10) {
         applyHint(x, y, 'near-sand')
       }
       // if it’s a manually-picked sand hint, apply near-hint-sand
-      if (classes.includes('hint-sand')) {
+      if (classes.includes('hint-sand tileImage:sand')) {
         applyHint(x, y, 'near-hint-sand')
       }
     })
