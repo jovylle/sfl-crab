@@ -75,6 +75,7 @@
         'hint-unset-white',
       ]"
       @pick="onHintPicked"
+      :possibleTreasures="possibleTreasures"
     />
     
     
@@ -90,6 +91,10 @@ import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
 import BottomGridInfo from './BottomGridInfo.vue'
 
+import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
+
+const possibleTreasures = useTodayTreasureNames();
+console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
 // your existing props
 const { showTreasureOrder, treasureOrderMap } = defineProps({
   showTreasureOrder: { type: Boolean, default: false },

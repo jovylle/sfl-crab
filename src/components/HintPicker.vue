@@ -37,6 +37,26 @@
         />
       </li>
     </ul>
+    <!-- Pattern suggestions -->
+    <p v-if="props.possibleTreasures.length" class="text-xs text-base-content/70 px-2 pt-1">
+      Suggested from pattern
+    </p>
+    <p v-else>
+      No suggestions available
+    </p>
+    <ul
+      v-if="props.possibleTreasures.length"
+      class="mt-1 px-2 py-1 bg-base-100 border border-base-300 rounded-box grid grid-cols-4 gap-2"
+    >
+      <li
+        v-for="(hintClass, idx) in props.possibleTreasures"
+        :key="'suggested-' + idx"
+        class="w-6 h-6 border border-base-300 rounded cursor-pointer opacity-70 hover:opacity-100"
+        @click="selectSuggestedHint(hintClass)"
+      >
+        <div :class="[hintClass, 'tile w-full h-full']" />
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -48,6 +68,7 @@ const props = defineProps({
   hints:     { type: Array, required: true },   // e.g. ['hint-sand','hint-crab',…]
   x:         { type: Number, required: true },
   y:         { type: Number, required: true },
+  possibleTreasures: { type: Array, default: () => [] },
   tileIndex: { type: Number, required: true }
 })
 
@@ -68,6 +89,11 @@ const popoverStyle = computed(() => ({
 function selectHint(idx) {
   const chosenClass = props.hints[idx]
   emit('pick', { tileIndex: props.tileIndex, hint: chosenClass })
+  visible.value = false
+}
+
+function selectSuggestedHint(hintClass) {
+  emit('pick', { tileIndex: props.tileIndex, hint: hintClass })
   visible.value = false
 }
 </script>
