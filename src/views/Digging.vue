@@ -1,11 +1,12 @@
-
 <template>
   <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
     <!-- Manual Marks clear & Grid -->
     <div
       class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
     >
-      <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
+      <div
+        class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1"
+      >
         <DigToolSection v-model:showTreasureOrder="showTreasureOrder" />
 
         <!-- Pass the toggle and map down into Grid -->
@@ -64,40 +65,40 @@ watch(
  * 2. Sorts all digs by `dugAt` (timestamp) so ordering is strictly chronological.
  * 3. Builds a map of length `total` that assigns each (x,y) cell its "dig order index".
  */
-const treasureOrderMap = computed(() => {
-  const tilesArray = grid.tiles.value;   // should be a flat Array of all cells
+ const treasureOrderMap = computed(() => {
+  const tilesArray = grid.tiles.value;
   const total = tilesArray.length;
   const map = Array.from({ length: total }, () => null);
 
-  // get raw grid data (may include nested arrays)
   const rawGrid = desert.value.digging?.grid || [];
 
-  // flatten any nested arrays into one single array of tile‐objects
-  const allDigs = rawGrid.reduce((acc, entry) => {
+  // Prepare entries with their unified dugAt and grouped tiles
+  const entries = rawGrid.map((entry) => {
     if (Array.isArray(entry)) {
-      return acc.concat(entry);
+      return { dugAt: entry[0]?.dugAt || 0, tiles: entry };
     } else {
-      acc.push(entry);
-      return acc;
+      return { dugAt: entry.dugAt, tiles: [entry] };
     }
-  }, []);
+  });
 
-  // sort by dugAt (older first → lower index)
-  allDigs.sort((a, b) => a.dugAt - b.dugAt);
+  // Sort entries by dugAt timestamp
+  entries.sort((a, b) => a.dugAt - b.dugAt);
 
-  // assign order based on sorted index (i + 1)
-  allDigs.forEach((tile, sortedIndex) => {
-    const x = tile.x;
-    const y = tile.y;
-    const size = Math.sqrt(total);
-    const idx = y * size + x;
-    if (Number.isInteger(idx) && idx >= 0 && idx < total) {
-      map[idx] = sortedIndex + 1;
-    }
+  // Assign order index (shared for grouped digs)
+  entries.forEach((entry, orderIndex) => {
+    const digNumber = orderIndex + 1;
+    entry.tiles.forEach(({ x, y }) => {
+      const size = Math.sqrt(total);
+      const idx = y * size + x;
+      if (Number.isInteger(idx) && idx >= 0 && idx < total) {
+        map[idx] = digNumber;
+      }
+    });
   });
 
   return map;
 });
+
 
 
 // 🔁 Auto-reload landData if stale on initial app load
@@ -118,5 +119,4 @@ onMounted(() => {
     console.log("No landId provided, skipping stale check.")
   }
 })
-
 </script>
