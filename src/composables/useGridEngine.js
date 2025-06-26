@@ -30,7 +30,7 @@ export function useGridEngine (gridSize = 10) {
         {
           // console.log('Checking classes kids:', c, 'Type:', typeof c);
           // console.log('treasure check:', c === 'treasure' || c === 'hint-treasure');
-          return c.includes('hint-treasure') || c.includes(' treasure');
+          return c.includes('hint-treasure') || c.includes('actual-treasure');
         }
         )
       })
@@ -141,7 +141,7 @@ export function useGridEngine (gridSize = 10) {
       } else if (tile.items?.Sand) {
         tiles.value[idx] = ['sand', tileImageClass]
       } else {
-        tiles.value[idx] = ['treasure', tileImageClass]
+        tiles.value[idx] = ['treasure actual-treasure', tileImageClass]
       }
     })
 
