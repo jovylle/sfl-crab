@@ -25,8 +25,13 @@ export function useGridEngine (gridSize = 10) {
         const ny = y + dy
         if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return false
         const idx = ny * gridSize + nx
+        
         return tiles.value[idx].some(c =>
-          c === 'treasure' || c === 'hint-treasure'
+        {
+          // console.log('Checking classes kids:', c, 'Type:', typeof c);
+          // console.log('treasure check:', c === 'treasure' || c === 'hint-treasure');
+          return c.includes('hint-treasure') || c.includes('actual-treasure');
+        }
         )
       })
       if (foundTreasure) return  // if any neighbor has a treasure, skip applying this hint
@@ -61,7 +66,7 @@ export function useGridEngine (gridSize = 10) {
   // The “rebuild” function
   function rebuildNearHints () {
     clearNearHints()
-    console.log('Rebuilding Near Crab/Sand hints...')
+    // console.log('Rebuilding Near Crab/Sand hints...')
 
     // walk every tile
     tiles.value.forEach((classes, idx) => {
@@ -73,7 +78,7 @@ export function useGridEngine (gridSize = 10) {
         applyHint(x, y, 'near-crab')
       }
       // if it’s a manually-picked crab hint, apply near-hint-crab
-      if (classes.includes('hint-crab')) {
+      if (classes.includes('hint-crab tileImage:crab')) {
         applyHint(x, y, 'near-hint-crab')
       }
       // if it’s a real sand, apply the standard near-sand
@@ -81,37 +86,37 @@ export function useGridEngine (gridSize = 10) {
         applyHint(x, y, 'near-sand')
       }
       // if it’s a manually-picked sand hint, apply near-hint-sand
-      if (classes.includes('hint-sand')) {
+      if (classes.includes('hint-sand tileImage:sand')) {
         applyHint(x, y, 'near-hint-sand')
       }
     })
   }
   
 
-  // Remove neighbor hints
-  function removeHint (x, y, hintClass) {
-    [
-      { dx: 0, dy: -1 },
-      { dx: 1, dy: 0 },
-      { dx: 0, dy: 1 },
-      { dx: -1, dy: 0 }
-    ].forEach(({ dx, dy }) => {
-      const nx = x + dx
-      const ny = y + dy
-      if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
-      const idx = ny * gridSize + nx
+  // // Remove neighbor hints
+  // function removeHint (x, y, hintClass) {
+  //   [
+  //     { dx: 0, dy: -1 },
+  //     { dx: 1, dy: 0 },
+  //     { dx: 0, dy: 1 },
+  //     { dx: -1, dy: 0 }
+  //   ].forEach(({ dx, dy }) => {
+  //     const nx = x + dx
+  //     const ny = y + dy
+  //     if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
+  //     const idx = ny * gridSize + nx
 
-      const cnt = hintCounts.value[idx][hintClass] || 0
-      if (cnt <= 1) {
-        delete hintCounts.value[idx][hintClass]
-        tiles.value[idx] = tiles.value[idx].filter(
-          c => typeof c === 'string' && c !== hintClass
-        )
-      } else {
-        hintCounts.value[idx][hintClass] = cnt - 1
-      }
-    })
-  }
+  //     const cnt = hintCounts.value[idx][hintClass] || 0
+  //     if (cnt <= 1) {
+  //       delete hintCounts.value[idx][hintClass]
+  //       tiles.value[idx] = tiles.value[idx].filter(
+  //         c => typeof c === 'string' && c !== hintClass
+  //       )
+  //     } else {
+  //       hintCounts.value[idx][hintClass] = cnt - 1
+  //     }
+  //   })
+  // }
 
   // Load / reset from API data
   // Load / reset from API data
@@ -136,7 +141,7 @@ export function useGridEngine (gridSize = 10) {
       } else if (tile.items?.Sand) {
         tiles.value[idx] = ['sand', tileImageClass]
       } else {
-        tiles.value[idx] = ['treasure', tileImageClass]
+        tiles.value[idx] = ['treasure actual-treasure', tileImageClass]
       }
     })
 
@@ -146,15 +151,15 @@ export function useGridEngine (gridSize = 10) {
   }
 
 
-  // Order for fallback cycling
-  const cycleOrder = [
-    'hint-sand',
-    'hint-crab',
-    'hint-treasure',
-    'hint-nothing',
-    'hint-unset-white',
-    ''
-  ]
+  // // Order for fallback cycling
+  // const cycleOrder = [
+  //   'hint-sand',
+  //   'hint-crab',
+  //   'hint-treasure',
+  //   'hint-nothing',
+  //   'hint-unset-white',
+  //   ''
+  // ]
 
   // Apply one specific picked hint
   function pickEngineHint (idx, hintClass) {

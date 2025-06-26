@@ -61,11 +61,11 @@
   --color-neutral-content: oklch(82.901% 0.031 222.959);
   --color-info: oklch(86.078% 0.142 206.182);
   --color-info-content: oklch(17.215% 0.028 206.182);
-  --color-success: oklch(86.171% 0.142 166.534);
+  --color-success: oklch(0.7404 0.142 166.534);
   --color-success-content: oklch(17.234% 0.028 166.534);
   --color-warning: oklch(86.163% 0.142 94.818);
   --color-warning-content: oklch(17.232% 0.028 94.818);
-  --color-error: oklch(82.418% 0.099 33.756);
+  --color-error: oklch(0.7315 0.099 33.756);
   --color-error-content: oklch(16.483% 0.019 33.756);
   --radius-selector: 1rem;
   --radius-field: 0.5rem;
@@ -158,17 +158,17 @@ body {
 .sand-label {
   font-weight: bold;
   @apply bg-error;
-  padding: 2px 4px;
+  padding: 2px 0.25rem;
 }
 .crab-label {
   font-weight: bold;
   @apply bg-warning;
-  padding: 2px 4px;
+  padding: 2px 0.25rem;
 }
 .treasure-label {
   font-weight: bold;
   @apply bg-success;
-  padding: 2px 4px;
+  padding: 2px 0.25rem;
 }
 
 .tile.near-crab {
@@ -195,31 +195,40 @@ body {
 
 .tile.hint-sand {
   @apply bg-error;
-  border: 4px dashed oklch(0.85 0.1316 22.21);
+  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
 }
 
 .tile.hint-crab {
   @apply bg-warning;
-  border: 4px dashed oklch(0.9265 0.0735 95.617);
+  border: 0.35rem dashed color-mix(in oklch, var(--color-warning), white 40%);
 }
 
 .tile.hint-sand {
-  background-image: url("/images/sand.png");
-  background-size: 60%;
-  background-repeat: no-repeat;
+  background-image:
+    url(/images/sand.png);
+  background-size:60%;
+  background-repeat:no-repeat;
   background-position: center;
 }
+
 
 .tile.hint-crab {
-  background-image: url("/images/crab.png");
-  background-size: 60%;
-  background-repeat: no-repeat;
+  background-image:
+    url(/images/crab.png);
+  background-size:60%;
+  background-repeat:no-repeat;
   background-position: center;
 }
 
-.tile.hint-treasure {
+.tile.hint-treasure:not(.treasure) {
   @apply bg-success;
-  border: 4px dashed #6ade95;
+  border: 0.35rem dashed color-mix(in oklch, var(--color-success), white 40%);
+}
+
+.tile.hint-treasure:not(.treasure) img {
+  outline: 3px dashed color-mix(in oklch, var(--color-success), white 10%);
+  width: calc(60% + 0.35rem);
+  height: calc(60% + 0.35rem);
 }
 
 /* center “treasure dot” */
@@ -252,7 +261,7 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 2px dashed oklch(0.9265 0.0735 95.617);
+  border: 2px dashed color-mix(in oklch, var(--color-warning), white 40%);
   @apply bg-warning outline-2 outline-base-100 ;
 }
 .hint-red-dot {
@@ -268,7 +277,7 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  border: 4px dashed oklch(0.85 0.1316 22.21);
+  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
   transform: translate(-50%, -50%);
 }
 .tile img {
@@ -276,26 +285,31 @@ body {
 }
 .tile.hint-unset-white {
   @apply bg-base-100;
-  border: 4px dashed;
+  border: 0.35rem dashed;
   @apply border-base-200;
 }
 
 .tile.hint-nothing {
   @apply bg-error;
-  border: 4px dashed oklch(0.85 0.1316 22.21);
+  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
+}
+
+.tile.hint-crab-eyes-maybe {
+  @apply bg-warning;
+  border: 0.35rem dashed color-mix(in oklch, var(--color-warning), white 40%);
 }
 
 .tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(
     .hint-treasure
   ) {
   @apply bg-error;
-  border: 4px dashed oklch(0.85 0.1316 22.21);
+  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
 }
 .tile.near-hint-crab:not(.treasure):not(.sand):not(.near-sand):not(
     .near-hint-sand
   ):not(.hint-sand):not(.hint-treasure):not(.hint-unset-white) {
   @apply bg-warning;
-  border: 4px dashed oklch(0.9265 0.0735 95.617);
+  border: 0.35rem dashed color-mix(in oklch, var(--color-warning), white 40%);
 }
 
 .treasure-indicator {
