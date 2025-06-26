@@ -25,8 +25,13 @@ export function useGridEngine (gridSize = 10) {
         const ny = y + dy
         if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return false
         const idx = ny * gridSize + nx
+        
         return tiles.value[idx].some(c =>
-          c === 'treasure' || c === 'hint-treasure'
+        {
+          // console.log('Checking classes kids:', c, 'Type:', typeof c);
+          // console.log('treasure check:', c === 'treasure' || c === 'hint-treasure');
+          return c.includes('hint-treasure') || c.includes('treasure');
+        }
         )
       })
       if (foundTreasure) return  // if any neighbor has a treasure, skip applying this hint
@@ -61,11 +66,10 @@ export function useGridEngine (gridSize = 10) {
   // The “rebuild” function
   function rebuildNearHints () {
     clearNearHints()
-    console.log('Rebuilding Near Crab/Sand hints...')
+    // console.log('Rebuilding Near Crab/Sand hints...')
 
     // walk every tile
     tiles.value.forEach((classes, idx) => {
-      console.log(`Processing tile ${idx} with classes:`, classes)
       const x = idx % gridSize
       const y = Math.floor(idx / gridSize)
 
@@ -89,30 +93,30 @@ export function useGridEngine (gridSize = 10) {
   }
   
 
-  // Remove neighbor hints
-  function removeHint (x, y, hintClass) {
-    [
-      { dx: 0, dy: -1 },
-      { dx: 1, dy: 0 },
-      { dx: 0, dy: 1 },
-      { dx: -1, dy: 0 }
-    ].forEach(({ dx, dy }) => {
-      const nx = x + dx
-      const ny = y + dy
-      if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
-      const idx = ny * gridSize + nx
+  // // Remove neighbor hints
+  // function removeHint (x, y, hintClass) {
+  //   [
+  //     { dx: 0, dy: -1 },
+  //     { dx: 1, dy: 0 },
+  //     { dx: 0, dy: 1 },
+  //     { dx: -1, dy: 0 }
+  //   ].forEach(({ dx, dy }) => {
+  //     const nx = x + dx
+  //     const ny = y + dy
+  //     if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
+  //     const idx = ny * gridSize + nx
 
-      const cnt = hintCounts.value[idx][hintClass] || 0
-      if (cnt <= 1) {
-        delete hintCounts.value[idx][hintClass]
-        tiles.value[idx] = tiles.value[idx].filter(
-          c => typeof c === 'string' && c !== hintClass
-        )
-      } else {
-        hintCounts.value[idx][hintClass] = cnt - 1
-      }
-    })
-  }
+  //     const cnt = hintCounts.value[idx][hintClass] || 0
+  //     if (cnt <= 1) {
+  //       delete hintCounts.value[idx][hintClass]
+  //       tiles.value[idx] = tiles.value[idx].filter(
+  //         c => typeof c === 'string' && c !== hintClass
+  //       )
+  //     } else {
+  //       hintCounts.value[idx][hintClass] = cnt - 1
+  //     }
+  //   })
+  // }
 
   // Load / reset from API data
   // Load / reset from API data
