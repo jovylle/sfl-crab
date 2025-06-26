@@ -151,15 +151,15 @@ export function useGridEngine (gridSize = 10) {
   }
 
 
-  // Order for fallback cycling
-  const cycleOrder = [
-    'hint-sand',
-    'hint-crab',
-    'hint-treasure',
-    'hint-nothing',
-    'hint-unset-white',
-    ''
-  ]
+  // // Order for fallback cycling
+  // const cycleOrder = [
+  //   'hint-sand',
+  //   'hint-crab',
+  //   'hint-treasure',
+  //   'hint-nothing',
+  //   'hint-unset-white',
+  //   ''
+  // ]
 
   // Apply one specific picked hint
   function pickEngineHint (idx, hintClass) {

@@ -8,8 +8,8 @@
   >
     <button class="btn btn-ghost p-0 w-0 h-0" ref="anchor" />
     <div
+      ref="dropdownContent"
       class="dropdown-content bg-base-100 border border-base-300 shadow-lg p-0.5 sm:p-1 md:p-2 w-full"
-      style="transform: translate(-50%, -50%);"
     >
       <ul class="!grid !grid-cols-3 !grid-rows-2">
         <li
@@ -65,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watchEffect, nextTick } from 'vue'
 // 1️⃣ Define your props
 const props = defineProps({
   hints:     { type: Array, required: true },   // e.g. ['hint-sand','hint-crab',…]
@@ -77,8 +77,23 @@ const props = defineProps({
 
 // 2️⃣ Define the emit
 const emit = defineEmits(['pick'])
-
+const dropdownContent = ref(null)
 const visible = ref(true)
+
+watchEffect(async () => {
+  if (visible.value) {
+    await nextTick()
+    const el = dropdownContent.value
+    if (el) {
+      const width = el.offsetWidth
+      console.log("Setting transform with width:", width)
+      el.style.transform = `translate(-50%, -${(width / 2) + 10}px)`
+    } else {
+      console.warn("dropdownContent not ready")
+    }
+  }
+})
+
 
 const popoverStyle = computed(() => ({
   position:  'absolute',
@@ -87,6 +102,13 @@ const popoverStyle = computed(() => ({
   zIndex:    50
 }))
 
+function adjustDropdownPosition() {
+  const el = dropdownContent.value
+  if (el) {
+    const width = el.offsetWidth
+    el.style.transform = `translate(-50%, -${width / 2}px)`
+  }
+}
 // 3️⃣ Emit the chosen class, not the index
 function selectHint(idx) {
   const chosenClass = props.hints[idx]

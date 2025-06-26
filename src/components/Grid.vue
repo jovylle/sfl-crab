@@ -66,15 +66,16 @@
       :x="picker.x"
       :y="picker.y"
       :hints="[
-        'hint-nothing',
+        'hint-red-dot',
         'hint-potential-treasure',
         'hint-potential-treasure2',
         'hint-sand tileImage:sand',
         'hint-treasure',
         'hint-crab tileImage:crab',
-        'hint-red-dot',
+        'hint-nothing',
         'no-hint-and-show-trash-icon',
-        'hint-unset-white',
+        // 'hint-unset-white',
+        'hint-crab-eyes-maybe',
       ]"
       @pick="onHintPicked"
       :possibleTreasures="possibleTreasures"

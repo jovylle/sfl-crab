@@ -294,6 +294,11 @@ body {
   border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
 }
 
+.tile.hint-crab-eyes-maybe {
+  @apply bg-warning;
+  border: 0.35rem dashed color-mix(in oklch, var(--color-warning), white 40%);
+}
+
 .tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(
     .hint-treasure
   ) {
