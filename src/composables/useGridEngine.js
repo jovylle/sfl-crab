@@ -30,7 +30,7 @@ export function useGridEngine (gridSize = 10) {
         {
           // console.log('Checking classes kids:', c, 'Type:', typeof c);
           // console.log('treasure check:', c === 'treasure' || c === 'hint-treasure');
-          return c.includes('hint-treasure') || c.includes('treasure');
+          return c.includes('hint-treasure') || c.includes(' treasure');
         }
         )
       })
