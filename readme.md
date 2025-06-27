@@ -1,108 +1,63 @@
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)  
 [![Netlify Status](https://api.netlify.com/api/v1/badges/e24fa8b5-f1d0-4674-bf2d-e227a4ce4a46/deploy-status)](https://app.netlify.com/projects/sfl-digging/deploys)
 
-# SFL CRAB Vue
+# 🌵 d1g.uk – Sunflower Land Desert Digging Assistant
 
-A small Vue 3 + Vite app for visualizing and “digging” a land grid in the Sunflower Land ecosystem.
+**d1g.uk** is a fast, free, and visual tool for helping **Sunflower Land players** explore the Desert efficiently.
 
-## Table of Contents
-
-- [Demo](#demo)  
-- [Features](#features)  
-- [Tech Stack & Skills](#tech-stack--skills)  
-- [Installation](#installation)  
-- [Development](#development)  
-- [Contribution Guide](#contribution-guide)  
-- [License](#license)
+Just enter your **Land ID**, and the tool shows you:
+- All dug tiles
+- Treasures found
+- Crab/sand hints
+- Live treasure patterns
+- And more — no login required
 
 ---
 
-## Demo
+## 🎮 Try It Live
 
-This SunflowerLand Project Official Links:
-
-**Production**  
-- https://sfl.uft1.com  
-- https://sfl-digging.uft1.com  
-- https://d1g.uk  
-
-**Development / Beta**  
-- https://sfl-development.uft1.com  
-- https://development.d1g.uk  
-- https://beta.d1g.uk  
+- **Main:** https://d1g.uk  
+- **Alt Mirrors:**  
+  - https://sfl.uft1.com  
+  - https://sfl-digging.uft1.com  
+- **Dev/Beta Builds:**  
+  - https://beta.d1g.uk  
+  - https://development.d1g.uk  
+  - https://sfl-development.uft1.com  
 
 ---
 
-## Features
+## ✨ Features
 
-- **Grid**: Render an interactive land grid with soft‐reload updates  
-- **Digging**: Click to uncover treasures and usernames  
-- **API integration**: Pull land/user data from an external service  
-
----
-
-## Tech Stack & Skills
-
-You’ll only need familiarity with:
-
-- **Vue 3** (Composition API)  
-- **Vite** as the build tool  
-- **Tailwind CSS** for styling  
-- **JavaScript** (ES2015+)  
-- **Node.js** / npm  
-
-No heavy backends—just modern JS, Vue, and CSS.
+- 🔍 **Auto-fetch Land Data** via public API
+- 🗺️ **Grid Display** of all dug tiles, updated live
+- 🦀 **Detects Crabs, Sand, and Treasures** visually
+- 🧠 **Auto-hint system**: crab/sand proximity = hint tiles
+- 🎯 **Mark tiles** with color labels (Red, Yellow, Green) or today's treasure type
+- 📅 **Daily Treasure Pattern Display** (based on live in-game info)
+- ⚡ Seamless experience — paste ID and dig smarter
 
 ---
 
-## Installation
+## 📸 Screenshots (coming soon)
 
-```bash
-git clone https://github.com/jovylle/sfl-crab.git
-cd sfl-crab
-npm install
-````
+> Grid view, pattern picker, and visual markers will be added here for clarity and SEO.
 
 ---
 
-## Development
+## 🔧 For Developers
 
-Start the hot-reload dev server:
+This is a small Vue 3 + Vite app built with:
+- Vue Composition API  
+- TailwindCSS  
+- Lightweight custom services  
+- No backend — just local + API fetch
 
-```bash
-npm run dev
-```
-
-Then open [http://localhost:5173](http://localhost:5173) (or the port Vite reports).
-
-To build for production:
-
-```bash
-npm run build
-```
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for development, setup, and pull request instructions.
 
 ---
 
-## Contribution Guide
+## 🪪 License
 
-We welcome pull requests! Please:
+This project is under the [MIT License](./LICENSE).
 
-1. **Fork** the repo.
-2. **Branch** your change:
-
-   ```bash
-   git checkout -b feature/short-description
-   ```
-3. **Implement** & **test** your code.
-4. **Commit** with a clear message:
-
-   ```bash
-   git commit -m "feat: add X feature"
-   ```
-5. **Push** and **open** a PR against `main`:
-
-   * Describe what you did and why.
-   * Link any relevant issues.
-
-We’ll review ASAP—thanks for contributing!
