@@ -5,6 +5,8 @@
 
 **d1g.uk** is a fast, free, and visual tool for helping **Sunflower Land players** explore the Desert efficiently.
 
+![Grid with Hint Picker](./public/screenshot-jun-27-2025.png)
+
 Just enter your **Land ID**, and the tool shows you:
 - All dug tiles
 - Treasures found
