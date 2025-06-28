@@ -7,7 +7,7 @@ You can bundle just your Vite config, the `src/` folder, and `package.json` into
 ### macOS / Linux
 
 ```bash
-zip -r project-core-$(date +%F).zip vite.config.js src package.json api_response.json
+zip -r project-core-$(date +%F).zip vite.config.js src package.json api_response.json readme.md index.html
 ```
 
 * `-r` recursively includes the `src/` directory
@@ -21,7 +21,7 @@ zip -r project-core-$(date +%F).zip vite.config.js src package.json api_response
 # generate a date string in YYYY-MM-DD format
 $date = Get-Date -Format yyyy-MM-dd
 # compress files into "project-core-YYYY-MM-DD.zip"
-Compress-Archive -Path vite.config.js, src, package.json -DestinationPath "project-core-$date.zip"
+Compress-Archive -Path vite.config.js, src, package.json, api_response.json, readme.md, index.html -DestinationPath "project-core-$date.zip"
 ```
 
 * `-Path` takes a comma-separated list of files/folders
