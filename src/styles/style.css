@@ -195,12 +195,12 @@ body {
 
 .tile.hint-sand {
   @apply bg-error;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-error));
 }
 
 .tile.hint-crab {
   @apply bg-warning;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-warning), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
 
 .tile.hint-sand {
@@ -222,11 +222,11 @@ body {
 
 .tile.hint-treasure:not(.treasure) {
   @apply bg-success;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-success), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-success));
 }
 
 .tile.hint-treasure:not(.treasure) img {
-  outline: 3px dashed color-mix(in oklch, var(--color-success), white 10%);
+  outline: 3px dashed color-mix(in srgb, white 10%, var(--color-success));
   width: calc(60% + 0.35rem);
   height: calc(60% + 0.35rem);
 }
@@ -261,7 +261,7 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 2px dashed color-mix(in oklch, var(--color-warning), white 40%);
+  border: 2px dashed color-mix(in srgb, white 40%, var(--color-warning));
   @apply bg-warning outline-2 outline-base-100 ;
 }
 .hint-red-dot {
@@ -277,7 +277,7 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-error));
   transform: translate(-50%, -50%);
 }
 .tile img {
@@ -291,25 +291,25 @@ body {
 
 .tile.hint-nothing {
   @apply bg-error;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-error));
 }
 
 .tile.hint-crab-eyes-maybe {
   @apply bg-warning;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-warning), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
 
 .tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(
     .hint-treasure
   ) {
   @apply bg-error;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-error), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-error));
 }
 .tile.near-hint-crab:not(.treasure):not(.sand):not(.near-sand):not(
     .near-hint-sand
   ):not(.hint-sand):not(.hint-treasure):not(.hint-unset-white) {
   @apply bg-warning;
-  border: 0.35rem dashed color-mix(in oklch, var(--color-warning), white 40%);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
 
 .treasure-indicator {
