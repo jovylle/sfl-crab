@@ -74,7 +74,6 @@
         'hint-crab tileImage:crab',
         'hint-nothing',
         'no-hint-and-show-trash-icon',
-        // 'hint-unset-white',
         'hint-crab-eyes-maybe',
       ]"
       @pick="onHintPicked"

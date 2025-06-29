@@ -15,18 +15,13 @@
         <li
           v-for="(hintClass, idx) in hints"
           :key="hintClass + idx"
-          class="aspect-square flex items-center justify-center
-                m-0.5 border border-base-300"
+          class="aspect-square flex items-center justify-center m-0.5 border border-base-300 tooltip"
+          :data-tip="`press '${reverseKeyMap[hintClass] || ''}' to pick`"
           @click="selectHint(idx)"
         >
-          <!-- <div
-          :class="[hintClass, 'tile', 'w-full', 'h-full border border-base-300']"
-          class=""
-        /> -->
           <div
             v-if="hintClass === 'no-hint-and-show-trash-icon'"
             class="tooltip tooltip-warning flex justify-center items-center tile w-full h-full border border-base-300"
-            data-tip="remove manual hint"
           >
             <span class="text-lg sm:text-3xl text-error">X</span>
           </div>
@@ -65,7 +60,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, nextTick } from 'vue'
+import { ref, computed, watchEffect, nextTick, onMounted, onBeforeUnmount } from 'vue'
+
 // 1️⃣ Define your props
 const props = defineProps({
   hints:     { type: Array, required: true },   // e.g. ['hint-sand','hint-crab',…]
@@ -79,6 +75,17 @@ const props = defineProps({
 const emit = defineEmits(['pick'])
 const dropdownContent = ref(null)
 const visible = ref(true)
+const keyMap = {
+  'q': 'hint-red-dot',
+  'w': 'hint-potential-treasure',
+  'e': 'hint-potential-treasure2',
+  'a': 'hint-sand tileImage:sand',
+  's': 'hint-treasure',
+  'd': 'hint-crab tileImage:crab',
+  'z': 'hint-nothing',
+  'x': 'no-hint-and-show-trash-icon',
+  'c': 'hint-crab-eyes-maybe'
+}
 
 watchEffect(async () => {
   if (visible.value) {
@@ -94,6 +101,10 @@ watchEffect(async () => {
   }
 })
 
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown))
+
+//  ___________ BELOW ARE THE FUNCTIONS ____________
 
 const popoverStyle = computed(() => ({
   position:  'absolute',
@@ -102,18 +113,20 @@ const popoverStyle = computed(() => ({
   zIndex:    50
 }))
 
-function adjustDropdownPosition() {
-  const el = dropdownContent.value
-  if (el) {
-    const width = el.offsetWidth
-    el.style.transform = `translate(-50%, -${width / 2}px)`
-  }
-}
-// 3️⃣ Emit the chosen class, not the index
+const reverseKeyMap = Object.fromEntries(Object.entries(keyMap).map(([k, v]) => [v, k]))
+
 function selectHint(idx) {
   const chosenClass = props.hints[idx]
   emit('pick', { tileIndex: props.tileIndex, hint: chosenClass })
   visible.value = false
+}
+
+function handleKeydown(e) {
+  const hint = keyMap[e.key.toLowerCase()]
+  if (hint) {
+    emit('pick', { tileIndex: props.tileIndex, hint })
+    visible.value = false
+  }
 }
 
 function selectSuggestedHint(hintClass) {
