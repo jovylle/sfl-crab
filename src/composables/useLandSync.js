@@ -70,6 +70,15 @@ export function useLandSync (opts = {}) {
           date: new Date().toISOString().slice(0, 10),
           ...fresh
         }
+        
+        const desertDigging = fresh.state.desert.digging
+        const username     = fresh.state.username  // ← pull from state.username
+
+        window.dispatchEvent(
+          new CustomEvent('landDataReady', {
+            detail: { desertDigging, username }
+          })
+        )
       } catch (err) {
         // 👇 Show a friendly alert for the 429 error or anything else
         alert(err.message || 'An unexpected error occurred while loading land data.')
