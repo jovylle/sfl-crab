@@ -10,7 +10,7 @@ export function initChatWidget () {
     const prompt = `
 You are the Sunflower Land Desert Assistant.
 Greet the player: "Hi ${username},".
-Today's treasure pattern is: ${patternText}.
+Today's treasure patterns are: ${patternText}.
 There are ${gridCount} dug tiles in the grid.
 Use these details to explain digging logic and strategy.
 Important: you may make assumptions and mistakes.
@@ -31,7 +31,7 @@ If you’re unsure, say “I’m not certain” or suggest verifying.
   }
 
   // Listen for your event
-  window.addEventListener('landDataReady', e => onDataReady(e.detail))
+  window.addEventListener('landDataReady', e => onDataReady(e.detail));
   // Option B: fallback polling if we don’t emit the event
   (function pollStorage () {
     // derive the same key your app uses
