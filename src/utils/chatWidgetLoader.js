@@ -2,30 +2,36 @@
 // Waits for landData in localStorage or via event, then patches chat config & injects embed.js
 
 export function initChatWidget () {
-  function onDataReady (landData) {
-    const { desertDigging, username } = landData;
 
-    // 1) Expose for the chatbot
-    window.desertDigging = {
-      username,              // now available in the chatbot prompt
-      grid: desertDigging.grid,
-      todayPattern: desertDigging.todayPattern,
-    };
+  function onDataReady ({ desertDigging, username }) {
+    // 1) Build the prompt with live data
+    const patternText = desertDigging.patterns.join(', ')
+    const gridCount = desertDigging.grid.length
+    const prompt = `
+You are the Sunflower Land Desert Assistant.
+Greet the player: "Hi ${username},".
+Today's treasure pattern is: ${patternText}.
+There are ${gridCount} dug tiles in the grid.
+Use these details to explain digging logic and strategy.
+Important: you may make assumptions and mistakes.
+If you’re unsure, say “I’m not certain” or suggest verifying.
+    `.trim()
 
-    // 2) (Optional) We leave the instructions stub as-is
+    // 2) Overwrite the stub’s instructions
+    const cfgEl = document.getElementById('chat-widget-config-001')
+    const cfg = JSON.parse(cfgEl.textContent)
+    cfg.instructions = prompt
+    cfgEl.textContent = JSON.stringify(cfg)
 
-    // 3) Inject the chat widget script
-    const script = document.createElement('script');
-    script.src = 'https://chat-widget.uft1.com/embed.js';
-    script.defer = true;
-    document.body.appendChild(script);
+    // 3) Finally inject the embedded widget
+    const s = document.createElement('script')
+    s.src = 'https://chat-widget.uft1.com/embed.js'
+    s.defer = true
+    document.body.appendChild(s)
   }
 
-  // Option A: listen for a custom event when landData is saved
-  window.addEventListener('landDataReady', e => {
-    onDataReady(e.detail);
-  });
-
+  // Listen for your event
+  window.addEventListener('landDataReady', e => onDataReady(e.detail))
   // Option B: fallback polling if we don’t emit the event
   (function pollStorage () {
     // derive the same key your app uses
