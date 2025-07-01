@@ -20,7 +20,7 @@ If you’re unsure, say “I’m not certain” or suggest verifying.
     // 2) Overwrite the stub’s instructions
     const cfgEl = document.getElementById('chat-widget-config-001')
     const cfg = JSON.parse(cfgEl.textContent)
-    cfg.instructions = prompt
+    cfg.chatbot.instructions = prompt
     cfgEl.textContent = JSON.stringify(cfg)
 
     // 3) Finally inject the embedded widget
