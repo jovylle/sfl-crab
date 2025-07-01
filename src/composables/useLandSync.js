@@ -70,6 +70,15 @@ export function useLandSync (opts = {}) {
           date: new Date().toISOString().slice(0, 10),
           ...fresh
         }
+        
+
+        // 2) **Paste the following block** immediately *after* setting landData.value**
+        //    so that the chat‐widget loader gets notified with exactly the desertDigging slice:
+        window.dispatchEvent(
+          new CustomEvent('landDataReady', {
+            detail: { desertDigging: fresh.state.desert.digging }
+          })
+        )
       } catch (err) {
         // 👇 Show a friendly alert for the 429 error or anything else
         alert(err.message || 'An unexpected error occurred while loading land data.')

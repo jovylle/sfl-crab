@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { createHead } from '@vueuse/head'
 import './styles/style.css'
+import { initChatWidget } from './utils/chatWidgetLoader';
 
 const app = createApp(App)
 const head = createHead()
@@ -11,6 +12,8 @@ const head = createHead()
 app.use(head)
 app.use(router)
 app.mount('#app')
+
+initChatWidget();
 
   ; (async function checkForUpdates () {
     const current = __APP_VERSION__    // the SHA baked into this bundle
