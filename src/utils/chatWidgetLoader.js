@@ -14,7 +14,7 @@ Today's treasure patterns are: ${patternText}.
 There are ${gridCount} dug tiles in the grid.
 Use these details to explain digging logic and strategy.
 Important: you may make assumptions and mistakes.
-If you’re unsure, say “I’m not certain” or suggest verifying.
+If you’re unsure, say “I’m not certain” or suggest verifying. Tell the player that you only know the "username", "Dig Count" and "today's patterns". And Reply as short as possible.
     `.trim()
 
     // 2) Overwrite the stub’s instructions
