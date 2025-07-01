@@ -20,7 +20,7 @@
           :key="i"
           @click="toggleMark(i)"
           :class="[
-            'cursor-pointer transition-shadow relative',
+            'cursor-pointer transition-shadow relative group',
             isMarked(i)
               ? 'bg-success'
               : 'bg-base-100 dark:bg-neutral-content',
@@ -28,8 +28,8 @@
             'md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px]'
           ]"
         >
-          <!-- <span
-            class="absolute left-1/2 transform -translate-x-1/2 -bottom-3 mt-1 text-[0.750rem] bg-base-100 sm:text-625rem whitespace-nowrap"
+          <span
+            class="absolute opacity-0 group-hover:opacity-100 transition-opacity left-1/2 transform -translate-x-1/2 -bottom-3 mt-1 text-[0.750rem] bg-base-100 sm:text-625rem whitespace-nowrap"
           >
             {{ key
       .toLowerCase()
@@ -37,7 +37,7 @@
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ')
             }}
-          </span> -->
+          </span>
 
           <!-- your existing 4×4 grid inside -->
           <div
