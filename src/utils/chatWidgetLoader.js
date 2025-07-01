@@ -3,10 +3,11 @@
 
 export function initChatWidget () {
   function onDataReady (landData) {
-    const { desertDigging } = landData;
+    const { desertDigging, username } = landData;
 
     // 1) Expose for the chatbot
     window.desertDigging = {
+      username,              // now available in the chatbot prompt
       grid: desertDigging.grid,
       todayPattern: desertDigging.todayPattern,
     };

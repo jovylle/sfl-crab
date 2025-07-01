@@ -71,12 +71,12 @@ export function useLandSync (opts = {}) {
           ...fresh
         }
         
+        const desertDigging = fresh.state.desert.digging
+        const username     = fresh.state.username  // ← pull from state.username
 
-        // 2) **Paste the following block** immediately *after* setting landData.value**
-        //    so that the chat‐widget loader gets notified with exactly the desertDigging slice:
         window.dispatchEvent(
           new CustomEvent('landDataReady', {
-            detail: { desertDigging: fresh.state.desert.digging }
+            detail: { desertDigging, username }
           })
         )
       } catch (err) {
