@@ -1,7 +1,14 @@
 <template>
-  <div v-if="patternKeys?.length" class="card grow max-w-md basis-[265px] mx-auto md:mx-0">
-    <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1 [@media(max-width:639px)]:pt-0">
-      <h2 class="card-title text-center text-sm sm:text-lg">Today's Treasure Patterns</h2>
+  <div
+    v-if="patternKeys?.length"
+    class="card grow max-w-md basis-[265px] mx-auto md:mx-0"
+  >
+    <div
+      class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1 [@media(max-width:639px)]:pt-0"
+    >
+      <h2 class="card-title text-center text-sm sm:text-lg">
+        Today's Treasure Patterns
+      </h2>
       <div
         class="
           flex flex-wrap         /* wrap into new rows */
@@ -13,7 +20,7 @@
           :key="i"
           @click="toggleMark(i)"
           :class="[
-            'cursor-pointer transition-shadow',
+            'cursor-pointer transition-shadow relative group',
             isMarked(i)
               ? 'bg-success'
               : 'bg-base-100 dark:bg-neutral-content',
@@ -21,8 +28,21 @@
             'md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px]'
           ]"
         >
+          <span
+            class="absolute opacity-0 group-hover:opacity-100 transition-opacity left-1/2 transform -translate-x-1/2 -bottom-3 mt-1 text-[0.750rem] bg-base-100 sm:text-625rem whitespace-nowrap"
+          >
+            {{ key
+      .toLowerCase()
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ')
+            }}
+          </span>
+
           <!-- your existing 4×4 grid inside -->
-          <div class="grid grid-cols-4 mx-auto border border-base-300 dark:border-slate-500">
+          <div
+            class="grid grid-cols-4 mx-auto border border-base-300 dark:border-slate-500"
+          >
             <div
               v-for="cell in 16"
               :key="cell"
