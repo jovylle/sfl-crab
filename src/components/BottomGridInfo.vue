@@ -11,7 +11,7 @@
 
     <span class="flex items-cente text-nowrapr">
       <img
-        :src="getImageSrc('/images/sand-shovel.png')"
+        :src="getImageSrc('/images/sand-shovel.png').value"
         alt="Shovel"
         class="w-4 h-4"
       />

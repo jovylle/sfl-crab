@@ -22,7 +22,9 @@ async function retryImageLoad(src, maxRetries = 3) {
       
       img.onload = () => {
         retryCache.delete(cacheKey)
-        resolve(src)
+        // Resolve with the actual working URL (including retry params)
+        const workingUrl = attempts > 1 ? `${src}?retry=${attempts}&t=${Date.now()}` : src
+        resolve(workingUrl)
       }
       
       img.onerror = () => {
@@ -31,6 +33,7 @@ async function retryImageLoad(src, maxRetries = 3) {
         if (attempts < maxRetries) {
           // Exponential backoff: 500ms, 1s, 2s
           const delay = 500 * Math.pow(2, attempts - 1)
+          console.log(`Retrying in ${delay}ms...`)
           setTimeout(tryLoad, delay)
         } else {
           retryCache.delete(cacheKey)
@@ -142,16 +145,38 @@ export function useReliableAssets() {
     return reliableRef
   }
   
-  // Simple helper for immediate use (non-reactive)
+  // Reactive image sources cache
+  const imageSources = ref(new Map())
+  
+  // Simple helper that updates reactively when retry succeeds
   const getImageSrc = (originalSrc) => {
     if (!originalSrc) return originalSrc
     
-    // Trigger retry in background but return original immediately
-    retryImageLoad(originalSrc).catch(() => {
-      // Silently handle errors - the img tag will show broken image
-    })
+    // Return reactive ref for this image
+    if (!imageSources.value.has(originalSrc)) {
+      // Initialize with original src
+      imageSources.value.set(originalSrc, ref(originalSrc))
+      
+      // Start retry process in background
+      retryImageLoad(originalSrc).then((workingSrc) => {
+        // Always update the reactive ref with the working URL
+        const imageRef = imageSources.value.get(originalSrc)
+        if (imageRef) {
+          imageRef.value = workingSrc
+          
+          // Only log if it was actually a retry (not first attempt)
+          if (workingSrc !== originalSrc) {
+            console.log('Updated image src after successful retry:', originalSrc, '→', workingSrc)
+          } else {
+            console.log('Image loaded successfully on first attempt:', originalSrc)
+          }
+        }
+      }).catch(() => {
+        console.warn('Image retry failed completely:', originalSrc)
+      })
+    }
     
-    return originalSrc
+    return imageSources.value.get(originalSrc)
   }
   
   return {
