@@ -71,8 +71,8 @@ export function useLandSync (opts = {}) {
           ...fresh
         }
         
-        const desertDigging = fresh.state.desert.digging
-        const username     = fresh.state.username  // ← pull from state.username
+        const desertDigging = fresh.visitedFarmState.desert.digging
+        const username     = fresh.visitedFarmState.username  // ← pull from visitedFarmState.username
 
         window.dispatchEvent(
           new CustomEvent('landDataReady', {
