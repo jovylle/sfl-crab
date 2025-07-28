@@ -45,7 +45,7 @@ const showTreasureOrder = useLocalStorage(
 
 // 2) grid engine + API watch
 const grid = useGridManager(landId)
-const defaults = { state: { inventory: {}, desert: { digging: { grid: [] } } } }
+const defaults = { visitedFarmState: { inventory: {}, desert: { digging: { grid: [] } } } }
 const { desert } = useLandData(defaults)
 watch(
   () => desert.value.digging?.grid,
@@ -103,14 +103,14 @@ watch(
 
 // 🔁 Auto-reload landData if stale on initial app load
 onMounted(() => {
-  console.log("App mounted, checking landData for stale state...")
+  console.log("App mounted, checking landData for stale visitedFarmState...")
   const landId = route.params.landId
   const today = new Date().toISOString().slice(0, 10)
 
   if (landId) {
     const raw = JSON.parse(localStorage.getItem(`landData_${landId}`) || '{}')
-    const isStale = raw?.date !== today || !raw?.state
-    console.log("Checking landData for ID:", raw?.date , "Stale:", raw?.state)
+    const isStale = raw?.date !== today || !raw?.visitedFarmState
+    console.log("Checking landData for ID:", raw?.date , "Stale:", raw?.visitedFarmState)
     if (isStale) {
       const { reloadFromServer } = useLandSync({ landId })
       reloadFromServer({ landId })

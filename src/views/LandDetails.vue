@@ -93,7 +93,7 @@ function loadState() {
   }
   try {
     rawData.value = JSON.parse(raw)
-    hasData.value  = Boolean(rawData.value?.state)
+    hasData.value  = Boolean(rawData.value?.visitedFarmState)
   } catch {
     rawData.value = null
     hasData.value  = false
@@ -115,12 +115,12 @@ onMounted(loadState)
 
 // All top-level keys under `state`
 const stateKeys = computed(() =>
-  rawData.value?.state ? Object.keys(rawData.value.state) : []
+  rawData.value?.visitedFarmState ? Object.keys(rawData.value.visitedFarmState) : []
 )
 
 // Grab a specific field’s value; wrap primitives in an object
 function fieldValue(key) {
-  const v = rawData.value?.state?.[key]
+  const v = rawData.value?.visitedFarmState?.[key]
   return typeof v === 'object' && v !== null ? v : { [key]: v }
 }
 

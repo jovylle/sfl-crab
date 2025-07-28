@@ -44,7 +44,7 @@ function goToLand() {
   const raw = JSON.parse(localStorage.getItem(`landData_${id}`) || '{}')
   const today = new Date().toISOString().slice(0, 10)
   const isStale = raw?.date !== today
-  const isMissingState = !raw?.state
+  const isMissingState = !raw?.visitedFarmState
 
   if (route.name === 'GuestDigging') {
     router.push({ name: 'Digging', params: { landId: id } })

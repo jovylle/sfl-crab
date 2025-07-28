@@ -96,14 +96,14 @@ const LAND_ID_KEY     = 'todays-checklist:landId'
 const NPCS_SELECT_KEY = 'todays-checklist:selectedNpcIds'
 
 // --- Raw land data loader ---
-const landRaw = ref({ state: { npcs: {} } })
+const landRaw = ref({ visitedFarmState: { npcs: {} } })
 function loadFromStorage(id) {
   if (!id) {
-    landRaw.value = { state: { npcs: {} } }
+    landRaw.value = { visitedFarmState: { npcs: {} } }
     return
   }
   const raw = localStorage.getItem(`landData_${id}`)
-  landRaw.value = raw ? JSON.parse(raw) : { state: { npcs: {} } }
+  landRaw.value = raw ? JSON.parse(raw) : { visitedFarmState: { npcs: {} } }
 }
 // --- landId logic (URL param wins) ---
 const landId = ref(
@@ -142,7 +142,7 @@ watch(
 
 // --- Build NPC list ---
 const npcList = computed(() => {
-  const npcs = landRaw.value.state.npcs || {}
+  const npcs = landRaw.value.visitedFarmState.npcs || {}
   return Object.entries(npcs).map(([id, npc]) => ({
     id,
     displayName: npc.name || id,
