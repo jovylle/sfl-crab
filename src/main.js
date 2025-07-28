@@ -5,6 +5,7 @@ import router from './router'
 import { createHead } from '@vueuse/head'
 import './styles/style.css'
 import { initChatWidget } from './utils/chatWidgetLoader';
+import { useReliableAssets } from './composables/useReliableAssets.js'
 
 const app = createApp(App)
 const head = createHead()
@@ -14,6 +15,11 @@ app.use(router)
 app.mount('#app')
 
 initChatWidget();
+
+// Auto-retry critical CSS if it failed to load
+const { autoRetryCriticalAssets } = useReliableAssets()
+// Run after DOM is ready
+setTimeout(autoRetryCriticalAssets, 1000)
 
   ; (async function checkForUpdates () {
     const current = __APP_VERSION__    // the SHA baked into this bundle
