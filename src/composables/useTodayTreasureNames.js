@@ -7,7 +7,7 @@ export function useTodayTreasureNames () {
   const { landData } = useLandData();
 
   return computed(() => {
-    const keys = landData.value?.state?.desert?.digging?.patterns || [];
+    const keys = landData.value?.visitedFarmState?.desert?.digging?.patterns || [];
     const set = new Set();
 
     console.log("useTodayTreasureNames → pattern keys:", keys);

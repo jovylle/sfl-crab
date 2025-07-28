@@ -24,8 +24,8 @@ export function useLandData (defaults = {}) {
   }
 
   // derived pieces
-  const inventory = computed(() => landData.value.state?.inventory || {})
-  const desert = computed(() => landData.value.state?.desert || {})
+  const inventory = computed(() => landData.value.visitedFarmState?.inventory || {})
+  const desert = computed(() => landData.value.visitedFarmState?.desert || {})
   const patternKeys = computed(() => desert.value.digging?.patterns || [])
 
   return { landData, inventory, desert, patternKeys }
