@@ -193,17 +193,17 @@ body {
   @apply bg-success;
 }
 
-.tile.hint-sand {
+.tile.hint-sand:not(.sand) {
   @apply bg-error;
   border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-error));
 }
 
-.tile.hint-crab {
+.tile.hint-crab:not(.crab) {
   @apply bg-warning;
   border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
 
-.tile.hint-sand {
+.tile.hint-sand:not(.sand) {
   background-image:
     url(/images/sand.png);
   background-size:60%;
@@ -212,7 +212,7 @@ body {
 }
 
 
-.tile.hint-crab {
+.tile.hint-crab:not(.crab) {
   background-image:
     url(/images/crab.png);
   background-size:60%;
@@ -299,7 +299,7 @@ body {
   border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
 
-.tile.near-hint-sand:not(.treasure):not(.crab):not(.hint-crab):not(
+.tile.near-hint-sand:not(.near-sand):not(.treasure):not(.crab):not(.hint-crab):not(
     .hint-treasure
   ) {
   @apply bg-error;
@@ -307,7 +307,7 @@ body {
 }
 .tile.near-hint-crab:not(.treasure):not(.sand):not(.near-sand):not(
     .near-hint-sand
-  ):not(.hint-sand):not(.hint-treasure):not(.hint-unset-white) {
+  ):not(.hint-sand):not(.hint-treasure):not(.hint-unset-white):not(.near-crab) {
   @apply bg-warning;
   border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
