@@ -35,7 +35,7 @@
         <!-- underlying image -->
         <img
           v-if="getTileImage(normalizeTile(tile))"
-          :src="getTileImage(normalizeTile(tile))"
+          :src="getImageSrc(getTileImage(normalizeTile(tile)))"
           alt="treasure"
           class="tile-img"
         />
@@ -93,6 +93,10 @@ import HintPicker from '@/components/HintPicker.vue'
 import BottomGridInfo from './BottomGridInfo.vue'
 
 import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
+import { useReliableAssets } from '@/composables/useReliableAssets.js'
+
+// Use reliable assets composable
+const { getImageSrc } = useReliableAssets()
 
 const possibleTreasures = useTodayTreasureNames();
 console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
