@@ -22,7 +22,9 @@ async function retryImageLoad(src, maxRetries = 3) {
       
       img.onload = () => {
         retryCache.delete(cacheKey)
-        resolve(src)
+        // Resolve with the actual working URL (including retry params)
+        const workingUrl = attempts > 1 ? `${src}?retry=${attempts}&t=${Date.now()}` : src
+        resolve(workingUrl)
       }
       
       img.onerror = () => {
@@ -31,6 +33,7 @@ async function retryImageLoad(src, maxRetries = 3) {
         if (attempts < maxRetries) {
           // Exponential backoff: 500ms, 1s, 2s
           const delay = 500 * Math.pow(2, attempts - 1)
+          console.log(`Retrying in ${delay}ms...`)
           setTimeout(tryLoad, delay)
         } else {
           retryCache.delete(cacheKey)
@@ -156,12 +159,17 @@ export function useReliableAssets() {
       
       // Start retry process in background
       retryImageLoad(originalSrc).then((workingSrc) => {
-        // Update the reactive ref when retry succeeds
+        // Always update the reactive ref with the working URL
         const imageRef = imageSources.value.get(originalSrc)
-        if (imageRef && workingSrc !== originalSrc) {
-          // Add cache busting to force browser to re-fetch
-          imageRef.value = `${originalSrc}?t=${Date.now()}`
-          console.log('Updated image src after successful retry:', originalSrc)
+        if (imageRef) {
+          imageRef.value = workingSrc
+          
+          // Only log if it was actually a retry (not first attempt)
+          if (workingSrc !== originalSrc) {
+            console.log('Updated image src after successful retry:', originalSrc, '→', workingSrc)
+          } else {
+            console.log('Image loaded successfully on first attempt:', originalSrc)
+          }
         }
       }).catch(() => {
         console.warn('Image retry failed completely:', originalSrc)
