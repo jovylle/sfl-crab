@@ -142,16 +142,33 @@ export function useReliableAssets() {
     return reliableRef
   }
   
-  // Simple helper for immediate use (non-reactive)
+  // Reactive image sources cache
+  const imageSources = ref(new Map())
+  
+  // Simple helper that updates reactively when retry succeeds
   const getImageSrc = (originalSrc) => {
     if (!originalSrc) return originalSrc
     
-    // Trigger retry in background but return original immediately
-    retryImageLoad(originalSrc).catch(() => {
-      // Silently handle errors - the img tag will show broken image
-    })
+    // Return reactive ref for this image
+    if (!imageSources.value.has(originalSrc)) {
+      // Initialize with original src
+      imageSources.value.set(originalSrc, ref(originalSrc))
+      
+      // Start retry process in background
+      retryImageLoad(originalSrc).then((workingSrc) => {
+        // Update the reactive ref when retry succeeds
+        const imageRef = imageSources.value.get(originalSrc)
+        if (imageRef && workingSrc !== originalSrc) {
+          // Add cache busting to force browser to re-fetch
+          imageRef.value = `${originalSrc}?t=${Date.now()}`
+          console.log('Updated image src after successful retry:', originalSrc)
+        }
+      }).catch(() => {
+        console.warn('Image retry failed completely:', originalSrc)
+      })
+    }
     
-    return originalSrc
+    return imageSources.value.get(originalSrc)
   }
   
   return {

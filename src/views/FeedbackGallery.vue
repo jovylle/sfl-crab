@@ -10,7 +10,7 @@
       >
         <div class="flex justify-center items-center">
           <img
-            :src="getImageSrc(src)"
+            :src="getImageSrc(src).value"
             :alt="`Feedback ${i + 1}`"
             class="max-w-[800px] max-h-[800px] w-full h-full object-contain"
           />

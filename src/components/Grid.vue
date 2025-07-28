@@ -35,7 +35,7 @@
         <!-- underlying image -->
         <img
           v-if="getTileImage(normalizeTile(tile))"
-          :src="getImageSrc(getTileImage(normalizeTile(tile)))"
+          :src="getImageSrc(getTileImage(normalizeTile(tile))).value"
           alt="treasure"
           class="tile-img"
         />
