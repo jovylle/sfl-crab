@@ -11,7 +11,7 @@
 
     <span class="flex items-cente text-nowrapr">
       <img
-        src="/images/sand-shovel.png"
+        :src="getImageSrc('/images/sand-shovel.png')"
         alt="Shovel"
         class="w-4 h-4"
       />
@@ -23,6 +23,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useLandData } from '@/composables/useLandData'
+import { useReliableAssets } from '@/composables/useReliableAssets.js'
+
+// Use reliable assets composable
+const { getImageSrc } = useReliableAssets()
 
 // ── Grab the entire `desert` object from your composable ──
 const { desert } = useLandData()

@@ -50,7 +50,7 @@
             >
               <img
                 v-if="getPlotAt(key, cell)"
-                :src="getImageUrl(getPlotAt(key, cell).name)"
+                :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name))"
                 :alt="getPlotAt(key, cell).name"
                 class="max-w-full max-h-full object-contain w-full"
               />
@@ -67,6 +67,10 @@ import { ref } from 'vue'
 import { useLandData } from '../composables/useLandData'
 import { DIGGING_FORMATIONS } from '../../src_other/features/game/types/desert'
 import { useRoute } from 'vue-router'
+import { useReliableAssets } from '@/composables/useReliableAssets.js'
+
+// Use reliable assets composable
+const { getImageSrc } = useReliableAssets()
 const route = useRoute()
 const { patternKeys } = useLandData()
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier

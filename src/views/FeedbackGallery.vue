@@ -10,7 +10,7 @@
       >
         <div class="flex justify-center items-center">
           <img
-            :src="src"
+            :src="getImageSrc(src)"
             :alt="`Feedback ${i + 1}`"
             class="max-w-[800px] max-h-[800px] w-full h-full object-contain"
           />
@@ -21,6 +21,11 @@
 </template>
 
 <script setup>
+import { useReliableAssets } from '@/composables/useReliableAssets.js'
+
+// Use reliable assets composable
+const { getImageSrc } = useReliableAssets()
+
 // auto-import image URLs
 const imageModules = import.meta.glob('@/assets/feedbacks/*.{webp,jpg,png}', {
   eager: true,
