@@ -9,7 +9,7 @@
     
     <span class="text-nowrap">🔗 url:{{ displayUrl }}</span>
 
-    <span class="flex items-cente text-nowrapr">
+    <span class="flex items-center text-nowrap">
       <img
         :src="getImageSrc('/images/sand-shovel.png').value"
         alt="Shovel"
