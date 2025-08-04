@@ -236,6 +236,7 @@ import sunflorianEmblem from "assets/icons/sunflorian_emblem.webp";
 import nightshadeEmblem from "assets/icons/nightshade_emblem.webp";
 import mark from "assets/icons/faction_mark.webp";
 import supporterTicket from "assets/icons/supporter_ticket.png";
+import cheer from "assets/icons/cheer.webp";
 import solarFlareBanner from "assets/decorations/banners/solar_flare_banner.png";
 import dawnBreakerBanner from "assets/decorations/banners/dawn_breaker_banner.png";
 import witchesEveBanner from "assets/decorations/banners/witches_eve_banner.webp";
@@ -726,6 +727,10 @@ import sunflorianGoldChampion from "assets/sfts/sunflorian_gold_champion.png";
 import sunflorianSilverChampion from "assets/sfts/sunflorian_silver_champion.png";
 import sunflorianBronzeChampion from "assets/sfts/sunflorian_bronze_champion.png";
 
+import goldCookingTrophy from "assets/sfts/cooking_gold_trophy.webp";
+import silverCookingTrophy from "assets/sfts/cooking_silver_trophy.webp";
+import bronzeCookingTrophy from "assets/sfts/cooking_bronze_trophy.webp";
+
 import desertRose from "assets/sfts/desert_rose.webp";
 import sarcophagus from "assets/sfts/sarcophagus.webp";
 import anubisJackal from "assets/sfts/anubis_jackal.webp";
@@ -827,11 +832,14 @@ import springDuckling from "assets/sfts/spring_duckling.webp";
 import timeshard from "assets/icons/timeshard.webp";
 import ancientClock from "assets/icons/ancient_clock.png";
 import windsOfChangeBanner from "assets/decorations/banners/winds-of-change_banner_loop.gif";
+import betterTogetherBanner from "assets/decorations/banners/better_together_banner.webp";
 import pesticide from "assets/sfts/pesticide.webp";
 import jin from "assets/sfts/jin_ronin.webp";
 import loveCharm from "assets/icons/love_charm.webp";
 import geniseed from "assets/icons/geniseed.webp";
 import brokenPillar from "assets/icons/broken_pillar.webp";
+import bracelet from "assets/icons/bracelet.webp";
+import coprolite from "assets/icons/coprolite.webp";
 
 import floralArch from "assets/sfts/floral_arch.webp";
 import flowerCoin from "assets/sfts/flower_coin.webp";
@@ -861,6 +869,16 @@ import easterBasket2025 from "assets/sfts/easter_basket.webp";
 import easterToken2025 from "assets/icons/easter_token_2025.webp";
 import easterTicket2025 from "assets/icons/easter_ticket_2025.webp";
 
+import colorToken2025 from "assets/icons/colors_token_2025.png";
+import colorTicket2025 from "assets/icons/colors_ticket_2025.png";
+import paintBuckets from "assets/sfts/paint_buckets.webp";
+import rainbowWell from "assets/sfts/rainbow_well.webp";
+import floatingToy from "assets/sfts/floating_toy.webp";
+import rainbowFlower from "assets/sfts/rainbow_flower.webp";
+import ponyToy from "assets/sfts/pony_toy.webp";
+import redSlimeBalloon from "assets/sfts/red_slime_balloon.webp";
+import blueSlimeBalloon from "assets/sfts/blue_slime_balloon.webp";
+
 import quarry from "assets/sfts/quarry.webp";
 import obsidianTurtle from "assets/sfts/obsidian_turtle.webp";
 import winterGuardian from "assets/sfts/winter_guardian.webp";
@@ -872,8 +890,27 @@ import flowerscribedStatue from "assets/sfts/flower-scribed_statue.webp";
 import balloonRug from "assets/sfts/balloon_rug.webp";
 import giantYam from "assets/sfts/giant_yam.webp";
 import heartAirBalloon from "assets/sfts/heart_air_balloon.webp";
-import giantZuchinni from "assets/sfts/giant_zuchinni.webp";
+import giantZucchini from "assets/sfts/giant_zucchini.webp";
 import miniFloatingIsland from "assets/sfts/mini_floating_island.webp";
+import giantKale from "assets/sfts/giant_kale.webp";
+
+import floorMirror from "assets/sfts/floor_mirror.webp";
+import longRug from "assets/sfts/long_rug.webp";
+import garbageBin from "assets/sfts/garbage_bin.webp";
+import wheelBarrow from "assets/sfts/wheelbarrow.webp";
+import snailKing from "assets/sfts/snail_king.webp";
+import reelmastersChair from "assets/sfts/reelmasters_chair.webp";
+import ratKing from "assets/sfts/rat_king.webp";
+import fruitTuneBox from "assets/sfts/fruit_tune_box.webp";
+import doubleBed from "assets/sfts/double_bed.webp";
+import giantArtichoke from "assets/sfts/giant_artichoke.webp";
+import rocketStatue from "assets/sfts/rocket_statue.webp";
+import antQueen from "assets/sfts/ant_queen.webp";
+import jurassicDroplet from "assets/sfts/jurassic_droplet.webp";
+import giantOnion from "assets/sfts/giant_onion.webp";
+import giantTurnip from "assets/sfts/giant_turnip.webp";
+import groovyGramophone from "assets/sfts/groovy_gramophone.webp";
+import wheatWhiskers from "assets/sfts/wheat_whiskers.webp";
 
 import bronzeLoveBox from "assets/rewardBoxes/bronze_love_box.webp";
 import silverLoveBox from "assets/rewardBoxes/silver_love_box.webp";
@@ -888,11 +925,66 @@ import bronzeToolBox from "assets/rewardBoxes/bronze_tool_box.webp";
 import silverToolBox from "assets/rewardBoxes/silver_tool_box.webp";
 import goldToolBox from "assets/rewardBoxes/gold_tool_box.webp";
 
+import doll from "assets/sfts/dolls/doll.webp";
+import buzzDoll from "assets/sfts/dolls/buzz_doll.webp";
+import lunarDoll from "assets/sfts/dolls/lunar_doll.webp";
+import duneDoll from "assets/sfts/dolls/dune_doll.webp";
+import mouseDoll from "assets/sfts/dolls/mouse_doll.webp";
+import grubbyDoll from "assets/sfts/dolls/grubby_doll.webp";
+import nefariDoll from "assets/sfts/dolls/nefari_doll.webp";
+import frostyDoll from "assets/sfts/dolls/frosty_doll.webp";
+import cosmoDoll from "assets/sfts/dolls/cosmo_doll.webp";
+import bigfinDoll from "assets/sfts/dolls/bigfin_doll.webp";
+import solarDoll from "assets/sfts/dolls/solar_doll.webp";
+import anglerDoll from "assets/sfts/dolls/angler_doll.webp";
+import harvestDoll from "assets/sfts/dolls/harvest_doll.webp";
+import sizzleDoll from "assets/sfts/dolls/sizzler_doll.webp";
+import juicyDoll from "assets/sfts/dolls/juicy_doll.webp";
+import crudeDoll from "assets/sfts/dolls/crude_doll.webp";
+import cluckDoll from "assets/sfts/dolls/cluky_doll.webp";
+import woolyDoll from "assets/sfts/dolls/wooly_doll.webp";
+import mooDoll from "assets/sfts/dolls/moo_doll.webp";
+import bloomDoll from "assets/sfts/dolls/bloom_doll.webp";
+import shadowDoll from "assets/sfts/dolls/shadow_doll.webp";
+import gildedDoll from "assets/sfts/dolls/gilded_doll.webp";
+import lumberDoll from "assets/sfts/dolls/lumber_doll.webp";
+import emberDoll from "assets/sfts/dolls/ember_doll.webp";
+
 import loveChicken from "assets/animals/chickens/love_chicken.webp";
 import drCow from "assets/sfts/dr_cow.webp";
 import nurseSheep from "assets/sfts/nurse_sheep.webp";
 import pinkDolphin from "assets/fish/pink_dolphin.webp";
 import lunalist from "assets/flowers/lunalist.webp";
+
+import basicBiome from "assets/icons/islands/basic.webp";
+import springBiome from "assets/icons/islands/spring.webp";
+import desertBiome from "assets/icons/islands/desert.webp";
+import volcanoBiome from "assets/icons/islands/volcano.webp";
+
+import farmerMonument from "assets/monuments/shovel_monument.webp";
+import minerMonument from "assets/monuments/pickaxe_monument.webp";
+import woodcutterMonument from "assets/monuments/axe_monument.webp";
+import teamworkMonument from "assets/monuments/chapters_monument_teamwork.webp";
+import basicCookingPot from "assets/monuments/basic_cooking_pot.webp";
+import expertCookingPot from "assets/monuments/expert_cooking_pot.webp";
+import advancedCookingPot from "assets/monuments/advanced_cooking_pot.webp";
+import bigOrange from "assets/monuments/big_orange.webp";
+import bigApple from "assets/monuments/big_apple.webp";
+import bigBanana from "assets/monuments/big_banana.webp";
+
+import trash from "assets/clutter/trash.webp";
+import dung from "assets/clutter/dung.webp";
+import weed from "assets/clutter/weed.webp";
+import anthill from "assets/clutter/anthill.webp";
+import rat from "assets/clutter/rat.webp";
+import snail from "assets/clutter/snail.webp";
+import pestNet from "assets/clutter/pest_net.webp";
+
+import babyCow from "assets/sfts/baby_cow.webp";
+import babySheep from "assets/sfts/baby_sheep.webp";
+import janitorChicken from "assets/animals/chickens/janitor_chicken.webp";
+import venusBumpkinTrap from "assets/flowers/venus_bumpkin_trap.webp";
+import poseidon from "assets/sfts/poseidon_fish.webp";
 
 import { COUPONS, EASTER_EGG, FERTILISERS, InventoryItemName } from "./game";
 
@@ -929,7 +1021,7 @@ import {
 } from "./craftables";
 import { LOVE_ANIMAL_TOOLS, TREASURE_TOOLS } from "./tools";
 import { translate } from "lib/i18n/translate";
-import { BASIC_DECORATIONS } from "./decorations";
+import { LANDSCAPING_DECORATIONS } from "./decorations";
 import { SELLABLE_TREASURE } from "./treasure";
 import { TREASURE_COLLECTIBLE_ITEM } from "./collectibles";
 import { ANIMAL_FOODS } from "./animals";
@@ -950,191 +1042,191 @@ type Items = Record<InventoryItemName | AchievementName, ItemDetails>;
 
 export const ITEM_DETAILS: Items = {
   Sunflower: {
-    image: CROP_LIFECYCLE.basic.Sunflower.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Sunflower.crop,
     description: CROPS.Sunflower.description,
   },
   Potato: {
-    image: CROP_LIFECYCLE.basic.Potato.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Potato.crop,
     description: CROPS.Potato.description,
   },
   Pumpkin: {
-    image: CROP_LIFECYCLE.basic.Pumpkin.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Pumpkin.crop,
     description: CROPS.Pumpkin.description,
   },
   Carrot: {
-    image: CROP_LIFECYCLE.basic.Carrot.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Carrot.crop,
     description: CROPS.Carrot.description,
   },
   Cabbage: {
-    image: CROP_LIFECYCLE.basic.Cabbage.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Cabbage.crop,
     description: CROPS.Cabbage.description,
   },
   Beetroot: {
-    image: CROP_LIFECYCLE.basic.Beetroot.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Beetroot.crop,
     description: CROPS.Beetroot.description,
   },
   Cauliflower: {
-    image: CROP_LIFECYCLE.basic.Cauliflower.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Cauliflower.crop,
     description: CROPS.Cauliflower.description,
   },
   Parsnip: {
-    image: CROP_LIFECYCLE.basic.Parsnip.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Parsnip.crop,
     description: CROPS.Parsnip.description,
   },
   Eggplant: {
-    image: CROP_LIFECYCLE.basic.Eggplant.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Eggplant.crop,
     description: CROPS.Eggplant.description,
   },
   Corn: {
-    image: CROP_LIFECYCLE.basic.Corn.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Corn.crop,
     description: CROPS.Corn.description,
   },
   Radish: {
-    image: CROP_LIFECYCLE.basic.Radish.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Radish.crop,
     description: CROPS.Radish.description,
   },
   Wheat: {
-    image: CROP_LIFECYCLE.basic.Wheat.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Wheat.crop,
     description: CROPS.Wheat.description,
   },
   Kale: {
-    image: CROP_LIFECYCLE.basic.Kale.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Kale.crop,
     description: CROPS.Kale.description,
   },
   Soybean: {
-    image: CROP_LIFECYCLE.basic.Soybean.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Soybean.crop,
     description: CROPS.Soybean.description,
   },
   Barley: {
-    image: CROP_LIFECYCLE.basic.Barley.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Barley.crop,
     description: translate("description.barley"),
   },
   Rhubarb: {
-    image: CROP_LIFECYCLE.basic.Rhubarb.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Rhubarb.crop,
     description: translate("description.rhubarb"),
   },
   Zucchini: {
-    image: CROP_LIFECYCLE.basic.Zucchini.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Zucchini.crop,
     description: translate("description.zucchini"),
   },
   Yam: {
-    image: CROP_LIFECYCLE.basic.Yam.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Yam.crop,
     description: translate("description.yam"),
   },
   Broccoli: {
-    image: CROP_LIFECYCLE.basic.Broccoli.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Broccoli.crop,
     description: translate("description.broccoli"),
   },
   Pepper: {
-    image: CROP_LIFECYCLE.basic.Pepper.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Pepper.crop,
     description: translate("description.pepper"),
   },
   Onion: {
-    image: CROP_LIFECYCLE.basic.Onion.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Onion.crop,
     description: translate("description.onion"),
   },
   Turnip: {
-    image: CROP_LIFECYCLE.basic.Turnip.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Turnip.crop,
     description: translate("description.turnip"),
   },
   Artichoke: {
-    image: CROP_LIFECYCLE.basic.Artichoke.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Artichoke.crop,
     description: translate("description.artichoke"),
   },
   "Sunflower Seed": {
-    image: CROP_LIFECYCLE.basic.Sunflower.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Sunflower.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Sunflower.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Sunflower.crop,
     description: CROP_SEEDS["Sunflower Seed"].description,
   },
   "Potato Seed": {
-    image: CROP_LIFECYCLE.basic.Potato.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Potato.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Potato.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Potato.crop,
     description: CROP_SEEDS["Potato Seed"].description,
   },
   "Pumpkin Seed": {
-    image: CROP_LIFECYCLE.basic.Pumpkin.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Pumpkin.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Pumpkin.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Pumpkin.crop,
     description: CROP_SEEDS["Pumpkin Seed"].description,
   },
   "Carrot Seed": {
-    image: CROP_LIFECYCLE.basic.Carrot.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Carrot.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Carrot.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Carrot.crop,
     description: CROP_SEEDS["Carrot Seed"].description,
   },
   "Cabbage Seed": {
-    image: CROP_LIFECYCLE.basic.Cabbage.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Cabbage.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Cabbage.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Cabbage.crop,
     description: CROP_SEEDS["Cabbage Seed"].description,
   },
   "Beetroot Seed": {
-    image: CROP_LIFECYCLE.basic.Beetroot.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Beetroot.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Beetroot.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Beetroot.crop,
     description: CROP_SEEDS["Beetroot Seed"].description,
   },
   "Cauliflower Seed": {
-    image: CROP_LIFECYCLE.basic.Cauliflower.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Cauliflower.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Cauliflower.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Cauliflower.crop,
     description: CROP_SEEDS["Cauliflower Seed"].description,
   },
   "Parsnip Seed": {
-    image: CROP_LIFECYCLE.basic.Parsnip.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Parsnip.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Parsnip.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Parsnip.crop,
     description: CROP_SEEDS["Parsnip Seed"].description,
   },
   "Eggplant Seed": {
-    image: CROP_LIFECYCLE.basic.Eggplant.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Eggplant.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Eggplant.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Eggplant.crop,
     description: CROP_SEEDS["Eggplant Seed"].description,
   },
   "Corn Seed": {
-    image: CROP_LIFECYCLE.basic.Corn.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Corn.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Corn.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Corn.crop,
     description: CROP_SEEDS["Corn Seed"].description,
   },
   "Radish Seed": {
-    image: CROP_LIFECYCLE.basic.Radish.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Radish.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Radish.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Radish.crop,
     description: CROP_SEEDS["Radish Seed"].description,
   },
   "Wheat Seed": {
-    image: CROP_LIFECYCLE.basic.Wheat.seed,
-    secondaryImage: CROP_LIFECYCLE.basic.Wheat.crop,
+    image: CROP_LIFECYCLE["Basic Biome"].Wheat.seed,
+    secondaryImage: CROP_LIFECYCLE["Basic Biome"].Wheat.crop,
     description: CROP_SEEDS["Wheat Seed"].description,
   },
   "Barley Seed": {
-    image: CROP_LIFECYCLE.basic.Barley.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Barley.seed,
     description: translate("description.barley"),
   },
   "Rhubarb Seed": {
-    image: CROP_LIFECYCLE.basic.Rhubarb.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Rhubarb.seed,
     description: translate("description.rhubarb"),
   },
   "Zucchini Seed": {
-    image: CROP_LIFECYCLE.basic.Zucchini.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Zucchini.seed,
     description: translate("description.zucchini"),
   },
   "Yam Seed": {
-    image: CROP_LIFECYCLE.basic.Yam.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Yam.seed,
     description: translate("description.yam"),
   },
   "Broccoli Seed": {
-    image: CROP_LIFECYCLE.basic.Broccoli.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Broccoli.seed,
     description: translate("description.broccoli"),
   },
   "Pepper Seed": {
-    image: CROP_LIFECYCLE.basic.Pepper.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Pepper.seed,
     description: translate("description.pepper"),
   },
   "Onion Seed": {
-    image: CROP_LIFECYCLE.basic.Onion.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Onion.seed,
     description: translate("description.onion"),
   },
   "Turnip Seed": {
-    image: CROP_LIFECYCLE.basic.Turnip.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Turnip.seed,
     description: translate("description.turnip"),
   },
   "Artichoke Seed": {
-    image: CROP_LIFECYCLE.basic.Artichoke.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Artichoke.seed,
     description: translate("description.artichoke"),
   },
 
@@ -1143,11 +1235,11 @@ export const ITEM_DETAILS: Items = {
     description: BEANS()["Magic Bean"].description,
   },
   "Kale Seed": {
-    image: CROP_LIFECYCLE.basic.Kale.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Kale.seed,
     description: CROP_SEEDS["Kale Seed"].description,
   },
   "Soybean Seed": {
-    image: CROP_LIFECYCLE.basic.Soybean.seed,
+    image: CROP_LIFECYCLE["Basic Biome"].Soybean.seed,
     description: CROP_SEEDS["Soybean Seed"].description,
   },
   "Duskberry Seed": {
@@ -2380,15 +2472,15 @@ export const ITEM_DETAILS: Items = {
   },
   "White Tulips": {
     image: SUNNYSIDE.decorations.whiteTulips,
-    description: BASIC_DECORATIONS()["White Tulips"].description,
+    description: LANDSCAPING_DECORATIONS["White Tulips"].description,
   },
   "Potted Sunflower": {
     image: SUNNYSIDE.decorations.pottedSunflower,
-    description: BASIC_DECORATIONS()["Potted Sunflower"].description,
+    description: LANDSCAPING_DECORATIONS["Potted Sunflower"].description,
   },
   Cactus: {
     image: SUNNYSIDE.decorations.cactus,
-    description: BASIC_DECORATIONS().Cactus.description,
+    description: LANDSCAPING_DECORATIONS.Cactus.description,
   },
   "Jack-o-lantern": {
     image: jackOLanternItem,
@@ -2400,7 +2492,7 @@ export const ITEM_DETAILS: Items = {
   },
   "Basic Bear": {
     image: basicBear,
-    description: BASIC_DECORATIONS()["Basic Bear"].description,
+    description: LANDSCAPING_DECORATIONS["Basic Bear"].description,
   },
   "Chef Bear": {
     image: chefBear,
@@ -2992,7 +3084,7 @@ export const ITEM_DETAILS: Items = {
   },
   "Bonnie's Tombstone": {
     image: SUNNYSIDE.decorations.bonniesTombstone,
-    description: BASIC_DECORATIONS()["Bonnie's Tombstone"].description,
+    description: LANDSCAPING_DECORATIONS["Bonnie's Tombstone"].description,
   },
   "Chestnut Fungi Stool": {
     image: chestnutStool,
@@ -3016,7 +3108,7 @@ export const ITEM_DETAILS: Items = {
   },
   "Grubnash's Tombstone": {
     image: SUNNYSIDE.decorations.grubnashTombstone,
-    description: BASIC_DECORATIONS()["Grubnash's Tombstone"].description,
+    description: LANDSCAPING_DECORATIONS["Grubnash's Tombstone"].description,
   },
   "Mahogany Cap": {
     image: mahoganyCap,
@@ -5135,6 +5227,10 @@ export const ITEM_DETAILS: Items = {
     image: easterTicket2025,
     description: translate("description.easterTicket2025"),
   },
+  Cheer: {
+    image: cheer,
+    description: translate("description.cheer"),
+  },
   "Carrot House": {
     image: carrotHouse,
     description: translate("description.carrotHouse"),
@@ -5264,8 +5360,8 @@ export const ITEM_DETAILS: Items = {
     description: translate("description.heartAirBalloon"),
   },
   "Giant Zucchini": {
-    image: giantZuchinni,
-    description: translate("description.giantZuchinni"),
+    image: giantZucchini,
+    description: translate("description.giantZucchini"),
   },
   "Mini Floating Island": {
     image: miniFloatingIsland,
@@ -5275,7 +5371,7 @@ export const ITEM_DETAILS: Items = {
     image: loveChicken,
     description: translate("description.loveChicken"),
   },
-  "Dr. Cow": {
+  "Dr Cow": {
     image: drCow,
     description: translate("description.drCow"),
   },
@@ -5292,7 +5388,339 @@ export const ITEM_DETAILS: Items = {
     description: translate("description.lunalist"),
   },
   "Giant Kale": {
-    image: SUNNYSIDE.icons.expression_confused,
+    image: giantKale,
     description: translate("description.giantKale"),
+  },
+  "Colors Token 2025": {
+    image: colorToken2025,
+    description: translate("description.colorToken2025"),
+  },
+  "Colors Ticket 2025": {
+    image: colorTicket2025,
+    description: translate("description.colorTicket2025"),
+  },
+  "Paint Buckets": {
+    image: paintBuckets,
+    description: translate("description.paintBuckets"),
+  },
+  "Rainbow Well": {
+    image: rainbowWell,
+    description: translate("description.rainbowWell"),
+  },
+  "Floating Toy": {
+    image: floatingToy,
+    description: translate("description.floatingToy"),
+  },
+  "Rainbow Flower": {
+    image: rainbowFlower,
+    description: translate("description.rainbowFlower"),
+  },
+  "Pony Toy": {
+    image: ponyToy,
+    description: translate("description.ponyToy"),
+  },
+  "Red Slime Balloon": {
+    image: redSlimeBalloon,
+    description: translate("description.redSlimeBalloon"),
+  },
+  "Blue Slime Balloon": {
+    image: blueSlimeBalloon,
+    description: translate("description.blueSlimeBalloon"),
+  },
+  "Basic Biome": {
+    image: basicBiome,
+    description: "A basic biome that provides a basic income and a basic life.",
+  },
+  "Spring Biome": {
+    image: springBiome,
+    description:
+      "A spring biome that provides a spring income and a spring life.",
+  },
+  "Desert Biome": {
+    image: desertBiome,
+    description:
+      "A desert biome that provides a desert income and a desert life.",
+  },
+  "Volcano Biome": {
+    image: volcanoBiome,
+    description:
+      "A volcano biome that provides a volcano income and a volcano life.",
+  },
+  Bracelet: {
+    image: bracelet,
+    description: "",
+  },
+  Coprolite: {
+    image: coprolite,
+    description: "",
+  },
+  "Better Together Banner": {
+    image: betterTogetherBanner,
+    description: "",
+  },
+  "Big Apple": {
+    image: bigApple,
+    description: translate("description.bigApple"),
+  },
+  "Big Orange": {
+    image: bigOrange,
+    description: translate("description.bigOrange"),
+  },
+  "Big Banana": {
+    image: bigBanana,
+    description: translate("description.bigBanana"),
+  },
+  "Farmer's Monument": {
+    image: farmerMonument,
+    description: translate("description.farmerMonument"),
+  },
+  "Miner's Monument": {
+    image: minerMonument,
+    description: translate("description.minerMonument"),
+  },
+  "Woodcutter's Monument": {
+    image: woodcutterMonument,
+    description: translate("description.woodcutterMonument"),
+  },
+  "Teamwork Monument": {
+    image: teamworkMonument,
+    description: translate("description.teamworkMonument"),
+  },
+  "Basic Cooking Pot": {
+    image: basicCookingPot,
+    description: translate("description.basicCookingPot"),
+  },
+  "Expert Cooking Pot": {
+    image: expertCookingPot,
+    description: translate("description.expertCookingPot"),
+  },
+  "Advanced Cooking Pot": {
+    image: advancedCookingPot,
+    description: translate("description.advancedCookingPot"),
+  },
+  "Floor Mirror": {
+    image: floorMirror,
+    description: translate("description.floorMirror"),
+  },
+  "Long Rug": {
+    image: longRug,
+    description: translate("description.longRug"),
+  },
+  "Garbage Bin": {
+    image: garbageBin,
+    description: translate("description.garbageBin"),
+  },
+  Wheelbarrow: {
+    image: wheelBarrow,
+    description: translate("description.wheelBarrow"),
+  },
+  "Snail King": {
+    image: snailKing,
+    description: translate("description.snailKing"),
+  },
+  "Reelmaster's Chair": {
+    image: reelmastersChair,
+    description: translate("description.reelmastersChair"),
+  },
+  "Rat King": {
+    image: ratKing,
+    description: translate("description.ratKing"),
+  },
+  "Fruit Tune Box": {
+    image: fruitTuneBox,
+    description: translate("description.fruitTuneBox"),
+  },
+  "Double Bed": {
+    image: doubleBed,
+    description: translate("description.doubleBed"),
+  },
+  "Giant Artichoke": {
+    image: giantArtichoke,
+    description: translate("description.giantArtichoke"),
+  },
+  "Rocket Statue": {
+    image: rocketStatue,
+    description: translate("description.rocketStatue"),
+  },
+  "Ant Queen": {
+    image: antQueen,
+    description: translate("description.antQueen"),
+  },
+  "Jurassic Droplet": {
+    image: jurassicDroplet,
+    description: translate("description.jurassicDroplet"),
+  },
+  "Giant Onion": {
+    image: giantOnion,
+    description: translate("description.giantOnion"),
+  },
+  "Giant Turnip": {
+    image: giantTurnip,
+    description: translate("description.giantTurnip"),
+  },
+  "Groovy Gramophone": {
+    image: groovyGramophone,
+    description: translate("description.groovyGramophone"),
+  },
+  "Wheat Whiskers": {
+    image: wheatWhiskers,
+    description: translate("description.wheatWhiskers"),
+  },
+  "Gold Cooking Trophy": {
+    image: goldCookingTrophy,
+    description: translate("description.goldCookingTrophy"),
+  },
+  "Silver Cooking Trophy": {
+    image: silverCookingTrophy,
+    description: translate("description.silverCookingTrophy"),
+  },
+  "Bronze Cooking Trophy": {
+    image: bronzeCookingTrophy,
+    description: translate("description.bronzeCookingTrophy"),
+  },
+
+  Doll: {
+    image: doll,
+    description: translate("description.doll"),
+  },
+  "Buzz Doll": {
+    image: buzzDoll,
+    description: translate("description.buzzDoll"),
+  },
+  "Lunar Doll": {
+    image: lunarDoll,
+    description: translate("description.lunarDoll"),
+  },
+  "Juicy Doll": {
+    image: juicyDoll,
+    description: translate("description.juicyDoll"),
+  },
+  "Crude Doll": {
+    image: crudeDoll,
+    description: translate("description.crudeDoll"),
+  },
+  "Cluck Doll": {
+    image: cluckDoll,
+    description: translate("description.cluckDoll"),
+  },
+  "Wooly Doll": {
+    image: woolyDoll,
+    description: translate("description.woolyDoll"),
+  },
+  "Moo Doll": {
+    image: mooDoll,
+    description: translate("description.mooDoll"),
+  },
+  "Bloom Doll": {
+    image: bloomDoll,
+    description: translate("description.bloomDoll"),
+  },
+  "Shadow Doll": {
+    image: shadowDoll,
+    description: translate("description.shadowDoll"),
+  },
+  "Ember Doll": {
+    image: emberDoll,
+    description: translate("description.emberDoll"),
+  },
+  "Gilded Doll": {
+    image: gildedDoll,
+    description: translate("description.gildedDoll"),
+  },
+  "Lumber Doll": {
+    image: lumberDoll,
+    description: translate("description.lumberDoll"),
+  },
+  "Harvest Doll": {
+    image: harvestDoll,
+    description: translate("description.harvestDoll"),
+  },
+  "Sizzle Doll": {
+    image: sizzleDoll,
+    description: translate("description.sizzleDoll"),
+  },
+  "Angler Doll": {
+    image: anglerDoll,
+    description: translate("description.anglerDoll"),
+  },
+  "Dune Doll": {
+    image: duneDoll,
+    description: translate("description.duneDoll"),
+  },
+  "Mouse Doll": {
+    image: mouseDoll,
+    description: translate("description.mouseDoll"),
+  },
+  "Grubby Doll": {
+    image: grubbyDoll,
+    description: translate("description.grubbyDoll"),
+  },
+  "Nefari Doll": {
+    image: nefariDoll,
+    description: translate("description.nefariDoll"),
+  },
+  "Frosty Doll": {
+    image: frostyDoll,
+    description: translate("description.frostyDoll"),
+  },
+  "Cosmo Doll": {
+    image: cosmoDoll,
+    description: translate("description.cosmoDoll"),
+  },
+  "Bigfin Doll": {
+    image: bigfinDoll,
+    description: translate("description.bigfinDoll"),
+  },
+  "Solar Doll": {
+    image: solarDoll,
+    description: translate("description.solarDoll"),
+  },
+  Trash: {
+    image: trash,
+    description: translate("description.trash"),
+  },
+  Dung: {
+    image: dung,
+    description: translate("description.dung"),
+  },
+  Weed: {
+    image: weed,
+    description: translate("description.weed"),
+  },
+  "Baby Cow": {
+    image: babyCow,
+    description: translate("description.babyCow"),
+  },
+  "Baby Sheep": {
+    image: babySheep,
+    description: translate("description.babySheep"),
+  },
+  "Janitor Chicken": {
+    image: janitorChicken,
+    description: translate("description.janitorChicken"),
+  },
+  "Venus Bumpkin Trap": {
+    image: venusBumpkinTrap,
+    description: translate("description.venusBumpkinTrap"),
+  },
+  Anthill: {
+    image: anthill,
+    description: translate("description.anthill"),
+  },
+  Rat: {
+    image: rat,
+    description: translate("description.rat"),
+  },
+  Snail: {
+    image: snail,
+    description: translate("description.snail"),
+  },
+  "Pest Net": {
+    image: pestNet,
+    description: translate("description.pestNet"),
+  },
+  Poseidon: {
+    image: poseidon,
+    description: translate("description.poseidon"),
   },
 };
