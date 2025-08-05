@@ -1,3 +1,4 @@
+// import { FlowerBox } from "../events/landExpansion/buySeasonalItem";
 import { BumpkinItem } from "./bumpkin";
 import { InventoryItemName } from "./game";
 import { SeasonName } from "./seasons";
@@ -33,7 +34,19 @@ export type SeasonalCollectibleName =
   | "Heart Air Balloon"
   | "Giant Zucchini"
   | "Giant Kale"
-  | "Mini Floating Island";
+  | "Mini Floating Island"
+  // Better Together
+  | "Floor Mirror"
+  | "Long Rug"
+  | "Garbage Bin"
+  | "Wheelbarrow"
+  | "Snail King"
+  | "Reelmaster's Chair"
+  | "Rat King"
+  | "Fruit Tune Box"
+  | "Double Bed"
+  | "Giant Artichoke"
+  | "Teamwork Monument";
 
 export type SeasonalWearableName = Extract<
   BumpkinItem,
@@ -59,6 +72,13 @@ export type SeasonalWearableName = Extract<
   | "Love Charm Shirt"
   | "Frost Sword"
   | "Oracle Syringe"
+
+  // Better Together
+  | "Garbage Bin Hat"
+  | "Architect Ruler"
+  | "Raccoon Onesie"
+  | "Recycle Shirt"
+  | "Pickaxe Shark"
 >;
 
 export type MegastoreKeys = "Treasure Key" | "Rare Key" | "Luxury Key";
@@ -72,10 +92,10 @@ type SeasonalStoreBase = {
 };
 
 export type SeasonalStoreWearable = SeasonalStoreBase & {
-  wearable: BumpkinItem;
+  wearable: SeasonalWearableName;
 };
 export type SeasonalStoreCollectible = SeasonalStoreBase & {
-  collectible: InventoryItemName;
+  collectible: SeasonalCollectibleName | MegastoreKeys | FlowerBox;
 };
 
 export type SeasonalStoreItem =
@@ -123,14 +143,14 @@ const EMPTY_SEASONAL_STORE: SeasonalStore = {
 // Test only
 const PHARAOH_ITEMS: SeasonalStoreItem[] = [
   {
-    wearable: "Red Farmer Shirt",
+    wearable: "Red Farmer Shirt" as SeasonalWearableName,
     cost: {
       items: {},
       sfl: 5,
     },
   },
   {
-    collectible: "Basic Bear",
+    collectible: "Basic Bear" as SeasonalCollectibleName,
     cost: {
       items: {
         Wood: 1,
@@ -139,7 +159,7 @@ const PHARAOH_ITEMS: SeasonalStoreItem[] = [
     },
   },
   {
-    collectible: "Treasure Key",
+    collectible: "Treasure Key" as MegastoreKeys,
     cooldownMs: 24 * 60 * 60 * 1000,
     cost: {
       items: {
@@ -152,7 +172,7 @@ const PHARAOH_ITEMS: SeasonalStoreItem[] = [
 
 const RARE_PHARAOH_ITEMS: SeasonalStoreItem[] = [
   {
-    wearable: "Rancher Hair",
+    wearable: "Rancher Hair" as SeasonalWearableName,
     cost: {
       items: {
         Wood: 1,
@@ -162,7 +182,7 @@ const RARE_PHARAOH_ITEMS: SeasonalStoreItem[] = [
     },
   },
   {
-    wearable: "Axe",
+    wearable: "Axe" as SeasonalWearableName,
     cost: {
       items: {
         Wood: 1,
@@ -171,7 +191,7 @@ const RARE_PHARAOH_ITEMS: SeasonalStoreItem[] = [
     },
   },
   {
-    wearable: "Yellow Farmer Shirt",
+    wearable: "Yellow Farmer Shirt" as SeasonalWearableName,
     cost: {
       items: {
         Wood: 1,
@@ -192,7 +212,7 @@ const RARE_PHARAOH_ITEMS: SeasonalStoreItem[] = [
 ];
 const EPIC_PHARAOH_ITEMS: SeasonalStoreItem[] = [
   {
-    wearable: "Blue Farmer Shirt",
+    wearable: "Blue Farmer Shirt" as SeasonalWearableName,
     cost: {
       items: {
         Wood: 1,
@@ -201,7 +221,7 @@ const EPIC_PHARAOH_ITEMS: SeasonalStoreItem[] = [
     },
   },
   {
-    collectible: "Luxury Key",
+    collectible: "Luxury Key" as MegastoreKeys,
     cooldownMs: 24 * 60 * 60 * 1000,
     cost: {
       items: {
@@ -675,6 +695,116 @@ const GREAT_BLOOM_ITEMS: SeasonalStore = {
   },
 };
 
+const BETTER_TOGETHER_ITEMS: SeasonalStore = {
+  basic: {
+    items: [
+      {
+        collectible: "Floor Mirror",
+        cost: { sfl: 5, items: {} },
+      },
+      {
+        collectible: "Long Rug",
+        cost: { sfl: 0, items: { Bracelet: 50 } },
+      },
+      {
+        collectible: "Garbage Bin",
+        cost: { sfl: 0, items: { Coprolite: 25 } },
+      },
+      {
+        collectible: "Bronze Flower Box",
+        cost: { sfl: 0, items: { Bracelet: 450 } },
+      },
+      {
+        collectible: "Treasure Key",
+        cost: { sfl: 0, items: { Bracelet: 250 } },
+      },
+      {
+        wearable: "Garbage Bin Hat",
+        cost: { sfl: 0, items: { Bracelet: 300 } },
+      },
+    ],
+  },
+  rare: {
+    items: [
+      {
+        collectible: "Wheelbarrow",
+        cost: { sfl: 60, items: {} },
+      },
+      {
+        collectible: "Snail King",
+        cost: { sfl: 0, items: { Coprolite: 85 } },
+      },
+      {
+        collectible: "Silver Flower Box",
+        cost: { sfl: 0, items: { Bracelet: 1000 } },
+      },
+      {
+        collectible: "Rare Key",
+        cost: { sfl: 0, items: { Bracelet: 500 } },
+      },
+      {
+        wearable: "Architect Ruler",
+        cost: { sfl: 0, items: { Bracelet: 2500 } },
+      },
+      {
+        wearable: "Raccoon Onesie",
+        cost: { sfl: 0, items: { Bracelet: 700 } },
+      },
+    ],
+    requirement: 4,
+  },
+  epic: {
+    items: [
+      {
+        collectible: "Reelmaster's Chair",
+        cost: { sfl: 0, items: { Coprolite: 160 } },
+      },
+      {
+        collectible: "Rat King",
+        cost: { sfl: 0, items: { Bracelet: 1250 } },
+      },
+      {
+        collectible: "Fruit Tune Box",
+        cost: { sfl: 0, items: { Bracelet: 3500 } },
+      },
+      {
+        collectible: "Gold Flower Box",
+        cost: { sfl: 0, items: { Bracelet: 2000 } },
+      },
+      {
+        collectible: "Luxury Key",
+        cost: { sfl: 0, items: { Bracelet: 1000 } },
+      },
+      {
+        collectible: "Double Bed",
+        cost: { sfl: 0, items: { Wool: 5000, Gem: 2500, Bracelet: 1250 } },
+      },
+      {
+        wearable: "Recycle Shirt",
+        cost: { sfl: 400, items: {} },
+      },
+    ],
+    requirement: 4,
+  },
+  mega: {
+    items: [
+      {
+        collectible: "Giant Artichoke",
+        cost: { sfl: 0, items: { Bracelet: 5500 } },
+      },
+      {
+        wearable: "Pickaxe Shark",
+        cost: { sfl: 0, items: { Bracelet: 8000 } },
+      },
+      {
+        collectible: "Teamwork Monument",
+        cost: { sfl: 0, items: { Bracelet: 1000 } },
+      },
+    ],
+    requirement: 4,
+  },
+};
+
 export const MEGASTORE: Record<SeasonName, SeasonalStore> = {
   "Catch the Kraken": EMPTY_SEASONAL_STORE,
   "Clash of Factions": EMPTY_SEASONAL_STORE,
@@ -733,6 +863,8 @@ export const MEGASTORE: Record<SeasonName, SeasonalStore> = {
       requirement: 4,
     },
   },
-
   "Great Bloom": GREAT_BLOOM_ITEMS,
+
+  // TODO: To add Better Together items
+  "Better Together": BETTER_TOGETHER_ITEMS,
 };
