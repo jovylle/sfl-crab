@@ -1,12 +1,11 @@
 // API endpoints configuration
 const API_ENDPOINTS = {
-  primary: '/api/community/farms/',
-  backup: '/api/community/farms/'
-  // backup: '/api/visit/' // no longer work
+  primary: '/api/community/farms/',  // no longer work
+  backup: '/api/visit/'
 };
 
 // Normalize response format to match primary API structure
-function normalizeApiResponse(data, apiType = 'primary') {
+function normalizeApiResponse(data, apiType = 'backup') {
   if (apiType === 'primary') {
     // Primary API: {visitedFarmState: {gameObject}}
     return data;
@@ -25,16 +24,16 @@ export async function fetchLandDataFromServer (landId) {
   if (!landId) throw new Error('landId is required');
 
   try {
-    // Try primary API first
-    const primaryResponse = await fetch(`${API_ENDPOINTS.primary}${landId}`);
+    // Try primary API first // UPDATE PRIMARY NO WORK EMOURE
+    const response = await fetch(`${API_ENDPOINTS.backup}${landId}`);
     
-    if (primaryResponse.ok) {
-      const data = await primaryResponse.json();
-      return normalizeApiResponse(data, 'primary');
+    if (response.ok) {
+      const data = await response.json();
+      return normalizeApiResponse(data, 'backup');
     }
     
     // If primary API returns 404, try backup API
-    if (primaryResponse.status === 404) {
+    if (response.status === 404) {
       console.warn('Primary API returned 404, trying backup API...');
       
       const backupResponse = await fetch(`${API_ENDPOINTS.backup}${landId}`);
@@ -50,7 +49,7 @@ export async function fetchLandDataFromServer (landId) {
     }
     
     // Handle rate limiting
-    if (primaryResponse.status === 429) {
+    if (response.status === 429) {
       throw new Error('You are sending requests too quickly. Please wait a moment before trying again.');
     }
     
