@@ -1,7 +1,8 @@
 // API endpoints configuration
 const API_ENDPOINTS = {
-  primary: '/api/visit/',
+  primary: '/api/community/farms/',
   backup: '/api/community/farms/'
+  // backup: '/api/visit/' // no longer work
 };
 
 // Normalize response format to match primary API structure
