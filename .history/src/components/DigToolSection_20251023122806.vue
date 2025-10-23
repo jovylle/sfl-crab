@@ -19,7 +19,30 @@
               🧹 Clear Marks
             </button>
 
+            <button
+              class="btn btn-info tooltip btn-sm text-nowrap"
+              :class="{ 'btn-disabled': !grid.canUndo() }"
+              data-tip="↶ Undo last mark (Ctrl+Z)"
+              @click="handleUndo"
+            >
+              ↶ Undo
+            </button>
 
+            <button
+              class="btn btn-success tooltip btn-sm text-nowrap"
+              data-tip="📤 Export grid state to clipboard"
+              @click="handleExport"
+            >
+              📤 Export
+            </button>
+
+            <button
+              class="btn btn-primary tooltip btn-sm text-nowrap"
+              data-tip="📥 Import grid state from clipboard"
+              @click="handleImport"
+            >
+              📥 Import
+            </button>
 
             <!-- Controlled checkbox -->
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
@@ -45,13 +68,20 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup>
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { 
+  encodeGridState, 
+  decodeGridState, 
+  importMarksToGrid, 
+  copyToClipboard, 
+  isValidEncodedState 
+} from '@/utils/gridStateCodec'
 
 const route  = useRoute()
 const router = useRouter()
@@ -76,4 +106,27 @@ function clearLandId () {
   }
 }
 
+function handleUndo () {
+  if (grid.canUndo()) {
+    grid.undo()
+  }
+}
+
+// Keyboard shortcut handler
+function handleKeydown (event) {
+  // Check for Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
+  if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+    event.preventDefault()
+    handleUndo()
+  }
+}
+
+// Add keyboard event listeners
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>

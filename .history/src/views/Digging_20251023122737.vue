@@ -1,29 +1,27 @@
 <template>
-    <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
-      <!-- Manual Marks clear & Grid -->
+  <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
+    <!-- Manual Marks clear & Grid -->
+    <div
+      class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
+    >
       <div
-        class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
+        class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1"
       >
-        <div
-          class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1"
-        >
-          <DigToolSection v-model:showTreasureOrder="showTreasureOrder" />
+        <DigToolSection v-model:showTreasureOrder="showTreasureOrder" />
 
-          <!-- Pass the toggle and map down into Grid -->
-          <Grid
-            :show-treasure-order="showTreasureOrder"
-            :treasure-order-map="treasureOrderMap"
-          />
-        </div>
+        <!-- Pass the toggle and map down into Grid -->
+        <Grid
+          :show-treasure-order="showTreasureOrder"
+          :treasure-order-map="treasureOrderMap"
+        />
       </div>
-
-      <TodayPatterns />
     </div>
 
-    <!-- Dig Statistics - Full Width Section -->
-    <div class="mt-6">
+    <div class="space-y-4">
+      <TodayPatterns />
       <DigStats />
     </div>
+  </div>
 
   <div>
     <InfoFooter />
@@ -36,7 +34,6 @@ import { useLocalStorage } from '@vueuse/core'
 import DigToolSection from '@/components/DigToolSection.vue'
 import Grid           from '@/components/Grid.vue'
 import TodayPatterns  from '@/components/TodayPatterns.vue'
-import DigStats       from '@/components/DigStats.vue'
 import InfoFooter     from '@/components/InfoFooter.vue'
 import { useLandData }    from '@/composables/useLandData'
 import { useGridManager } from '@/composables/useGridManager'

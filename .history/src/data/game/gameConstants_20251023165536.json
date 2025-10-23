@@ -1,0 +1,9 @@
+{
+  "lastUpdated": "2025-10-23T00:00:00.000Z",
+  "source": "https://github.com/sunflower-land/sunflower-land",
+  "version": "1.0.0",
+  "constants": {
+    "FREE_DIGS_PER_DAY": 25,
+    "GRID_SIZE": 10
+  }
+}

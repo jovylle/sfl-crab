@@ -19,6 +19,14 @@
               🧹 Clear Marks
             </button>
 
+            <button
+              class="btn btn-info tooltip btn-sm text-nowrap"
+              :class="{ 'btn-disabled': !grid.canUndo() }"
+              data-tip="↶ Undo last mark (Ctrl+Z)"
+              @click="handleUndo"
+            >
+              ↶ Undo
+            </button>
 
 
             <!-- Controlled checkbox -->
@@ -52,6 +60,7 @@
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -76,4 +85,28 @@ function clearLandId () {
   }
 }
 
+function handleUndo () {
+  if (grid.canUndo()) {
+    grid.undo()
+  }
+}
+
+
+// Keyboard shortcut handler
+function handleKeydown (event) {
+  // Check for Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
+  if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+    event.preventDefault()
+    handleUndo()
+  }
+}
+
+// Add keyboard event listeners
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>

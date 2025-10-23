@@ -1,0 +1,42 @@
+name: Sync Sunflower Land Game Data
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Download game files from SFL repo
+        run: |
+          mkdir -p temp/sfl
+          curl -o temp/sfl/treasure.ts \
+            https://raw.githubusercontent.com/sunflower-land/sunflower-land/main/src/features/game/types/treasure.ts
+          curl -o temp/sfl/desert.ts \
+            https://raw.githubusercontent.com/sunflower-land/sunflower-land/main/src/features/game/types/desert.ts
+      
+      - run: npm ci
+      - run: node scripts/parse-treasure-data.js
+      
+      - name: Commit if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add src/data/game/
+          
+          if ! git diff --staged --quiet; then
+            git commit -m "🤖 Auto-sync: Update game data [$(date -u '+%Y-%m-%d %H:%M UTC')]"
+            git push
+          fi
+      
+      - run: rm -rf temp/
