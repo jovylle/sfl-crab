@@ -1,2 +1,2 @@
-/api/*  https://api.sunflower-land.com/:splat  200
-/*      /index.html                           200
+/.netlify/functions/*  /.netlify/functions/:splat  200
+/*                    /index.html               200
