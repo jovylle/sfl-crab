@@ -1,3 +1,5 @@
+import { API_CONFIG, getApiHeaders } from '@/config/api.js'
+
 // API endpoints configuration
 const API_ENDPOINTS = {
   primary: '/api/visit/',  // no longer work
@@ -25,7 +27,9 @@ export async function fetchLandDataFromServer (landId) {
 
   try {
     // Try primary API first // UPDATE PRIMARY NO WORK EMOURE
-    const response = await fetch(`${API_ENDPOINTS.backup}${landId}`);
+    const response = await fetch(`${API_ENDPOINTS.backup}${landId}`, {
+      headers: getApiHeaders()
+    });
     
     if (response.ok) {
       const data = await response.json();
@@ -36,7 +40,9 @@ export async function fetchLandDataFromServer (landId) {
     if (response.status === 404) {
       console.warn('Primary API returned 404, trying backup API...');
       
-      const backupResponse = await fetch(`${API_ENDPOINTS.backup}${landId}`);
+      const backupResponse = await fetch(`${API_ENDPOINTS.backup}${landId}`, {
+        headers: getApiHeaders()
+      });
       
       if (backupResponse.ok) {
         const data = await backupResponse.json();
