@@ -1,11 +1,5 @@
 import { API_CONFIG, getApiHeaders } from '@/config/api.js'
 
-// API endpoints configuration
-const API_ENDPOINTS = {
-  primary: '/api/visit/',  // no longer work
-  backup: '/api/community/farms/'
-};
-
 // Normalize response format to match primary API structure
 function normalizeApiResponse(data, apiType = 'backup') {
   if (apiType === 'primary') {
@@ -27,7 +21,7 @@ export async function fetchLandDataFromServer (landId) {
 
   try {
     // Try primary API first // UPDATE PRIMARY NO WORK EMOURE
-    const response = await fetch(`${API_ENDPOINTS.backup}${landId}`, {
+    const response = await fetch(`${API_CONFIG.ENDPOINTS.backup}${landId}`, {
       headers: getApiHeaders()
     });
     
@@ -40,7 +34,7 @@ export async function fetchLandDataFromServer (landId) {
     if (response.status === 404) {
       console.warn('Primary API returned 404, trying backup API...');
       
-      const backupResponse = await fetch(`${API_ENDPOINTS.backup}${landId}`, {
+      const backupResponse = await fetch(`${API_CONFIG.ENDPOINTS.backup}${landId}`, {
         headers: getApiHeaders()
       });
       
