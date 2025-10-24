@@ -26,19 +26,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': {
-        target: 'https://api.sunflower-land.com',
+      '/.netlify/functions': {
+        target: 'http://localhost:8888',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''), // Remove '/api' prefix
-        configure: (proxy, options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            // Add the API key header to all proxied requests
-            const apiKey = process.env.VITE_SFL_API_KEY;
-            if (apiKey) {
-              proxyReq.setHeader('x-api-key', apiKey);
-            }
-          });
-        },
       },
     },
   },
