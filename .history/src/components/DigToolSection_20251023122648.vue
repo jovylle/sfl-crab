@@ -19,7 +19,14 @@
               🧹 Clear Marks
             </button>
 
-
+            <button
+              class="btn btn-info tooltip btn-sm text-nowrap"
+              :class="{ 'btn-disabled': !grid.canUndo() }"
+              data-tip="↶ Undo last mark (Ctrl+Z)"
+              @click="handleUndo"
+            >
+              ↶ Undo
+            </button>
 
             <!-- Controlled checkbox -->
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
@@ -45,7 +52,6 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup>
@@ -59,21 +65,21 @@ const router = useRouter()
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
 
-// Define the incoming prop and the event you'll emit
+// Define the incoming prop and the event you’ll emit
 defineProps({
   showTreasureOrder: { type: Boolean, required: true }
 })
-// we'll emit update:showTreasureOrder via @change above
+// we’ll emit update:showTreasureOrder via @change above
 defineEmits(['update:showTreasureOrder'])
+
 
 function clearLandId () {
   if (route.name === 'Digging') {
-    // we're on /:landId/digging → go to /digging
+    // we’re on /:landId/digging → go to /digging
     router.push({ name: 'GuestDigging' })
   } else {
     // default to details no-id
     router.push({ name: 'LandDetailsNoId' })
   }
 }
-
 </script>

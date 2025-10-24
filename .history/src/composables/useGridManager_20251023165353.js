@@ -65,6 +65,39 @@ export function useGridManager (rawLandId, gridSize = 10) {
       storage.save()
     }
 
+    // undo last action
+    function undo () {
+      if (history.length === 0) return false
+      
+      const lastAction = history.pop()
+      
+      if (lastAction.action === 'mark') {
+        // restore previous state
+        if (lastAction.oldClasses.length === 0) {
+          // was empty, remove from storage
+          delete storage.hints.value[lastAction.tileIndex]
+        } else {
+          // restore old classes
+          storage.hints.value[lastAction.tileIndex] = [...lastAction.oldClasses]
+        }
+        
+        // reapply all hints to engine
+        applySavedHints()
+        storage.save()
+        return true
+      }
+      
+      return false
+    }
+
+    // add action to history
+    function addToHistory (action) {
+      history.push(action)
+      // keep only last MAX_HISTORY actions
+      if (history.length > MAX_HISTORY) {
+        history.shift()
+      }
+    }
 
 
     cache[landKey] = {
@@ -72,6 +105,9 @@ export function useGridManager (rawLandId, gridSize = 10) {
       update,
       // cycle, removed
       pick (index, hintClass) {
+        // capture old state before making changes
+        const oldClasses = storage.hints.value[index] ? [...storage.hints.value[index]] : []
+        
         engine.pickEngineHint(index, hintClass);
 
         // 🔒 Normalize to a flat array
@@ -87,9 +123,20 @@ export function useGridManager (rawLandId, gridSize = 10) {
           storage.hints.value[index] = flat;
         }
 
+        // add to history for undo functionality
+        addToHistory({
+          action: 'mark',
+          tileIndex: index,
+          oldClasses,
+          newClasses: [...storage.hints.value[index]],
+          timestamp: Date.now()
+        })
+
         storage.save();
       },
-      clear
+      clear,
+      undo,
+      canUndo: () => history.length > 0
     }
   }
 

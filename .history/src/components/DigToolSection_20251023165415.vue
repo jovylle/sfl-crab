@@ -76,4 +76,28 @@ function clearLandId () {
   }
 }
 
+function handleUndo () {
+  if (grid.canUndo()) {
+    grid.undo()
+  }
+}
+
+
+// Keyboard shortcut handler
+function handleKeydown (event) {
+  // Check for Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
+  if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+    event.preventDefault()
+    handleUndo()
+  }
+}
+
+// Add keyboard event listeners
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>

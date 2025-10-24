@@ -89,7 +89,9 @@ export function useGridManager (rawLandId, gridSize = 10) {
 
         storage.save();
       },
-      clear
+      clear,
+      undo,
+      canUndo: () => history.length > 0
     }
   }
 

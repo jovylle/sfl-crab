@@ -12,6 +12,9 @@ export function useGridManager (rawLandId, gridSize = 10) {
     const engine = useGridEngine(gridSize)
     const storage = useHintsStorage(landKey)
     
+    // 2️⃣ history stack for undo functionality
+    const history = []
+    const MAX_HISTORY = 10
 
     // reapply saved hints on-top of the engine’s base grid
     function applySavedHints () {
@@ -64,7 +67,6 @@ export function useGridManager (rawLandId, gridSize = 10) {
       // write the empty map back to localStorage
       storage.save()
     }
-
 
 
     cache[landKey] = {

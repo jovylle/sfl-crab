@@ -72,6 +72,9 @@ export function useGridManager (rawLandId, gridSize = 10) {
       update,
       // cycle, removed
       pick (index, hintClass) {
+        // capture old state before making changes
+        const oldClasses = storage.hints.value[index] ? [...storage.hints.value[index]] : []
+        
         engine.pickEngineHint(index, hintClass);
 
         // 🔒 Normalize to a flat array
@@ -87,9 +90,20 @@ export function useGridManager (rawLandId, gridSize = 10) {
           storage.hints.value[index] = flat;
         }
 
+        // add to history for undo functionality
+        addToHistory({
+          action: 'mark',
+          tileIndex: index,
+          oldClasses,
+          newClasses: [...storage.hints.value[index]],
+          timestamp: Date.now()
+        })
+
         storage.save();
       },
-      clear
+      clear,
+      undo,
+      canUndo: () => history.length > 0
     }
   }
 
