@@ -13,10 +13,7 @@
   NODE_VERSION = "18"
 
 # Redirect rules (backup for _redirects file)
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# Note: Netlify functions are handled automatically, no redirect needed
 
 [[redirects]]
   from = "/*"
