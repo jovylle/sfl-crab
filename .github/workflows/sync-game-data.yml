@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * *'  # Daily at midnight UTC
   workflow_dispatch:
 
+permissions:
+  contents: write  # Allow the workflow to push commits
+
 jobs:
   sync-data:
     runs-on: ubuntu-latest
