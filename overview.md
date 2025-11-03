@@ -271,11 +271,18 @@ GET /api/community/farms/{landId}
 - **`src/services/landApiService.js`** - API calls to Sunflower Land servers
 - **`src/services/landSyncService.js`** - Land sync operations
 
-### Game Data (from SFL repo)
-- **`src_other/features/game/types/desert.ts`** - ⭐ `DIGGING_FORMATIONS` object
+### Game Data
+- **`src/data/game/diggingFormations.js`** - ⭐ `DIGGING_FORMATIONS` object
   - Contains all treasure pattern formations (ARTEFACT_ONE through ARTEFACT_TWENTY_THREE, etc.)
   - Maps pattern names to coordinate arrays with treasure types
-  - Defines seasonal artifacts per season
+  - Extracted from official SFL repo for local use
+- **`src/data/game/seasonalArtefacts.js`** - Seasonal artifact mappings
+  - Maps season names to their artifacts (e.g., "Better Together" → "Coprolite")
+  - Provides `getCurrentSeasonalArtefact()` helper function
+  - Gracefully handles dates beyond defined seasons
+- **`src_other/`** - ⚠️ **REFERENCE ONLY**: Temporary static data from SFL repo
+  - DO NOT import directly from `src_other` in application code
+  - Extract needed data to `src/data/game/` instead
 
 ### Utilities
 - **`src/utils/api.js`** - API helper functions
@@ -303,11 +310,14 @@ GET /api/community/farms/{landId}
 - API endpoint is configurable in `API_ENDPOINTS` constant
 - Response normalization happens in `normalizeApiResponse()`
 
-### Updating Treasure Patterns
-- Source file: `src_other/features/game/types/desert.ts`
-- This file is copied from the official Sunflower Land game repository
-- Contains `DIGGING_FORMATIONS` object with all pattern definitions
-- Update when new patterns are added to the game
+### Updating Game Data (Treasure Patterns, Seasons, etc.)
+- **Local data files:** `src/data/game/diggingFormations.js` and `seasonalArtefacts.js`
+- **Source of truth:** Official Sunflower Land game repository
+- **Process:**
+  1. Check `src_other/features/game/types/desert.ts` for updates
+  2. Manually extract relevant data to `src/data/game/` files
+  3. Never import directly from `src_other` in application code
+  4. Update when new patterns/seasons are added to the game
 
 ### Styling Changes
 - Global styles: `src/styles/style.css`

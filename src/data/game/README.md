@@ -5,6 +5,8 @@ Auto-synced daily from https://github.com/sunflower-land/sunflower-land
 ## Files
 - `treasurePrices.json` - Treasure sell prices
 - `gameConstants.json` - Game constants (FREE_DIGS, GRID_SIZE, etc.)
+- `seasonalArtefacts.js` - Seasonal artifact mappings (manually extracted from SFL repo)
+- `diggingFormations.js` - Treasure pattern formations (manually extracted from SFL repo)
 
 ## Updates
 - **Automatic**: Daily at 00:00 UTC via GitHub Actions
