@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useLandData } from '../composables/useLandData'
-import { DIGGING_FORMATIONS } from '../../src_other/features/game/types/desert'
+import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useRoute } from 'vue-router'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 

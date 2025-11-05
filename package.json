@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "prerender": "node scripts/prerender.js",
-    "sync-game-data": "node scripts/parse-treasure-data.js"
+    "sync-game-data": "node scripts/parse-treasure-data.js",
+    "check-assets": "node scripts/check-missing-assets.js",
+    "update-seasons": "node scripts/update-seasons-from-sfl.js"
   },
   "dependencies": {
     "@vueuse/core": "^13.2.0",

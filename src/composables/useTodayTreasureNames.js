@@ -1,6 +1,6 @@
 // composables/useTodayTreasureNames.js
 import { computed } from "vue";
-import { DIGGING_FORMATIONS } from '../../src_other/features/game/types/desert'
+import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useLandData } from "@/composables/useLandData";
 
 export function useTodayTreasureNames () {
