@@ -2,6 +2,43 @@
 
 Every few months, Sunflower Land releases a new chapter/season. This guide helps you update the app when that happens.
 
+## 🤖 Automated Updates (Recommended)
+
+**Good news!** Season updates are now automated via GitHub Actions!
+
+### How It Works
+
+- **Automatic:** Runs on the 1st of every month at 00:00 UTC
+- **Manual Trigger:** You can also trigger it manually from GitHub Actions tab
+- **What It Does:**
+  1. Fetches latest season data from SFL repository
+  2. Updates `src/data/game/seasonalArtefacts.js` if changes detected
+  3. Downloads new artifact `.webp` images to `public/world/`
+  4. Commits and pushes changes automatically to `development` branch
+
+### Manual Trigger
+
+1. Go to: https://github.com/jovylle/sfl-crab/actions
+2. Select "Update Seasons Data" workflow
+3. Click "Run workflow" button
+4. Select branch (usually `development`)
+5. Click "Run workflow" green button
+
+### Test Locally Before Deployment
+
+You can also run the update script locally:
+```bash
+npm run update-seasons
+```
+
+This will check for updates and show you what would change without committing anything.
+
+---
+
+## 📋 Manual Update Checklist (If Needed)
+
+If the automated workflow fails or you need to update manually:
+
 ## 🔍 How to Know When to Update
 
 You'll get the `"No Season found"` error when:
@@ -104,7 +141,15 @@ git push
 
 ## 🎯 Quick Reference
 
-### Where to Update:
+### Automated Tools:
+
+| Command | Description |
+|---------|-------------|
+| `npm run update-seasons` | Fetch and update season data from SFL repo |
+| `npm run check-assets` | Check for missing treasure asset images |
+| GitHub Actions | Auto-runs monthly on the 1st at 00:00 UTC |
+
+### Where to Update (Manual):
 
 | What | File | Action |
 |------|------|--------|
@@ -134,11 +179,30 @@ git push
 - Verify `SEASONAL_ARTEFACT` mapping in `seasonalArtefacts.js`
 - Check that `getCurrentSeasonalArtefact()` has correct date ranges
 
+## 🔧 Automation Details
+
+### GitHub Actions Workflow
+
+The automation is defined in `.github/workflows/update-seasons.yml`:
+- Scheduled to run monthly
+- Can be triggered manually
+- Automatically commits changes if updates are found
+
+### Update Script
+
+The script `scripts/update-seasons-from-sfl.js`:
+- Fetches `seasons.ts` and `desert.ts` from SFL repo
+- Parses TypeScript using regex patterns
+- Generates updated `seasonalArtefacts.js` file
+- Downloads missing artifact images
+- Safe to run multiple times (idempotent)
+
 ## 📚 Additional Resources
 
 - **SFL GitHub:** https://github.com/sunflower-land/sunflower-land
 - **SFL Discord:** Ask community for season info
 - **Game Wiki:** Check for new season announcements
+- **GitHub Actions:** https://github.com/jovylle/sfl-crab/actions
 
 ---
 
