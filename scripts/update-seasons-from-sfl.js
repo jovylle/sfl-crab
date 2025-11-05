@@ -24,6 +24,7 @@ const SFL_REPO_BASE = 'https://raw.githubusercontent.com/sunflower-land/sunflowe
 const SEASONS_URL = `${SFL_REPO_BASE}/src/features/game/types/seasons.ts`;
 const DESERT_URL = `${SFL_REPO_BASE}/src/features/game/types/desert.ts`;
 const ASSETS_BASE_URL = `${SFL_REPO_BASE}/public/world`;
+const ASSETS_FALLBACK_URL = 'https://sunflower-land.com/testnet-assets/resources/treasures'; // Fallback for missing assets
 
 const LOCAL_ARTIFACTS_FILE = path.join(__dirname, '../src/data/game/seasonalArtefacts.js');
 const ASSETS_DIR = path.join(__dirname, '../public/world');
@@ -228,7 +229,18 @@ async function main() {
           downloadedAssets.push(filename);
           hasChanges = true;
         } catch (error) {
-          console.warn(`⚠️  Failed to download ${filename}: ${error.message}`);
+          // Try fallback URL (testnet-assets) if main repo fails
+          console.log(`⚠️  Main URL failed, trying fallback for ${filename}...`);
+          const fallbackUrl = `${ASSETS_FALLBACK_URL}/${filename}`;
+          
+          try {
+            await downloadFile(fallbackUrl, localPath);
+            console.log(`✅ Downloaded ${filename} from fallback URL`);
+            downloadedAssets.push(filename);
+            hasChanges = true;
+          } catch (fallbackError) {
+            console.warn(`❌ Failed to download ${filename} from both URLs`);
+          }
         }
       }
     }
