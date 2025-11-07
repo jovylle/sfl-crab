@@ -100,16 +100,6 @@
         <div v-if="lastDigTime" class="mt-3 text-xs text-base-content/70 text-center">
           <span class="font-medium">Last dig:</span> {{ formatTime(lastDigTime) }}
         </div>
-
-        <!-- Data Freshness Footer -->
-        <div class="mt-4 text-xs text-base-content/50 text-center border-t border-base-300 pt-3">
-          <span class="font-medium">Prices updated:</span> 
-          {{ formatDate(LAST_UPDATED) }}
-          <span class="mx-2">•</span>
-          <a :href="DATA_SOURCE" target="_blank" class="link link-hover">
-            Source: Sunflower Land
-          </a>
-        </div>
       </div>
     </div>
   </div>
@@ -118,7 +108,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useLandData } from '@/composables/useLandData'
-import { getTreasuresWithPrices, calculateTotalValue, LAST_UPDATED, DATA_SOURCE } from '@/utils/treasurePrices'
+import { getTreasuresWithPrices, calculateTotalValue } from '@/utils/treasurePrices'
 
 const { desert } = useLandData()
 
