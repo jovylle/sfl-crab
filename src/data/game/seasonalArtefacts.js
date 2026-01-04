@@ -1,19 +1,19 @@
 // Seasonal Artefacts Data
 // Extracted from Sunflower Land game repo for local use
-// Last updated: 2025-11-05
+// Last updated: 2026-01-04
 
 /**
  * Maps season names to their corresponding seasonal artifact
  */
 export const SEASONAL_ARTEFACT = {
-  "Bull Run": "Cow Skull",
-  "Pharaoh's Treasure": "Scarab",
   "Solar Flare": "Scarab",
   "Dawn Breaker": "Scarab",
   "Witches' Eve": "Scarab",
   "Catch the Kraken": "Scarab",
   "Spring Blossom": "Scarab",
   "Clash of Factions": "Scarab",
+  "Pharaoh's Treasure": "Scarab",
+  "Bull Run": "Cow Skull",
   "Winds of Change": "Ancient Clock",
   "Great Bloom": "Broken Pillar",
   "Better Together": "Coprolite",
