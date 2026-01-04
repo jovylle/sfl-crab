@@ -4,8 +4,8 @@
  * Auto-update seasons data from Sunflower Land repository
  * 
  * This script:
- * 1. Fetches seasons.ts and desert.ts from SFL GitHub repo
- * 2. Parses TypeScript to extract season data and artifacts
+ * 1. Fetches chapters.ts from SFL GitHub repo
+ * 2. Parses TypeScript to extract chapter data and artifacts
  * 3. Updates src/data/game/seasonalArtefacts.js if changes detected
  * 4. Downloads any new artifact .webp files to public/world/
  * 
@@ -21,8 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const SFL_REPO_BASE = 'https://raw.githubusercontent.com/sunflower-land/sunflower-land/main';
-const SEASONS_URL = `${SFL_REPO_BASE}/src/features/game/types/seasons.ts`;
-const DESERT_URL = `${SFL_REPO_BASE}/src/features/game/types/desert.ts`;
+const CHAPTERS_URL = `${SFL_REPO_BASE}/src/features/game/types/chapters.ts`;
 const ASSETS_BASE_URL = `${SFL_REPO_BASE}/public/world`;
 const ASSETS_FALLBACK_URL = 'https://sunflower-land.com/testnet-assets/resources/treasures'; // Fallback for missing assets
 
@@ -65,14 +64,14 @@ async function downloadFile(url, destPath) {
   });
 }
 
-// Parse seasons from seasons.ts
-function parseSeasons(seasonsContent) {
+// Parse chapters from chapters.ts
+function parseSeasons(chaptersContent) {
   const seasons = [];
   
-  // Extract season names from the type definition
-  const seasonNamesMatch = seasonsContent.match(/export type SeasonName =\s*([\s\S]*?);/);
+  // Extract chapter names from the type definition
+  const seasonNamesMatch = chaptersContent.match(/export type ChapterName =\s*([\s\S]*?);/);
   if (!seasonNamesMatch) {
-    throw new Error('Could not find SeasonName type definition');
+    throw new Error('Could not find ChapterName type definition');
   }
   
   const seasonNames = seasonNamesMatch[1]
@@ -80,13 +79,13 @@ function parseSeasons(seasonsContent) {
     .map(s => s.trim().replace(/['"]/g, ''))
     .filter(s => s.length > 0);
   
-  // Extract season dates from SEASONS object
-  const seasonsObjectMatch = seasonsContent.match(/export const SEASONS: Record<SeasonName, SeasonDates> = {([\s\S]*?)};/);
+  // Extract chapter dates from CHAPTERS object
+  const seasonsObjectMatch = chaptersContent.match(/export const CHAPTERS: Record<ChapterName, ChapterDates> = {([\s\S]*?)};/);
   if (!seasonsObjectMatch) {
-    throw new Error('Could not find SEASONS object');
+    throw new Error('Could not find CHAPTERS object');
   }
   
-  // Parse each season's dates
+  // Parse each chapter's dates
   for (const seasonName of seasonNames) {
     const seasonRegex = new RegExp(`"${seasonName}":\\s*{[^}]*startDate:\\s*new Date\\("([^"]+)"\\)[^}]*endDate:\\s*new Date\\("([^"]+)"\\)`, 'g');
     const match = seasonRegex.exec(seasonsObjectMatch[1]);
@@ -103,17 +102,17 @@ function parseSeasons(seasonsContent) {
   return seasons;
 }
 
-// Parse seasonal artifacts from desert.ts
-function parseSeasonalArtifacts(desertContent) {
+// Parse seasonal artifacts from chapters.ts (was moved from desert.ts)
+function parseSeasonalArtifacts(chaptersContent) {
   const artifacts = {};
   
-  // Extract SEASONAL_ARTEFACT object
-  const artifactsMatch = desertContent.match(/export const SEASONAL_ARTEFACT: Record<[\s\S]*?> = {([\s\S]*?)};/);
+  // Extract CHAPTER_ARTEFACT_NAME object (new location for artifacts)
+  const artifactsMatch = chaptersContent.match(/export const CHAPTER_ARTEFACT_NAME: Record<[\s\S]*?> = {([\s\S]*?)};/);
   if (!artifactsMatch) {
-    throw new Error('Could not find SEASONAL_ARTEFACT object');
+    throw new Error('Could not find CHAPTER_ARTEFACT_NAME object');
   }
   
-  // Parse each season's artifact
+  // Parse each chapter's artifact
   const artifactLines = artifactsMatch[1].split('\n');
   for (const line of artifactLines) {
     const match = line.match(/"([^"]+)":\s*"([^"]+)"/);
@@ -180,17 +179,14 @@ async function main() {
   console.log('🔍 Fetching season data from Sunflower Land repository...\n');
   
   try {
-    // Fetch TypeScript files
-    console.log('📥 Downloading seasons.ts...');
-    const seasonsContent = await fetchText(SEASONS_URL);
-    
-    console.log('📥 Downloading desert.ts...');
-    const desertContent = await fetchText(DESERT_URL);
+    // Fetch TypeScript file
+    console.log('📥 Downloading chapters.ts...');
+    const chaptersContent = await fetchText(CHAPTERS_URL);
     
     // Parse data
-    console.log('\n🔬 Parsing season data...');
-    const seasons = parseSeasons(seasonsContent);
-    const artifacts = parseSeasonalArtifacts(desertContent);
+    console.log('\n🔬 Parsing chapter data...');
+    const seasons = parseSeasons(chaptersContent);
+    const artifacts = parseSeasonalArtifacts(chaptersContent);
     
     console.log(`✅ Found ${seasons.length} seasons`);
     console.log(`✅ Found ${Object.keys(artifacts).length} seasonal artifacts\n`);
