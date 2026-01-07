@@ -21,9 +21,9 @@ const desertFile = project.addSourceFileAtPath(join(__dirname, '..', 'temp', 'sf
 
 // Extract treasure prices
 function extractTreasurePrices() {
-  const sellableTreasure = treasureFile.getVariableDeclaration('SELLABLE_TREASURE')
+  const sellableTreasure = treasureFile.getVariableDeclaration('SELLABLE_TREASURES')
   if (!sellableTreasure) {
-    throw new Error('SELLABLE_TREASURE not found in treasure.ts')
+    throw new Error('SELLABLE_TREASURES not found in treasure.ts')
   }
 
   const prices = {}
