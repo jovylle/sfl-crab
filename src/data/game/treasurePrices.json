@@ -1,6 +1,32 @@
 {
-  "lastUpdated": "2026-01-06T00:33:16.795Z",
+  "lastUpdated": "2026-01-07T07:59:47.232Z",
   "source": "https://github.com/sunflower-land/sunflower-land/blob/main/src/features/game/types/treasure.ts",
   "version": "1.0.0",
-  "prices": {}
+  "prices": {
+    "Sand": 10,
+    "Camel Bone": 10,
+    "Crab": 15,
+    "Old Bottle": 22.5,
+    "Sea Cucumber": 22.5,
+    "Vase": 50,
+    "Seaweed": 75,
+    "Cockle Shell": 100,
+    "Starfish": 112.5,
+    "Wooden Compass": 131.25,
+    "Iron Compass": 187.5,
+    "Emerald Compass": 187.5,
+    "Pipi": 187.5,
+    "Hieroglyph": 250,
+    "Clam Shell": 375,
+    "Coral": 1500,
+    "Pearl": 3750,
+    "Pirate Bounty": 7500,
+    "Scarab": 200,
+    "Cow Skull": 200,
+    "Ancient Clock": 200,
+    "Broken Pillar": 200,
+    "Coprolite": 200,
+    "Moon Crystal": 200,
+    "Crab Chapter Artefact": 200
+  }
 }

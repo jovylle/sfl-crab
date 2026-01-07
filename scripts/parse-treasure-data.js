@@ -29,21 +29,33 @@ function extractTreasurePrices() {
   const prices = {}
   const objectLiteral = sellableTreasure.getInitializer()
   
-  if (objectLiteral && objectLiteral.getKind() === 201) { // ObjectLiteralExpression
-    objectLiteral.getProperties().forEach(prop => {
-      if (prop.getKind() === 201) { // PropertyAssignment
-        const treasureName = prop.getName()
-        const sellPriceProp = prop.getInitializer()?.getProperties().find(p => 
-          p.getName() === 'sellPrice'
-        )
-        
-        if (sellPriceProp) {
-          const priceValue = sellPriceProp.getInitializer()?.getText()
-          if (priceValue) {
-            prices[treasureName] = parseFloat(priceValue)
+  // Use ts-morph's isObjectLiteralExpression helper
+  if (objectLiteral) {
+    const properties = objectLiteral.getProperties()
+    properties.forEach(prop => {
+      // Get property name and value
+      let name = prop.getName ? prop.getName() : null
+      if (!name) return
+      
+      // Remove surrounding quotes if present
+      name = name.replace(/^["']|["']$/g, '')
+      
+      // Get the initializer (the object with sellPrice, description, etc)
+      const init = prop.getInitializer ? prop.getInitializer() : null
+      if (!init) return
+      
+      // Find sellPrice property in the nested object
+      const nestedProps = init.getProperties ? init.getProperties() : []
+      nestedProps.forEach(nestedProp => {
+        const propName = nestedProp.getName ? nestedProp.getName() : null
+        if (propName === 'sellPrice') {
+          const priceInit = nestedProp.getInitializer ? nestedProp.getInitializer() : null
+          if (priceInit) {
+            const priceText = priceInit.getText()
+            prices[name] = parseFloat(priceText)
           }
         }
-      }
+      })
     })
   }
 
