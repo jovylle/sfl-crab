@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-01-20T00:32:38.348Z",
+  "lastUpdated": "2026-01-21T00:34:09.032Z",
   "source": "https://github.com/sunflower-land/sunflower-land/blob/main/src/features/game/types/treasure.ts",
   "version": "1.0.0",
   "prices": {
@@ -27,6 +27,6 @@
     "Broken Pillar": 200,
     "Coprolite": 200,
     "Moon Crystal": 200,
-    "Crab Chapter Artefact": 200
+    "Ammonite Shell": 200
   }
 }
