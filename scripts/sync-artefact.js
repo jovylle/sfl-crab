@@ -120,18 +120,19 @@ async function ensureAsset(filename, candidateUrls) {
     return false; // No change
   }
 
-  for (const url of candidateUrls) {
-    try {
-      await downloadFile(url, localPath);
-      console.log(`✅ Downloaded ${filename} from ${url}`);
-      return true;
-    } catch (error) {
-      console.warn(`⚠️  Failed to download ${filename} from ${url}: ${error.message}`);
+    for (const url of candidateUrls) {
+      try {
+        await downloadFile(url, localPath);
+        console.log(`✅ Downloaded ${filename} from ${url}`);
+        console.log(`   saved to ${localPath}`);
+        return true;
+      } catch (error) {
+        console.warn(`⚠️  Failed to download ${filename} from ${url}: ${error.message}`);
+      }
     }
-  }
 
-  console.warn(`❌ Could not download ${filename} from any candidate URL`);
-  return false;
+    console.warn(`❌ Could not download ${filename} from any candidate URL`);
+    return false;
 }
 
 // If targetFile is missing but sourceFile exists, duplicate it (used to provide a slugged .webp when source is .png)
