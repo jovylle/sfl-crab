@@ -9,7 +9,7 @@
  * 3. Updates src/data/game/seasonalArtefacts.js if changes detected
  * 4. Downloads any new artifact .webp files to public/world/
  * 
- * Run: npm run update-seasons
+ * Run: npm run sync-artefact
  */
 
 import fs from 'fs';
@@ -22,6 +22,7 @@ const __dirname = path.dirname(__filename);
 
 const SFL_REPO_BASE = 'https://raw.githubusercontent.com/sunflower-land/sunflower-land/main';
 const CHAPTERS_URL = `${SFL_REPO_BASE}/src/features/game/types/chapters.ts`;
+const IMAGES_URL = `${SFL_REPO_BASE}/src/features/game/types/images.ts`;
 const ASSETS_BASE_URL = `${SFL_REPO_BASE}/public/world`;
 const ASSETS_FALLBACK_URL = 'https://sunflower-land.com/testnet-assets/resources/treasures'; // Fallback for missing assets
 
@@ -62,6 +63,89 @@ async function downloadFile(url, destPath) {
       file.on('error', reject);
     }).on('error', reject);
   });
+}
+
+// Escape text for safe usage in RegExp
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Parse artefact image import paths from images.ts so we can download the right file/extension
+function parseArtifactAssets(imagesContent, artifacts) {
+  const importMap = {};
+  const importRegex = /import\s+(\w+)\s+from\s+["']([^"']+)["'];/g;
+  let importMatch;
+
+  while ((importMatch = importRegex.exec(imagesContent)) !== null) {
+    importMap[importMatch[1]] = importMatch[2];
+  }
+
+  const artifactAssetPaths = {};
+
+  for (const artifactName of Object.values(artifacts)) {
+    const artifactRegex = new RegExp(
+      `"${escapeRegExp(artifactName)}":\\s*{[^}]*?image:\\s*([\\w]+)`,
+      'm',
+    );
+    const match = artifactRegex.exec(imagesContent);
+    if (match) {
+      const importName = match[1];
+      if (importMap[importName]) {
+        artifactAssetPaths[artifactName] = importMap[importName];
+      }
+    }
+  }
+
+  return artifactAssetPaths;
+}
+
+const IMAGES_TS_DIR = 'src/features/game/types';
+
+// Build a raw GitHub URL from an import path
+function buildRawAssetUrl(assetPath) {
+  const normalized = assetPath.replace(/^\.?\/*/, '');
+  const isRelative = normalized.startsWith('.') || normalized.startsWith('..');
+  const resolved = isRelative
+    ? path.posix.normalize(path.posix.join(IMAGES_TS_DIR, normalized))
+    : normalized;
+
+  return `${SFL_REPO_BASE}/${resolved}`;
+}
+
+// Ensure an asset exists locally, downloading from the first working URL
+async function ensureAsset(filename, candidateUrls) {
+  const localPath = path.join(ASSETS_DIR, filename);
+
+  if (fs.existsSync(localPath)) {
+    return false; // No change
+  }
+
+  for (const url of candidateUrls) {
+    try {
+      await downloadFile(url, localPath);
+      console.log(`✅ Downloaded ${filename} from ${url}`);
+      return true;
+    } catch (error) {
+      console.warn(`⚠️  Failed to download ${filename} from ${url}: ${error.message}`);
+    }
+  }
+
+  console.warn(`❌ Could not download ${filename} from any candidate URL`);
+  return false;
+}
+
+// If targetFile is missing but sourceFile exists, duplicate it (used to provide a slugged .webp when source is .png)
+function copyIfMissing(sourceFile, targetFile) {
+  const sourcePath = path.join(ASSETS_DIR, sourceFile);
+  const targetPath = path.join(ASSETS_DIR, targetFile);
+
+  if (!fs.existsSync(sourcePath) || fs.existsSync(targetPath)) {
+    return false;
+  }
+
+  fs.copyFileSync(sourcePath, targetPath);
+  console.log(`✅ Copied ${sourceFile} -> ${targetFile} (fallback copy)`);
+  return true;
 }
 
 // Parse chapters from chapters.ts
@@ -124,6 +208,25 @@ function parseSeasonalArtifacts(chaptersContent) {
   return artifacts;
 }
 
+function parseExistingArtifactsFile(content) {
+  const match = content.match(/export const SEASONAL_ARTEFACT\s*=\s*{([\s\S]*?)};/);
+  if (!match) {
+    return {};
+  }
+
+  const parsed = {};
+  for (const line of match[1].split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const entryMatch = trimmed.match(/["']([^"']+)["']\s*:\s*["']([^"']+)["']/);
+    if (entryMatch) {
+      parsed[entryMatch[1]] = entryMatch[2];
+    }
+  }
+
+  return parsed;
+}
+
 // Generate the new seasonalArtefacts.js file content
 function generateArtifactsFileContent(seasons, artifacts) {
   const header = `// Seasonal Artefacts Data
@@ -182,17 +285,25 @@ async function main() {
     // Fetch TypeScript file
     console.log('📥 Downloading chapters.ts...');
     const chaptersContent = await fetchText(CHAPTERS_URL);
+    console.log('📥 Downloading images.ts (for artefact assets)...');
+    const imagesContent = await fetchText(IMAGES_URL);
     
     // Parse data
     console.log('\n🔬 Parsing chapter data...');
     const seasons = parseSeasons(chaptersContent);
     const artifacts = parseSeasonalArtifacts(chaptersContent);
+    const artifactAssetPaths = parseArtifactAssets(imagesContent, artifacts);
     
     console.log(`✅ Found ${seasons.length} seasons`);
     console.log(`✅ Found ${Object.keys(artifacts).length} seasonal artifacts\n`);
     
     // Check for new seasons
-    const currentContent = fs.readFileSync(LOCAL_ARTIFACTS_FILE, 'utf8');
+    const currentContent = fs.existsSync(LOCAL_ARTIFACTS_FILE)
+      ? fs.readFileSync(LOCAL_ARTIFACTS_FILE, 'utf8')
+      : '';
+    const previousArtifacts = currentContent
+      ? parseExistingArtifactsFile(currentContent)
+      : {};
     const newContent = generateArtifactsFileContent(seasons, artifacts);
     
     let hasChanges = false;
@@ -206,45 +317,90 @@ async function main() {
       console.log('✨ Season data is up to date!\n');
     }
     
-    // Download missing artifact images
+    // Determine which artifact assets really need downloading
+    const artifactChanges = Object.entries(artifacts).filter(
+      ([season, artifact]) => previousArtifacts[season] !== artifact,
+    );
+    const artifactsToDownload = [
+      ...new Set(artifactChanges.map(([, artifact]) => artifact)),
+    ];
     console.log('🖼️  Checking for missing artifact images...');
-    const uniqueArtifacts = [...new Set(Object.values(artifacts))];
     const downloadedAssets = [];
-    
-    for (const artifact of uniqueArtifacts) {
-      const filename = artifact.toLowerCase().replace(/\s+/g, '_') + '.webp';
-      const localPath = path.join(ASSETS_DIR, filename);
-      
-      if (!fs.existsSync(localPath)) {
-        console.log(`📥 Downloading ${filename}...`);
-        const assetUrl = `${ASSETS_BASE_URL}/${filename}`;
-        
-        try {
-          await downloadFile(assetUrl, localPath);
-          console.log(`✅ Downloaded ${filename}`);
-          downloadedAssets.push(filename);
+
+    if (artifactsToDownload.length === 0) {
+      console.log('✨ No new artifact images to download.\n');
+    } else {
+      for (const artifact of artifactsToDownload) {
+        // Prefer the filename/extension from the official import path when available
+        const mappedPath = artifactAssetPaths[artifact];
+        const mappedExt = mappedPath ? path.extname(mappedPath).toLowerCase() : '';
+        const slugBase = mappedPath
+          ? path.basename(mappedPath, path.extname(mappedPath))
+          : artifact.toLowerCase().replace(/\s+/g, '_');
+
+        const slugFilename = `${slugBase}.webp`; // canonical filename used by the app
+
+        // Candidate URLs to try for the canonical slug file
+        const candidateUrls = [];
+
+        // If official asset is already a .webp, try downloading that into the canonical filename first
+        if (mappedPath && mappedExt === '.webp') {
+          candidateUrls.push(buildRawAssetUrl(mappedPath));
+        }
+
+        // Then try world + fallback using the slug .webp
+        candidateUrls.push(
+          `${ASSETS_BASE_URL}/${slugFilename}`,
+          `${ASSETS_FALLBACK_URL}/${slugFilename}`,
+        );
+
+        const downloaded = await ensureAsset(slugFilename, candidateUrls);
+        if (downloaded) {
+          downloadedAssets.push(slugFilename);
           hasChanges = true;
-        } catch (error) {
-          // Try fallback URL (testnet-assets) if main repo fails
-          console.log(`⚠️  Main URL failed, trying fallback for ${filename}...`);
-          const fallbackUrl = `${ASSETS_FALLBACK_URL}/${filename}`;
-          
-          try {
-            await downloadFile(fallbackUrl, localPath);
-            console.log(`✅ Downloaded ${filename} from fallback URL`);
-            downloadedAssets.push(filename);
+        }
+
+        // If the official asset exists but isn't webp, download it as-is too (for reference and future-proofing)
+        if (mappedPath && mappedExt && mappedExt !== '.webp') {
+          const mappedFilename = path.basename(mappedPath);
+          const mappedDownloaded = await ensureAsset(mappedFilename, [
+            buildRawAssetUrl(mappedPath),
+          ]);
+          if (mappedDownloaded) {
+            downloadedAssets.push(mappedFilename);
             hasChanges = true;
-          } catch (fallbackError) {
-            console.warn(`❌ Failed to download ${filename} from both URLs`);
+          }
+
+          // If we have the official asset (e.g., .png) but still lack the slugged .webp, copy it as a fallback
+          const copied = copyIfMissing(mappedFilename, slugFilename);
+          if (copied) {
+            downloadedAssets.push(`${mappedFilename}→${slugFilename}`);
+            hasChanges = true;
+          }
+        }
+
+        // If we had no mapped path (or still missing), try generic icon/raw paths as a last resort and copy to slug .webp
+        if (!fs.existsSync(path.join(ASSETS_DIR, slugFilename))) {
+          const genericCandidates = [
+            buildRawAssetUrl(`assets/icons/${slugBase}.png`),
+            buildRawAssetUrl(`assets/icons/${slugBase}.webp`),
+            buildRawAssetUrl(`assets/resources/${slugBase}.png`),
+            buildRawAssetUrl(`assets/resources/${slugBase}.webp`),
+          ];
+
+          const genericDownloaded = await ensureAsset(slugFilename, genericCandidates);
+          if (genericDownloaded) {
+            downloadedAssets.push(slugFilename);
+            hasChanges = true;
           }
         }
       }
-    }
-    
-    if (downloadedAssets.length === 0) {
-      console.log('✨ All artifact images are present!\n');
-    } else {
-      console.log(`\n✅ Downloaded ${downloadedAssets.length} new assets\n`);
+
+      if (downloadedAssets.length === 0) {
+        console.log('\n⚠️  Unable to download the new artifact assets.\n');
+      } else {
+        console.log(`\n✅ Downloaded ${downloadedAssets.length} new assets\n`);
+      }
     }
     
     // Summary

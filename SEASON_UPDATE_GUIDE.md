@@ -26,9 +26,9 @@ Every few months, Sunflower Land releases a new chapter/season. This guide helps
 
 ### Test Locally Before Deployment
 
-You can also run the update script locally:
+You can also run the sync script locally:
 ```bash
-npm run update-seasons
+npm run sync-artefact
 ```
 
 This will check for updates and show you what would change without committing anything.
@@ -145,7 +145,7 @@ git push
 
 | Command | Description |
 |---------|-------------|
-| `npm run update-seasons` | Fetch and update season data from SFL repo |
+| `npm run sync-artefact` | Fetch and update season data from SFL repo |
 | `npm run check-assets` | Check for missing treasure asset images |
 | GitHub Actions | Auto-runs monthly on the 1st at 00:00 UTC |
 
@@ -183,14 +183,14 @@ git push
 
 ### GitHub Actions Workflow
 
-The automation is defined in `.github/workflows/update-seasons.yml`:
+The automation is defined in `.github/workflows/sync-artefact.yml`:
 - Scheduled to run monthly
 - Can be triggered manually
 - Automatically commits changes if updates are found
 
 ### Update Script
 
-The script `scripts/update-seasons-from-sfl.js`:
+The script `scripts/sync-artefact.js`:
 - Fetches `seasons.ts` and `desert.ts` from SFL repo
 - Parses TypeScript using regex patterns
 - Generates updated `seasonalArtefacts.js` file
