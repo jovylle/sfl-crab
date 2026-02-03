@@ -340,19 +340,11 @@ async function main() {
 
         const slugFilename = `${slugBase}.webp`; // canonical filename used by the app
 
-        // Candidate URLs to try for the canonical slug file
-        const candidateUrls = [];
-
-        // If official asset is already a .webp, try downloading that into the canonical filename first
-        if (mappedPath && mappedExt === '.webp') {
-          candidateUrls.push(buildRawAssetUrl(mappedPath));
-        }
-
-        // Then try world + fallback using the slug .webp
-        candidateUrls.push(
+        // Candidate URLs should always prefer the canonical world asset
+        const candidateUrls = [
           `${ASSETS_BASE_URL}/${slugFilename}`,
           `${ASSETS_FALLBACK_URL}/${slugFilename}`,
-        );
+        ];
 
         const downloaded = await ensureAsset(slugFilename, candidateUrls);
         if (downloaded) {
@@ -419,6 +411,7 @@ async function main() {
     console.log(`   Start: ${latestSeason.startDate}`);
     console.log(`   End: ${latestSeason.endDate}`);
     
+    process.exit(0);
   } catch (error) {
     console.error('❌ Error updating seasons:', error.message);
     console.error(error.stack);
