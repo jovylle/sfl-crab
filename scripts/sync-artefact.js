@@ -117,12 +117,14 @@ async function ensureAsset(filename, candidateUrls) {
   const localPath = path.join(ASSETS_DIR, filename);
 
   if (fs.existsSync(localPath)) {
-    return { success: false, reason: 'already exists' };
+    return { success: false, reason: 'already exists', attempted: false };
   }
 
   const errors = [];
+  let attempted = false;
 
   for (const url of candidateUrls) {
+    attempted = true;
     try {
       await downloadFile(url, localPath);
       console.log(`✅ Downloaded ${filename} from ${url}`);
@@ -137,7 +139,7 @@ async function ensureAsset(filename, candidateUrls) {
 
   const reason = errors.join('\n');
   console.warn(`❌ Could not download ${filename} from any candidate URL`);
-  return { success: false, reason };
+  return { success: false, reason, attempted };
 }
 
 // If targetFile is missing but sourceFile exists, duplicate it (used to provide a slugged .webp when source is .png)
@@ -357,7 +359,11 @@ async function main() {
         if (slugResult.success) {
           downloadedAssets.push(slugFilename);
           hasChanges = true;
-        } else if (slugResult.reason && slugResult.reason !== 'already exists') {
+        } else if (
+          slugResult.attempted &&
+          slugResult.reason &&
+          slugResult.reason !== 'already exists'
+        ) {
           failureReasons.push(`${slugFilename}: ${slugResult.reason}`);
         }
 
@@ -370,7 +376,11 @@ async function main() {
           if (mappedResult.success) {
             downloadedAssets.push(mappedFilename);
             hasChanges = true;
-          } else if (mappedResult.reason && mappedResult.reason !== 'already exists') {
+          } else if (
+            mappedResult.attempted &&
+            mappedResult.reason &&
+            mappedResult.reason !== 'already exists'
+          ) {
             failureReasons.push(`${mappedFilename}: ${mappedResult.reason}`);
           }
 
@@ -395,19 +405,25 @@ async function main() {
           if (genericResult.success) {
             downloadedAssets.push(slugFilename);
             hasChanges = true;
-          } else if (genericResult.reason && genericResult.reason !== 'already exists') {
+          } else if (
+            genericResult.attempted &&
+            genericResult.reason &&
+            genericResult.reason !== 'already exists'
+          ) {
             failureReasons.push(`${slugFilename}: ${genericResult.reason}`);
           }
         }
       }
 
       if (downloadedAssets.length === 0) {
-        console.log('\n⚠️  Unable to download the new artifact assets.');
-        if (failureReasons.length > 0) {
+        if (failureReasons.length === 0) {
+          console.log('\n✨ All artifact images are already present!\n');
+        } else {
+          console.log('\n⚠️  Unable to download the new artifact assets.');
           console.log('Reasons:');
           failureReasons.forEach(reason => console.log(`  - ${reason}`));
+          console.log('');
         }
-        console.log('');
       } else {
         console.log(`\n✅ Downloaded ${downloadedAssets.length} new assets\n`);
       }
