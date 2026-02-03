@@ -117,22 +117,27 @@ async function ensureAsset(filename, candidateUrls) {
   const localPath = path.join(ASSETS_DIR, filename);
 
   if (fs.existsSync(localPath)) {
-    return false; // No change
+    return { success: false, reason: 'already exists' };
   }
 
-    for (const url of candidateUrls) {
-      try {
-        await downloadFile(url, localPath);
-        console.log(`✅ Downloaded ${filename} from ${url}`);
-        console.log(`   saved to ${localPath}`);
-        return true;
-      } catch (error) {
-        console.warn(`⚠️  Failed to download ${filename} from ${url}: ${error.message}`);
-      }
-    }
+  const errors = [];
 
-    console.warn(`❌ Could not download ${filename} from any candidate URL`);
-    return false;
+  for (const url of candidateUrls) {
+    try {
+      await downloadFile(url, localPath);
+      console.log(`✅ Downloaded ${filename} from ${url}`);
+      console.log(`   saved to ${localPath}`);
+      return { success: true, path: localPath };
+    } catch (error) {
+      const message = `⚠️  Failed to download ${filename} from ${url}: ${error.message}`;
+      console.warn(message);
+      errors.push(message);
+    }
+  }
+
+  const reason = errors.join('\n');
+  console.warn(`❌ Could not download ${filename} from any candidate URL`);
+  return { success: false, reason };
 }
 
 // If targetFile is missing but sourceFile exists, duplicate it (used to provide a slugged .webp when source is .png)
@@ -327,6 +332,7 @@ async function main() {
     ];
     console.log('🖼️  Checking for missing artifact images...');
     const downloadedAssets = [];
+    const failureReasons = [];
 
     if (artifactsToDownload.length === 0) {
       console.log('✨ No new artifact images to download.\n');
@@ -347,21 +353,25 @@ async function main() {
           `${ASSETS_FALLBACK_URL}/${slugFilename}`,
         ];
 
-        const downloaded = await ensureAsset(slugFilename, candidateUrls);
-        if (downloaded) {
+        const slugResult = await ensureAsset(slugFilename, candidateUrls);
+        if (slugResult.success) {
           downloadedAssets.push(slugFilename);
           hasChanges = true;
+        } else if (slugResult.reason && slugResult.reason !== 'already exists') {
+          failureReasons.push(`${slugFilename}: ${slugResult.reason}`);
         }
 
         // If the official asset exists but isn't webp, download it as-is too (for reference and future-proofing)
         if (mappedPath && mappedExt && mappedExt !== '.webp') {
           const mappedFilename = path.basename(mappedPath);
-          const mappedDownloaded = await ensureAsset(mappedFilename, [
+          const mappedResult = await ensureAsset(mappedFilename, [
             buildRawAssetUrl(mappedPath),
           ]);
-          if (mappedDownloaded) {
+          if (mappedResult.success) {
             downloadedAssets.push(mappedFilename);
             hasChanges = true;
+          } else if (mappedResult.reason && mappedResult.reason !== 'already exists') {
+            failureReasons.push(`${mappedFilename}: ${mappedResult.reason}`);
           }
 
           // If we have the official asset (e.g., .png) but still lack the slugged .webp, copy it as a fallback
@@ -381,16 +391,23 @@ async function main() {
             buildRawAssetUrl(`assets/resources/${slugBase}.webp`),
           ];
 
-          const genericDownloaded = await ensureAsset(slugFilename, genericCandidates);
-          if (genericDownloaded) {
+          const genericResult = await ensureAsset(slugFilename, genericCandidates);
+          if (genericResult.success) {
             downloadedAssets.push(slugFilename);
             hasChanges = true;
+          } else if (genericResult.reason && genericResult.reason !== 'already exists') {
+            failureReasons.push(`${slugFilename}: ${genericResult.reason}`);
           }
         }
       }
 
       if (downloadedAssets.length === 0) {
-        console.log('\n⚠️  Unable to download the new artifact assets.\n');
+        console.log('\n⚠️  Unable to download the new artifact assets.');
+        if (failureReasons.length > 0) {
+          console.log('Reasons:');
+          failureReasons.forEach(reason => console.log(`  - ${reason}`));
+        }
+        console.log('');
       } else {
         console.log(`\n✅ Downloaded ${downloadedAssets.length} new assets\n`);
       }
