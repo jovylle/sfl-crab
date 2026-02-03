@@ -15,7 +15,7 @@ env:
   SYNC_ARTIFACT_VERSION: "1.2"
 
 jobs:
-  sync-artefact:
+  sync-artefact-v1-2:
     runs-on: ubuntu-latest
     
     steps:
