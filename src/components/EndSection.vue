@@ -2,7 +2,7 @@
 <template>
   <section class="card bg-base-200 shadow-md p-4 text-sm space-y-4">
     <div class="card-body space-y-2">
-      <h5 class="font-bold text-base">Official Sunflower Land Digging Utility Links</h5>
+      <h5 class="font-bold text-base">SFL Digging Assitant Links</h5>
 
       <div class="">
         <span class="italic">Production:</span>
