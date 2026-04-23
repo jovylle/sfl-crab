@@ -21,6 +21,7 @@ If you’re unsure, say “I’m not certain” or suggest verifying. Tell the p
     const cfgEl = document.getElementById('chat-widget-config-001')
     const cfg = JSON.parse(cfgEl.textContent)
     cfg.chatbot.instructions = prompt
+    cfg.chatbot.position = 'bottom-left'
     cfgEl.textContent = JSON.stringify(cfg)
 
     // 3) Finally inject the embedded widget
