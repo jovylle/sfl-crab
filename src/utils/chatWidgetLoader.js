@@ -14,6 +14,17 @@ export function initChatWidget () {
     return null
   }
 
+  function upsertCanonicalConfigElement (jsonText) {
+    let canonical = document.getElementById('chat-widget-config')
+    if (!canonical) {
+      canonical = document.createElement('script')
+      canonical.type = 'application/json'
+      canonical.id = 'chat-widget-config'
+      document.body.prepend(canonical)
+    }
+    canonical.textContent = jsonText
+  }
+
   function onDataReady ({ desertDigging, username }) {
     if (hasInitialized) return
 
@@ -52,7 +63,10 @@ If you’re unsure, say “I’m not certain” or suggest verifying. Tell the p
     cfg.chatbot = cfg.chatbot || {}
     cfg.chatbot.instructions = prompt
     cfg.chatbot.position = 'bottom-left'
-    cfgEl.textContent = JSON.stringify(cfg)
+    const nextConfigText = JSON.stringify(cfg)
+    cfgEl.textContent = nextConfigText
+    // Some embed builds only read #chat-widget-config, so mirror there.
+    upsertCanonicalConfigElement(nextConfigText)
 
     // 3) Finally inject the embedded widget
     if (document.querySelector(`script[src="${EMBED_SRC}"]`)) {
