@@ -14,6 +14,7 @@
     "sync-artefact": "node scripts/sync-artefact.js"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.0",
     "@vueuse/core": "^13.2.0",
     "@vueuse/head": "^2.0.0",
     "daisyui": "^5.0.28",

@@ -26,6 +26,13 @@
             <span class="text-lg sm:text-3xl text-error">X</span>
           </div>
           <div
+            v-else-if="hintClass === 'action:dig'"
+            class="flex flex-col justify-center items-center tile w-full h-full border border-warning bg-warning/10 gap-0.5 cursor-pointer"
+          >
+            <Icon icon="noto:shovel" class="w-4 h-4 sm:w-5 sm:h-5" />
+            <span class="text-[0.45rem] sm:text-[0.5rem] font-bold text-warning leading-none">DIG</span>
+          </div>
+          <div
             v-else
             :class="[hintClass, 'tile w-full h-full border border-base-300']"
           />
@@ -61,6 +68,7 @@
 
 <script setup>
 import { ref, computed, watchEffect, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { Icon } from '@iconify/vue'
 
 // 1️⃣ Define your props
 const props = defineProps({

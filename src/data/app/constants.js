@@ -11,3 +11,8 @@ export const UI_CONSTANTS = {
   GRID_LABELS_Y: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
   DEFAULT_THEME: 'nord'
 }
+
+export const PRACTICE_CONSTANTS = {
+  // Community farm owner used to source today's practice patterns.
+  ADAM_OWNER_ID: '1',
+}
