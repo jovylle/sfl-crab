@@ -11,7 +11,7 @@
             Practice Mode
             <span class="badge badge-secondary badge-sm">Round {{ roundCount }}</span>
           </h2>
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
             <button
               v-if="!isGameOver"
               class="btn btn-sm btn-warning"
@@ -20,12 +20,19 @@
               Give Up
             </button>
             <button
+              class="btn btn-sm btn-outline"
+              :class="showTimer ? 'btn-success' : ''"
+              @click="showTimer = !showTimer"
+            >
+              {{ showTimer ? 'Hide Timer' : 'Show Timer' }}
+            </button>
+            <button
               class="btn btn-sm btn-primary"
               :disabled="isLoading || isStartingTodayRound"
               @click="newTodayRound"
             >
               <span v-if="isStartingTodayRound" class="loading loading-spinner loading-xs"></span>
-              <span>{{ isStartingTodayRound ? "Loading today's round" : "New Today's Round ↺" }}</span>
+              <span>{{ isStartingTodayRound ? "Loading today's round" : "New Today's Pattern Round ↺" }}</span>
             </button>
             <button class="btn btn-sm btn-secondary" @click="newRandomRound">
               New Random Pattern Round
@@ -58,6 +65,9 @@
             <strong :class="treasuresFound > 0 ? 'text-success' : ''">{{ treasuresFound }}</strong>
             / {{ totalTreasures }}
           </span>
+          <span v-if="showTimer" class="badge badge-outline font-mono">
+            {{ liveTimerText }}
+          </span>
           <span class="text-base-content/50 text-xs">lower digs = better</span>
         </div>
 
@@ -66,12 +76,19 @@
           <span v-if="isVictory">
             🎉 Found all {{ totalTreasures }} treasure{{ totalTreasures !== 1 ? 's' : '' }} in
             <strong>{{ digsMade }} dig{{ digsMade !== 1 ? 's' : '' }}</strong>!
+            <span v-if="showTimer" class="ml-1">
+              Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+            </span>
             <span v-if="digsMade <= totalTreasures + 2"> Impressive!</span>
           </span>
           <span v-else>
             Round over — found
             <strong>{{ treasuresFound }}</strong> / {{ totalTreasures }} in
-            <strong>{{ digsMade }}</strong> digs. Ghosted tiles show what was hidden.
+            <strong>{{ digsMade }}</strong> digs.
+            <span v-if="showTimer" class="ml-1">
+              Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+            </span>
+            Ghosted tiles show what was hidden.
           </span>
         </div>
 
@@ -120,7 +137,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, nextTick, ref } from 'vue'
+import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { usePracticeEngine } from '@/composables/usePracticeEngine.js'
 import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
@@ -159,9 +176,64 @@ const {
 
 const isStartingTodayRound = ref(false)
 const MIN_TODAY_ROUND_LOADING_MS = 450
+const showTimer = ref(false)
+const elapsedMs = ref(0)
+const finalElapsedMs = ref(0)
+const roundStartedAt = ref(Date.now())
+let timerId = null
 
 const practicePatternKeys = computed(() => {
   return patternKeys.value.length ? patternKeys.value : ALL_FORMATION_KEYS
+})
+
+const liveTimerText = computed(() => formatElapsed(elapsedMs.value))
+const finalTimerText = computed(() => formatElapsed(finalElapsedMs.value || elapsedMs.value))
+
+function formatElapsed(value) {
+  const totalSeconds = Math.floor(value / 1000)
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0')
+  const seconds = String(totalSeconds % 60).padStart(2, '0')
+  return `${minutes}:${seconds}`
+}
+
+function stopTimer () {
+  if (timerId !== null) {
+    clearInterval(timerId)
+    timerId = null
+  }
+}
+
+function startTimer () {
+  stopTimer()
+  if (!showTimer.value) return
+
+  elapsedMs.value = Date.now() - roundStartedAt.value
+  timerId = setInterval(() => {
+    elapsedMs.value = Date.now() - roundStartedAt.value
+  }, 1000)
+}
+
+function resetRoundTimer () {
+  roundStartedAt.value = Date.now()
+  elapsedMs.value = 0
+  finalElapsedMs.value = 0
+  startTimer()
+}
+
+watch(showTimer, () => {
+  if (showTimer.value) {
+    startTimer()
+  } else {
+    stopTimer()
+  }
+})
+
+watch(isGameOver, done => {
+  if (!done) return
+
+  finalElapsedMs.value = Date.now() - roundStartedAt.value
+  elapsedMs.value = finalElapsedMs.value
+  stopTimer()
 })
 
 async function newTodayRound () {
@@ -174,9 +246,11 @@ async function newTodayRound () {
     await nextTick()
     await refreshPracticePatterns()
     startGame(practicePatternKeys.value, { exact: true })
+    resetRoundTimer()
   } catch {
     // If the network is unavailable and no cache exists yet, use the local fallback set.
     startGame(practicePatternKeys.value, { exact: true })
+    resetRoundTimer()
   } finally {
     const elapsed = Date.now() - startedAt
     const remaining = MIN_TODAY_ROUND_LOADING_MS - elapsed
@@ -189,6 +263,7 @@ async function newTodayRound () {
 
 function newRandomRound () {
   startGame(ALL_FORMATION_KEYS)
+  resetRoundTimer()
 }
 
 const bannerClass = computed(() => {
@@ -199,5 +274,9 @@ const bannerClass = computed(() => {
 
 onMounted(() => {
   void newTodayRound()
+})
+
+onUnmounted(() => {
+  stopTimer()
 })
 </script>
