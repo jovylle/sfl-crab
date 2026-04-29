@@ -28,11 +28,16 @@
             </button>
             <button
               class="btn btn-sm btn-primary"
-              :disabled="isLoading || isStartingTodayRound"
+              :disabled="isLoading || isStartingTodayRound || todayRoundCooldownActive"
               @click="newTodayRound"
             >
               <span v-if="isStartingTodayRound" class="loading loading-spinner loading-xs"></span>
-              <span>{{ isStartingTodayRound ? "Loading today's round" : "New Today's Pattern Round ↺" }}</span>
+              <span v-else-if="todayRoundCooldownActive">
+                Retry later
+              </span>
+              <span v-else>
+                New Today's Pattern Round ↺
+              </span>
             </button>
             <button class="btn btn-sm btn-secondary" @click="newRandomRound">
               New Random Pattern Round
@@ -48,10 +53,14 @@
           <span v-if="isLoading || isStartingTodayRound" class="loading loading-dots loading-xs"></span>
         </div>
 
-        <div v-if="error" class="alert alert-warning py-2 text-xs">
-          {{ error }}
-          <span v-if="!patternKeys.length" class="block">
-            Falling back to the full practice set until the cache refreshes.
+        <div v-if="todayRoundErrorMessage || error" class="alert alert-warning py-2 text-xs">
+          <span v-if="todayRoundErrorMessage">{{ todayRoundErrorMessage }}</span>
+          <span v-else>{{ error }}</span>
+          <span class="block">
+            Use <strong>New Random Pattern Round</strong> for now.
+          </span>
+          <span v-if="todayRoundCooldownActive" class="block">
+            Retry available in <strong>5s</strong>.
           </span>
         </div>
 
@@ -176,6 +185,9 @@ const {
 
 const isStartingTodayRound = ref(false)
 const MIN_TODAY_ROUND_LOADING_MS = 450
+const TODAY_ROUND_ERROR_COOLDOWN_MS = 5000
+const todayRoundCooldownActive = ref(false)
+const todayRoundErrorMessage = ref('')
 const showTimer = ref(false)
 const elapsedMs = ref(0)
 const finalElapsedMs = ref(0)
@@ -188,6 +200,7 @@ const practicePatternKeys = computed(() => {
 
 const liveTimerText = computed(() => formatElapsed(elapsedMs.value))
 const finalTimerText = computed(() => formatElapsed(finalElapsedMs.value || elapsedMs.value))
+let todayRoundCooldownTimerId = null
 
 function formatElapsed(value) {
   const totalSeconds = Math.floor(value / 1000)
@@ -201,6 +214,14 @@ function stopTimer () {
     clearInterval(timerId)
     timerId = null
   }
+}
+
+function stopTodayRoundCooldown () {
+  if (todayRoundCooldownTimerId !== null) {
+    clearTimeout(todayRoundCooldownTimerId)
+    todayRoundCooldownTimerId = null
+  }
+  todayRoundCooldownActive.value = false
 }
 
 function startTimer () {
@@ -237,10 +258,11 @@ watch(isGameOver, done => {
 })
 
 async function newTodayRound () {
-  if (isStartingTodayRound.value) return
+  if (isStartingTodayRound.value || todayRoundCooldownActive.value) return
 
   isStartingTodayRound.value = true
   const startedAt = Date.now()
+  todayRoundErrorMessage.value = ''
 
   try {
     await nextTick()
@@ -249,8 +271,14 @@ async function newTodayRound () {
     resetRoundTimer()
   } catch {
     // If the network is unavailable and no cache exists yet, use the local fallback set.
-    startGame(practicePatternKeys.value, { exact: true })
-    resetRoundTimer()
+    todayRoundErrorMessage.value = "Today's pattern round failed to load."
+    stopTodayRoundCooldown()
+    todayRoundCooldownActive.value = true
+    todayRoundCooldownTimerId = setTimeout(() => {
+      todayRoundCooldownActive.value = false
+      todayRoundCooldownTimerId = null
+    }, TODAY_ROUND_ERROR_COOLDOWN_MS)
+    newRandomRound({ preserveFailureState: true })
   } finally {
     const elapsed = Date.now() - startedAt
     const remaining = MIN_TODAY_ROUND_LOADING_MS - elapsed
@@ -261,7 +289,11 @@ async function newTodayRound () {
   }
 }
 
-function newRandomRound () {
+function newRandomRound ({ preserveFailureState = false } = {}) {
+  if (!preserveFailureState) {
+    todayRoundErrorMessage.value = ''
+    stopTodayRoundCooldown()
+  }
   startGame(ALL_FORMATION_KEYS)
   resetRoundTimer()
 }
@@ -278,5 +310,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopTimer()
+  stopTodayRoundCooldown()
 })
 </script>
