@@ -60,6 +60,9 @@ const tabs = computed(() => {
     { label: "Focused Checklist", to: landId
                                 ? { name: 'TodaysChecklistWithId', params: { landId } }
                                 : { name: 'TodaysChecklist' } },
+    { label: 'Practice',          to: landId
+                                ? { name: 'PracticeWithId', params: { landId } }
+                                : { name: 'Practice' } },
   ]
 })
 </script>

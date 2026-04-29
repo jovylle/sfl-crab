@@ -6,6 +6,7 @@ import Home from '@/views/Home.vue'
 import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
 import FeedbackGallery from '@/views/FeedbackGallery.vue'
+import PracticeDigging from '@/views/PracticeDigging.vue'
 
 const routes = [
   { path: '/', name: 'Home', redirect: '/digging' },
@@ -51,6 +52,12 @@ const routes = [
     path: '/feedbacks',
     name: 'FeedbackGallery',
     component: FeedbackGallery
+  },
+  { path: '/practice', name: 'Practice', component: PracticeDigging },
+  {
+    path: '/:landId(\\d+)/practice',
+    name: 'PracticeWithId',
+    component: PracticeDigging
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
