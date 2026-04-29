@@ -19,8 +19,33 @@
             >
               Give Up
             </button>
-            <button class="btn btn-sm btn-primary" @click="newRound">New Round ↺</button>
+            <button
+              class="btn btn-sm btn-primary"
+              :disabled="isLoading || isStartingTodayRound"
+              @click="newTodayRound"
+            >
+              <span v-if="isStartingTodayRound" class="loading loading-dots loading-xs"></span>
+              <span>{{ isStartingTodayRound ? "Loading today's round" : "New Today's Round ↺" }}</span>
+            </button>
+            <button class="btn btn-sm btn-secondary" @click="newRandomRound">
+              New Random Pattern Round
+            </button>
           </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 text-xs text-base-content/60">
+          <span>
+            Today's shared patterns
+            <span v-if="isCachedForToday" class="badge badge-outline badge-xs ml-1">cached</span>
+          </span>
+          <span v-if="isLoading || isStartingTodayRound" class="loading loading-dots loading-xs"></span>
+        </div>
+
+        <div v-if="error" class="alert alert-warning py-2 text-xs">
+          {{ error }}
+          <span v-if="!patternKeys.length" class="block">
+            Falling back to the full practice set until the cache refreshes.
+          </span>
         </div>
 
         <!-- Live stats -->
@@ -54,7 +79,10 @@
         <PracticeGrid
           :key="`round-${roundCount}`"
           :tiles="displayTiles"
+          :hidden-grid="hiddenGrid"
           :game-over="isGameOver"
+          :loading="isStartingTodayRound"
+          @auto-finish="finishGame"
           @dig="dig"
         />
 
@@ -87,15 +115,15 @@
   </div>
 
   <div>
-    <InfoFooter />
+    <InfoFooter :show-what-is-this="false" :show-features="false" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, nextTick, ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import { usePracticeEngine } from '@/composables/usePracticeEngine.js'
-import { useLandData } from '@/composables/useLandData.js'
+import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import PracticeGrid from '@/components/PracticeGrid.vue'
@@ -110,22 +138,50 @@ const {
   isGameOver,
   isVictory,
   usedFormationKeys,
+  hiddenGrid,
   roundCount,
   treasuresFound,
   totalTreasures,
   startGame,
   dig,
   giveUp,
+  finishGame,
 } = usePracticeEngine()
 
 const { getImageSrc } = useReliableAssets()
+const {
+  error,
+  isCachedForToday,
+  isLoading,
+  patternKeys,
+  refreshPracticePatterns,
+} = usePracticePatterns()
 
-// Use today's stored patterns if user is at /:landId/practice, otherwise use all
-const { patternKeys } = useLandData()
+const isStartingTodayRound = ref(false)
 
-function newRound() {
-  const keys = patternKeys.value?.length ? patternKeys.value : ALL_FORMATION_KEYS
-  startGame(keys)
+const practicePatternKeys = computed(() => {
+  return patternKeys.value.length ? patternKeys.value : ALL_FORMATION_KEYS
+})
+
+async function newTodayRound () {
+  if (isStartingTodayRound.value) return
+
+  isStartingTodayRound.value = true
+
+  try {
+    await nextTick()
+    await refreshPracticePatterns()
+    startGame(practicePatternKeys.value, { exact: true })
+  } catch {
+    // If the network is unavailable and no cache exists yet, use the local fallback set.
+    startGame(practicePatternKeys.value, { exact: true })
+  } finally {
+    isStartingTodayRound.value = false
+  }
+}
+
+function newRandomRound () {
+  startGame(ALL_FORMATION_KEYS)
 }
 
 const bannerClass = computed(() => {
@@ -134,5 +190,7 @@ const bannerClass = computed(() => {
   return 'alert-warning'
 })
 
-onMounted(() => newRound())
+onMounted(() => {
+  void newTodayRound()
+})
 </script>

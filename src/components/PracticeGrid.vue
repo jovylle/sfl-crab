@@ -1,5 +1,5 @@
 <template>
-  <div class="contain-please relative mt-1 sm:mt-4 mx-auto">
+  <div class="contain-please relative mt-1 sm:mt-4 mx-auto" @contextmenu.prevent.stop>
     <!-- COL LABELS OVERLAY -->
     <div class="overlay-cols text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
       <div v-for="L in colLabels" :key="L" class="overlay-cell justify-center items-end">{{ L }}</div>
@@ -10,7 +10,10 @@
       <div v-for="N in rowLabels" :key="N" class="overlay-cell justify-end items-center">{{ N }}</div>
     </div>
 
-    <div class="relative z-20 grid w-full p-0.5 gap-0.5 bg-base-300 dark:bg-slate-500">
+    <div
+      class="relative z-20 grid w-full p-0.5 gap-0.5 bg-base-300 dark:bg-slate-500"
+      :class="{ 'pointer-events-none select-none': loading }"
+    >
       <div
         v-for="(tile, index) in tiles"
         :key="index"
@@ -27,7 +30,7 @@
           <!-- Revealed / ghosted image -->
           <img
             v-if="tile && getSlug(tile) && getSlug(tile) !== 'crab'"
-            :src="getImageSrc(`/world/${getSlug(tile)}.webp`).value"
+            :src="getImageSrc(getImagePath(tile)).value"
             :alt="tile.type"
             class="tile-img"
             :class="{ 'opacity-30': tile.ghosted }"
@@ -42,7 +45,7 @@
           <!-- Hint image (tileImage: class from engine) -->
           <img
             v-else-if="!tile && getHintSlug(index) && getHintSlug(index) !== 'crab'"
-            :src="getImageSrc(`/world/${getHintSlug(index)}.webp`).value"
+            :src="getImageSrc(getHintImagePath(index)).value"
             alt="hint"
             class="tile-img"
           />
@@ -63,10 +66,26 @@
           </span>
 
           <!-- Idle hover hint -->
-          <span v-else-if="!tile && !gameOver && !hasHint(index)" class="hover-shovel-wrap">
+          <span
+            v-else-if="!tile && !gameOver && !hasHint(index) && !getAutoMarker(index)"
+            class="hover-shovel-wrap"
+          >
             <Icon icon="noto:shovel" class="hover-shovel-icon" />
           </span>
+
+          <!-- Auto indicator: low-priority full-cell hint derived from revealed sand / crab -->
         </div>
+      </div>
+    </div>
+
+    <div
+      v-if="loading"
+      class="absolute inset-0 z-30 flex items-center justify-center rounded-box bg-base-100/70 backdrop-blur-sm"
+    >
+      <div class="flex flex-col items-center gap-3 text-center px-4">
+        <span class="loading loading-dots loading-lg text-primary"></span>
+        <div class="text-sm font-semibold">Loading today's round</div>
+        <div class="text-xs text-base-content/60">Rebuilding the grid from the shared pattern set</div>
       </div>
     </div>
 
@@ -92,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { useGridEngine } from '@/composables/useGridEngine.js'
@@ -103,13 +122,41 @@ const engine = useGridEngine(10)
 
 const props = defineProps({
   tiles:    { type: Array,   required: true },
+  hiddenGrid: { type: Array, default: () => [] },
   gameOver: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['dig'])
+const emit = defineEmits(['dig', 'auto-finish'])
 
 const colLabels = computed(() => Array.from({ length: 10 }, (_, i) => String.fromCharCode(65 + i)))
 const rowLabels = computed(() => Array.from({ length: 10 }, (_, i) => i + 1))
+const adjacentOffsets = [
+  { dx: 0, dy: -1 },
+  { dx: 1, dy: 0 },
+  { dx: 0, dy: 1 },
+  { dx: -1, dy: 0 },
+]
+
+const sandAutoSet = computed(() => collectAutoMarkers('sand'))
+const crabAutoSet = computed(() => collectAutoMarkers('crab'))
+const shouldAutoFinish = computed(() => {
+  if (!props.hiddenGrid?.length) return false
+
+  return props.hiddenGrid.every((hiddenTile, index) => {
+    if (hiddenTile?.type !== 'treasure') return true
+
+    const tile = props.tiles[index]
+    if (tile?.revealed || tile?.ghosted) return true
+    return hasTreasureHint(index)
+  })
+})
+
+watch(shouldAutoFinish, done => {
+  if (done && !props.gameOver) {
+    emit('auto-finish')
+  }
+}, { immediate: true })
 
 // Marking hints only — dig is now left-click, not a picker option
 const MARK_HINTS = [
@@ -175,6 +222,7 @@ function onRightClick(event, index) {
   const tile = props.tiles[index]
   if (props.gameOver || tile?.revealed || tile?.ghosted || diggingSet.value.has(index)) return
 
+  event.preventDefault()
   confirmIndex.value = null
 
   const container = event.currentTarget.closest('.contain-please')
@@ -201,11 +249,23 @@ function hasHint(index) {
   return engine.tiles.value[index]?.some(c => c.startsWith('hint-') || c.startsWith('near-'))
 }
 
+function hasTreasureHint(index) {
+  return engine.tiles.value[index]?.some(c => c.startsWith('hint-treasure'))
+}
+
 function getHintSlug(index) {
   const classes = engine.tiles.value[index]
   if (!classes) return null
   const m = classes.find(c => typeof c === 'string' && c.includes('tileImage:'))
   return m ? m.split(':')[1] : null
+}
+
+function getHintImagePath(index) {
+  const slug = getHintSlug(index)
+  if (!slug) return null
+  return slug === 'sand'
+    ? '/my_images/sand.png'
+    : `/world/${slug}.webp`
 }
 
 function getSlug(tile) {
@@ -216,6 +276,76 @@ function getSlug(tile) {
   return null
 }
 
+function getImagePath(tile) {
+  const slug = getSlug(tile)
+  if (!slug) return null
+  return slug === 'sand'
+    ? '/my_images/sand.png'
+    : `/world/${slug}.webp`
+}
+
+function hasAdjacentTreasure(index) {
+  const x = index % 10
+  const y = Math.floor(index / 10)
+
+  return adjacentOffsets.some(({ dx, dy }) => {
+    const nx = x + dx
+    const ny = y + dy
+    if (nx < 0 || nx >= 10 || ny < 0 || ny >= 10) return false
+
+    const neighbor = props.tiles[ny * 10 + nx]
+    return neighbor?.type === 'treasure'
+  })
+}
+
+function collectAutoMarkers(type) {
+  const marked = new Set()
+
+  props.tiles.forEach((tile, index) => {
+    if (!tile || tile.type !== type || !tile.revealed) return
+    if (type === 'crab' && hasAdjacentTreasure(index)) return
+    if (
+      type === 'crab' &&
+      adjacentOffsets.some(({ dx, dy }) => {
+        const x = index % 10
+        const y = Math.floor(index / 10)
+        const nx = x + dx
+        const ny = y + dy
+        if (nx < 0 || nx >= 10 || ny < 0 || ny >= 10) return false
+        return hasTreasureHint(ny * 10 + nx)
+      })
+    ) return
+
+    const x = index % 10
+    const y = Math.floor(index / 10)
+
+    adjacentOffsets.forEach(({ dx, dy }) => {
+      const nx = x + dx
+      const ny = y + dy
+      if (nx < 0 || nx >= 10 || ny < 0 || ny >= 10) return
+
+      const nIndex = ny * 10 + nx
+      const neighbor = props.tiles[nIndex]
+      if (neighbor?.revealed || neighbor?.ghosted) return
+      if (hasHint(nIndex)) return
+
+      marked.add(nIndex)
+    })
+  })
+
+  return marked
+}
+
+function getAutoMarker(index) {
+  const tile = props.tiles[index]
+  if (tile?.revealed || tile?.ghosted) return false
+  if (hasHint(index)) return false
+
+  if (crabAutoSet.value.has(index)) return 'hint-crab-eyes-maybe'
+  if (sandAutoSet.value.has(index)) return 'hint-nothing'
+  return ''
+}
+
 function outerClasses(tile, index) {
   if (diggingSet.value.has(index))    return ['bg-base-200', 'cursor-wait']
   if (confirmIndex.value === index)   return ['practice-confirming', 'cursor-pointer']
@@ -224,6 +354,8 @@ function outerClasses(tile, index) {
 
   const hints = engine.tiles.value[index]
   if (hints?.length) return [...hints, 'cursor-pointer']
+  const autoMarker = getAutoMarker(index)
+  if (autoMarker) return [autoMarker, 'cursor-pointer']
 
   return props.gameOver
     ? ['bg-base-100']
@@ -365,6 +497,10 @@ function outerClasses(tile, index) {
 .tile.near-hint-sand:not([class*="near-hint-sand-"])::after {
   background: radial-gradient(circle, oklch(var(--color-error) / 0.8) 0 18%, transparent 20%);
   clip-path: inset(41% 41% 41% 41%);
+}
+
+.tile.hint-crab:not(.crab) {
+  background-image: none;
 }
 
 .digging-shovel-wrap {

@@ -6,7 +6,9 @@
         <div
           v-for="(key, i) in patternKeys"
           :key="i"
-          class="relative group md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px] bg-base-100 dark:bg-neutral-content"
+          class="relative group md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px] bg-base-100 dark:bg-neutral-content cursor-pointer transition-all"
+          :class="isMarked(i) ? 'ring-2 ring-success ring-offset-2 ring-offset-base-100' : 'hover:ring-2 hover:ring-base-300'"
+          @click="toggleMark(i)"
         >
           <span
             class="absolute opacity-0 group-hover:opacity-100 transition-opacity left-1/2 transform -translate-x-1/2 -bottom-3 mt-1 text-[0.75rem] bg-base-100 whitespace-nowrap z-10"
@@ -34,6 +36,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 
@@ -45,9 +48,21 @@ const props = defineProps({
 
 const GRID_SIZE = 4
 const CENTER_OFFSET = Math.floor(GRID_SIZE / 2) - 1
+const marked = ref(new Set())
 
 function formatKey(key) {
   return key.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+function toggleMark(index) {
+  const next = new Set(marked.value)
+  if (next.has(index)) next.delete(index)
+  else next.add(index)
+  marked.value = next
+}
+
+function isMarked(index) {
+  return marked.value.has(index)
 }
 
 function getPlotAt(key, cellIndex) {

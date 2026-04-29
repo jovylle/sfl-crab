@@ -2,8 +2,7 @@
 <template>
   <section class="card bg-base-100">
     <div class="card-body space-y-4">
-      <!-- “What is this?” -->
-      <div>
+      <div v-if="showWhatIsThis">
         <h3 class="text-xl font-bold flex items-center">
           <span class="text-2xl mr-2">💡</span>
            What is this?
@@ -24,8 +23,7 @@
         </p>
       </div>
 
-      <!-- Features -->
-      <div>
+      <div v-if="showFeatures">
         <h4 class="text-lg font-semibold">🚀 Features:</h4>
         <ul class="list-disc list-inside mt-2 space-y-1">
           <li>Auto-load from Land ID (via API)</li>
@@ -38,7 +36,10 @@
 </template>
 
 <script setup>
-// no script logic needed
+defineProps({
+  showWhatIsThis: { type: Boolean, default: true },
+  showFeatures: { type: Boolean, default: true },
+})
 </script>
 
 <style scoped>

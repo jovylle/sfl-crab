@@ -105,8 +105,8 @@ export function usePracticeEngine() {
     return grid
   }
 
-  function startGame(allKeys) {
-    const picked = pickPracticePatterns(allKeys)
+  function startGame(allKeys, options = {}) {
+    const picked = options.exact ? [...new Set(allKeys)] : pickPracticePatterns(allKeys)
     usedFormationKeys.value = picked
     hiddenGrid.value = _buildGrid(picked)
     revealedSet.value = new Set()
@@ -133,6 +133,12 @@ export function usePracticeEngine() {
     if (isGameOver.value) return
     isGameOver.value = true
     isVictory.value = false
+  }
+
+  function finishGame() {
+    if (isGameOver.value) return
+    isGameOver.value = true
+    isVictory.value = true
   }
 
   // null = hidden, revealed tile, or ghosted (shown after game over without being dug)
@@ -164,5 +170,7 @@ export function usePracticeEngine() {
     startGame,
     dig,
     giveUp,
+    finishGame,
+    hiddenGrid,
   }
 }
