@@ -174,7 +174,7 @@ const MARK_HINTS = [
 // ── Dig animation state ──────────────────────────────────────────────
 const diggingSet    = ref(new Set())
 const pendingTimers = {}
-const DIG_DELAY_MS  = 700
+const DIG_DELAY_MS  = 350
 
 function startDig(index) {
   if (diggingSet.value.has(index)) return

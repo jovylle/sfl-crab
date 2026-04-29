@@ -24,7 +24,7 @@
               :disabled="isLoading || isStartingTodayRound"
               @click="newTodayRound"
             >
-              <span v-if="isStartingTodayRound" class="loading loading-dots loading-xs"></span>
+              <span v-if="isStartingTodayRound" class="loading loading-spinner loading-xs"></span>
               <span>{{ isStartingTodayRound ? "Loading today's round" : "New Today's Round ↺" }}</span>
             </button>
             <button class="btn btn-sm btn-secondary" @click="newRandomRound">
@@ -34,10 +34,10 @@
         </div>
 
         <div class="flex items-center justify-between gap-2 text-xs text-base-content/60">
-          <span>
+          <!-- <span>
             Today's shared patterns
             <span v-if="isCachedForToday" class="badge badge-outline badge-xs ml-1">cached</span>
-          </span>
+          </span> -->
           <span v-if="isLoading || isStartingTodayRound" class="loading loading-dots loading-xs"></span>
         </div>
 
@@ -158,6 +158,7 @@ const {
 } = usePracticePatterns()
 
 const isStartingTodayRound = ref(false)
+const MIN_TODAY_ROUND_LOADING_MS = 450
 
 const practicePatternKeys = computed(() => {
   return patternKeys.value.length ? patternKeys.value : ALL_FORMATION_KEYS
@@ -167,6 +168,7 @@ async function newTodayRound () {
   if (isStartingTodayRound.value) return
 
   isStartingTodayRound.value = true
+  const startedAt = Date.now()
 
   try {
     await nextTick()
@@ -176,6 +178,11 @@ async function newTodayRound () {
     // If the network is unavailable and no cache exists yet, use the local fallback set.
     startGame(practicePatternKeys.value, { exact: true })
   } finally {
+    const elapsed = Date.now() - startedAt
+    const remaining = MIN_TODAY_ROUND_LOADING_MS - elapsed
+    if (remaining > 0) {
+      await new Promise(resolve => setTimeout(resolve, remaining))
+    }
     isStartingTodayRound.value = false
   }
 }
