@@ -1,5 +1,5 @@
 <template>
-  <div v-if="patternKeys?.length" class="card grow max-w-md basis-[265px] mx-auto md:mx-0">
+  <div v-if="patternKeys?.length" class="card grow max-w-[400px] basis-[265px] mx-auto md:mx-0">
     <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
       <h2 class="card-title text-center text-sm sm:text-lg">Practice Patterns</h2>
       <div class="flex flex-wrap gap-2 sm:gap-4">
