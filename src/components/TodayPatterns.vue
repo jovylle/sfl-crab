@@ -75,8 +75,7 @@ const route = useRoute()
 const { patternKeys } = useLandData()
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 
-const GRID_SIZE     = 4
-const CENTER_OFFSET = Math.floor(GRID_SIZE / 2) - 1 // = 2
+const GRID_SIZE = 4
 
 function toggleMark(index: number) {
   marked.value.has(index)
@@ -88,15 +87,49 @@ function isMarked(index: number) {
   return marked.value.has(index)
 }
 
+function getFormationBounds(formation: Array<{ x: number, y: number }>) {
+  if (!formation.length) {
+    return {
+      minX: 0,
+      minY: 0,
+      width: 0,
+      height: 0,
+    }
+  }
+
+  const xs = formation.map(plot => plot.x)
+  const ys = formation.map(plot => plot.y)
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minY = Math.min(...ys)
+  const maxY = Math.max(...ys)
+
+  return {
+    minX,
+    minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+  }
+}
+
+function getPreviewOffset(formation: Array<{ x: number, y: number }>) {
+  const { minX, minY, width, height } = getFormationBounds(formation)
+
+  return {
+    x: Math.floor((GRID_SIZE - width) / 2) - minX,
+    y: Math.floor((GRID_SIZE - height) / 2) - minY,
+  }
+}
+
 function getPlotAt(key: string, cellIndex: number) {
   const formation = DIGGING_FORMATIONS[key as keyof typeof DIGGING_FORMATIONS] || []
   const idx = cellIndex - 1
   const col = idx % GRID_SIZE            // 0..3
   const row = Math.floor(idx / GRID_SIZE) // 0..3
 
-  // center the origin on (CENTER_OFFSET, CENTER_OFFSET)
-  const x = col - CENTER_OFFSET + 1
-  const y = row - CENTER_OFFSET
+  const offset = getPreviewOffset(formation)
+  const x = col - offset.x
+  const y = row - offset.y
 
   return formation.find(plot => plot.x === x && plot.y === y) || null
 }
