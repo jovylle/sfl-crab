@@ -10,6 +10,18 @@ export function useGridEngine (gridSize = 10) {
     Array.from({ length: gridSize * gridSize }, () => ({}))
   )
 
+  function isSandNearClass (c) {
+    return (
+      typeof c === 'string' &&
+      (
+        c === 'near-sand' ||
+        c === 'near-hint-sand' ||
+        c.startsWith('near-sand-') ||
+        c.startsWith('near-hint-sand-')
+      )
+    )
+  }
+
   function applyHint (x, y, hintClass) {
     const deltas = [
       { dx: 0, dy: -1, direction: 'top' }, // above
@@ -43,17 +55,20 @@ export function useGridEngine (gridSize = 10) {
       const ny = y + dy
       if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return
       const idx = ny * gridSize + nx
-      const appliedHintClass =
+      const appliedHintClasses =
         (hintClass === 'near-sand' || hintClass === 'near-hint-sand')
-          ? `${hintClass}-${direction}`
-          : hintClass
+          ? [hintClass, `${hintClass}-${direction}`]
+          : [hintClass]
 
       // increment the count for this hint
-      hintCounts.value[idx][appliedHintClass] = (hintCounts.value[idx][appliedHintClass] || 0) + 1
-      // add the CSS class if it’s not already present
-      if (!tiles.value[idx].includes(appliedHintClass)) {
-        tiles.value[idx] = [...tiles.value[idx], appliedHintClass]
-      }
+      appliedHintClasses.forEach(appliedHintClass => {
+        hintCounts.value[idx][appliedHintClass] =
+          (hintCounts.value[idx][appliedHintClass] || 0) + 1
+        // add the CSS class if it’s not already present
+        if (!tiles.value[idx].includes(appliedHintClass)) {
+          tiles.value[idx] = [...tiles.value[idx], appliedHintClass]
+        }
+      })
     })
   
 
@@ -65,16 +80,7 @@ export function useGridEngine (gridSize = 10) {
       classes.filter(c =>
         c !== 'near-crab' &&
         c !== 'near-hint-crab' &&
-        c !== 'near-sand' &&
-        c !== 'near-hint-sand' &&
-        c !== 'near-sand-top' &&
-        c !== 'near-sand-right' &&
-        c !== 'near-sand-bottom' &&
-        c !== 'near-sand-left' &&
-        c !== 'near-hint-sand-top' &&
-        c !== 'near-hint-sand-right' &&
-        c !== 'near-hint-sand-bottom' &&
-        c !== 'near-hint-sand-left'
+        !isSandNearClass(c)
       )
     )
     hintCounts.value = hintCounts.value.map(() => ({}))
