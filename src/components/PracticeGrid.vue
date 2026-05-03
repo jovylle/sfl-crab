@@ -234,7 +234,6 @@ function onRightClick(event, index) {
     y: tR.top  - cR.top  + tR.height / 2,
   }
 }
-
 function onHintPicked({ tileIndex, hint }) {
   picker.value = null
   if (hint === 'no-hint-and-show-trash-icon') {
@@ -536,7 +535,7 @@ function outerClasses(tile, index) {
 }
 
 /* ── Ghosted / reveal ── */
-.practice-ghosted { opacity: 0.35; }
+.practice-ghosted { opacity: 0.6; }
 
 .practice-reveal {
   animation: tile-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);

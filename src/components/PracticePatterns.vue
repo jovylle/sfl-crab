@@ -6,8 +6,13 @@
         <div
           v-for="(key, i) in patternKeys"
           :key="i"
-          class="relative group md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px] bg-base-100 dark:bg-neutral-content cursor-pointer transition-all"
-          :class="isMarked(i) ? 'ring-2 ring-success ring-offset-2 ring-offset-base-100' : 'hover:ring-2 hover:ring-base-300'"
+          :class="[
+            'cursor-pointer transition-shadow relative group',
+            isMarked(i)
+              ? 'bg-success'
+              : 'bg-base-100 dark:bg-neutral-content',
+            'md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px]',
+          ]"
           @click="toggleMark(i)"
         >
           <span
@@ -47,7 +52,6 @@ const props = defineProps({
 })
 
 const GRID_SIZE = 4
-const CENTER_OFFSET = Math.floor(GRID_SIZE / 2) - 1
 const marked = ref(new Set())
 
 function formatKey(key) {
@@ -65,13 +69,49 @@ function isMarked(index) {
   return marked.value.has(index)
 }
 
+function getFormationBounds(formation) {
+  if (!formation.length) {
+    return {
+      minX: 0,
+      minY: 0,
+      width: 0,
+      height: 0,
+    }
+  }
+
+  const xs = formation.map(plot => plot.x)
+  const ys = formation.map(plot => plot.y)
+
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minY = Math.min(...ys)
+  const maxY = Math.max(...ys)
+
+  return {
+    minX,
+    minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+  }
+}
+
+function getPreviewOffset(formation) {
+  const { minX, minY, width, height } = getFormationBounds(formation)
+
+  return {
+    x: Math.floor((GRID_SIZE - width) / 2) - minX,
+    y: Math.floor((GRID_SIZE - height) / 2) - minY,
+  }
+}
+
 function getPlotAt(key, cellIndex) {
   const formation = DIGGING_FORMATIONS[key] || []
   const idx = cellIndex - 1
   const col = idx % GRID_SIZE
   const row = Math.floor(idx / GRID_SIZE)
-  const x = col - CENTER_OFFSET + 1
-  const y = row - CENTER_OFFSET
+  const offset = getPreviewOffset(formation)
+  const x = col - offset.x
+  const y = row - offset.y
   return formation.find(p => p.x === x && p.y === y) || null
 }
 

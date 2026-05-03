@@ -31,6 +31,7 @@
         class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative"
         :class="normalizeTile(tile)"
         @click="onTileClick($event, index)"
+        @contextmenu.prevent="onTileClick($event, index)"
       >
         <!-- underlying image -->
         <img
