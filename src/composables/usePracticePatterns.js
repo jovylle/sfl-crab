@@ -3,9 +3,11 @@ import { useStorage } from '@vueuse/core'
 import { fetchPracticePatterns } from '@/services/practicePatternService'
 import { PRACTICE_CONSTANTS } from '@/data/app/constants'
 
-const todayUTC = () => new Date().toISOString().slice(0, 10)
+const getTodayUTC = () => new Date().toISOString().slice(0, 10)
 
 const cacheKey = `practice:today-patterns:${PRACTICE_CONSTANTS.ADAM_OWNER_ID}`
+
+export const PRACTICE_PATTERN_CACHE_KEY = cacheKey
 
 const defaultCache = {
   date: '',
@@ -14,12 +16,30 @@ const defaultCache = {
   patterns: [],
 }
 
+function readCachedPatternsFromStorage () {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage?.getItem(cacheKey)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (parsed?.date !== getTodayUTC()) return []
+    return Array.isArray(parsed.patterns) ? parsed.patterns : []
+  } catch (error) {
+    console.warn('Failed to parse practice pattern cache:', error)
+    return []
+  }
+}
+
+export function readCachedPracticePatterns () {
+  return readCachedPatternsFromStorage()
+}
+
 export function usePracticePatterns () {
   const cache = useStorage(cacheKey, { ...defaultCache })
   const isLoading = ref(false)
   const error = ref('')
 
-  const isCachedForToday = computed(() => cache.value.date === todayUTC() && (cache.value.patterns || []).length > 0)
+  const isCachedForToday = computed(() => cache.value.date === getTodayUTC() && (cache.value.patterns || []).length > 0)
   const patternKeys = computed(() => (isCachedForToday.value ? cache.value.patterns : []))
 
   async function refreshPracticePatterns ({ force = false } = {}) {
@@ -35,7 +55,7 @@ export function usePracticePatterns () {
       const patterns = visitedFarmState.desert?.digging?.patterns || []
 
       cache.value = {
-        date: todayUTC(),
+        date: getTodayUTC(),
         fetchedAt: Date.now(),
         landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
         patterns,
