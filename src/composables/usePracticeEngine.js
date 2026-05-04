@@ -106,7 +106,12 @@ export function usePracticeEngine() {
   }
 
   function startGame(allKeys, options = {}) {
-    const picked = options.exact ? [...new Set(allKeys)] : pickPracticePatterns(allKeys)
+    // When `exact` is requested, preserve the provided array as-is
+    // (including duplicate entries). Previously this used `new Set()`
+    // which removed duplicates from the practice-of-the-day list.
+    const picked = options.exact
+      ? (Array.isArray(allKeys) ? [...allKeys] : [allKeys])
+      : pickPracticePatterns(allKeys)
     usedFormationKeys.value = picked
     hiddenGrid.value = _buildGrid(picked)
     revealedSet.value = new Set()

@@ -66,13 +66,11 @@
 import { ref } from 'vue'
 import { useLandData } from '../composables/useLandData'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
-import { useRoute } from 'vue-router'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
-const route = useRoute()
-const { patternKeys } = useLandData()
+const { dailyPatternKeys: patternKeys } = useLandData()
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 
 const GRID_SIZE = 4
