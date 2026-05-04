@@ -395,6 +395,8 @@ async function main() {
         // If we had no mapped path (or still missing), try generic icon/raw paths as a last resort and copy to slug .webp
         if (!fs.existsSync(path.join(ASSETS_DIR, slugFilename))) {
           const genericCandidates = [
+            buildRawAssetUrl(`src/assets/icons/${slugBase}.webp`),
+            buildRawAssetUrl(`src/assets/icons/${slugBase}.png`),
             buildRawAssetUrl(`assets/icons/${slugBase}.png`),
             buildRawAssetUrl(`assets/icons/${slugBase}.webp`),
             buildRawAssetUrl(`assets/resources/${slugBase}.png`),
