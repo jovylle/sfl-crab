@@ -1,6 +1,6 @@
 // Seasonal Artefacts Data
 // Extracted from Sunflower Land game repo for local use
-// Last updated: 2026-05-03
+// Last updated: 2026-05-04
 
 /**
  * Maps season names to their corresponding seasonal artifact
