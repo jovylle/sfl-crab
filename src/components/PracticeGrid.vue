@@ -33,13 +33,13 @@
             :src="getImageSrc(getImagePath(tile)).value"
             :alt="tile.type"
             class="tile-img"
-            :class="{ 'opacity-30': tile.ghosted }"
+            :class="{ '': tile.ghosted }"
           />
           <Icon
             v-else-if="tile && getSlug(tile) === 'crab'"
             icon="noto:crab"
             class="tile-icon"
-            :class="{ 'opacity-30': tile.ghosted }"
+            :class="{ '': tile.ghosted }"
           />
 
           <!-- Hint image (tileImage: class from engine) -->
@@ -535,7 +535,7 @@ function outerClasses(tile, index) {
 }
 
 /* ── Ghosted / reveal ── */
-.practice-ghosted { opacity: 0.6; }
+.practice-ghosted { opacity: 0.7; }
 
 .practice-reveal {
   animation: tile-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
