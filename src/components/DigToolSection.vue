@@ -1,6 +1,14 @@
 <template>
   <div class="flex gap-4 mb-1 justify-center items-center">
     <InputLandIdOrRefresh />
+    <button
+      type="button"
+      class="btn btn-primary btn-sm"
+      @click="goToPractice"
+      title="Go to Practice"
+    >
+      Practice
+    </button>
     <div class="dropdown">
       <div tabindex="0" role="button" class="btn m-1 btn-accent btn-sm sm:btn-md">
         More ⋮
@@ -73,6 +81,14 @@ function clearLandId () {
   } else {
     // default to details no-id
     router.push({ name: 'LandDetailsNoId' })
+  }
+}
+
+function goToPractice () {
+  if (route.params.landId) {
+    router.push({ name: 'PracticeWithId', params: { landId: route.params.landId } })
+  } else {
+    router.push({ name: 'Practice' })
   }
 }
 
