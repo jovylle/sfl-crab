@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { useStorage } from '@vueuse/core'
-import { fetchLandData } from '@/services/landSyncService'
+import { fetchPracticePatterns } from '@/services/practicePatternService'
 import { PRACTICE_CONSTANTS } from '@/data/app/constants'
 
 const todayUTC = () => new Date().toISOString().slice(0, 10)
@@ -30,7 +30,7 @@ export function usePracticePatterns () {
     error.value = ''
 
     try {
-      const fresh = await fetchLandData(PRACTICE_CONSTANTS.ADAM_OWNER_ID)
+      const fresh = await fetchPracticePatterns()
       const visitedFarmState = fresh?.visitedFarmState || {}
       const patterns = visitedFarmState.desert?.digging?.patterns || []
 
