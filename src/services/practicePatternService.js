@@ -17,16 +17,6 @@ function normalizePracticePayload (data) {
 }
 
 export async function fetchPracticePatterns () {
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      // dev-only counter to help debug duplicate fetches
-      window.__practiceFetchCount = (window.__practiceFetchCount || 0) + 1
-      // eslint-disable-next-line no-console
-      console.debug(`[dev] fetchPracticePatterns start (#${window.__practiceFetchCount})`, PRACTICE_PATTERN_ENDPOINT)
-    } catch (e) {
-      // ignore
-    }
-  }
   const response = await fetch(PRACTICE_PATTERN_ENDPOINT, {
     headers: {
       'Content-Type': 'application/json',

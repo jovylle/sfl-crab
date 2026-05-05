@@ -18,6 +18,7 @@ const defaultCache = {
 
 // Module-scoped single-flight promise shared by all composable instances
 let ongoingFetch = null
+const GLOBAL_ONGOING_KEY = '__practicePatternsOngoing'
 
 function readCachedPatternsFromStorage () {
   if (typeof window === 'undefined') return []
@@ -41,43 +42,29 @@ export function usePracticePatterns () {
   const cache = useStorage(cacheKey, { ...defaultCache })
   const isLoading = ref(false)
   const error = ref('')
-  // single-flight promise to avoid duplicate network requests
-  let ongoingFetch = null
 
   const isCachedForToday = computed(() => cache.value.date === getTodayUTC() && (cache.value.patterns || []).length > 0)
   const patternKeys = computed(() => (isCachedForToday.value ? cache.value.patterns : []))
 
   async function refreshPracticePatterns ({ force = false } = {}) {
-    if (process.env.NODE_ENV !== 'production') {
-      try {
-        // eslint-disable-next-line no-console
-        console.debug('[dev] refreshPracticePatterns called', { force, isCached: isCachedForToday.value, isLoading: isLoading.value })
-      } catch (e) {}
-    }
-
     if (!force && isCachedForToday.value) {
-      if (process.env.NODE_ENV !== 'production') {
-        try { console.debug('[dev] refreshPracticePatterns using cache') } catch (e) {}
-      }
       return cache.value
     }
 
-    // If a fetch is already in progress, return the same promise
+    // If a fetch is already in progress, return the same promise.
+    if (typeof window !== 'undefined' && window[GLOBAL_ONGOING_KEY]) {
+      return window[GLOBAL_ONGOING_KEY]
+    }
+
     if (ongoingFetch) {
-      if (process.env.NODE_ENV !== 'production') {
-        try { console.debug('[dev] refreshPracticePatterns reusing ongoingFetch') } catch (e) {}
-      }
       return ongoingFetch
     }
 
     isLoading.value = true
     error.value = ''
 
-    ongoingFetch = (async () => {
+    const makeFetch = async () => {
       try {
-        if (process.env.NODE_ENV !== 'production') {
-          try { console.debug('[dev] fetchPracticePatterns starting network request') } catch (e) {}
-        }
         const fresh = await fetchPracticePatterns()
         const visitedFarmState = fresh?.visitedFarmState || {}
         const patterns = visitedFarmState.desert?.digging?.patterns || []
@@ -87,10 +74,6 @@ export function usePracticePatterns () {
           fetchedAt: Date.now(),
           landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
           patterns,
-        }
-
-        if (process.env.NODE_ENV !== 'production') {
-          try { console.debug('[dev] fetchPracticePatterns completed', { patternsLength: patterns.length }) } catch (e) {}
         }
 
         return cache.value
@@ -105,13 +88,20 @@ export function usePracticePatterns () {
       } finally {
         isLoading.value = false
         ongoingFetch = null
-        if (process.env.NODE_ENV !== 'production') {
-          try { console.debug('[dev] refreshPracticePatterns finished') } catch (e) {}
+        if (typeof window !== 'undefined') {
+          try { delete window[GLOBAL_ONGOING_KEY] } catch (e) {}
         }
       }
-    })()
+    }
 
-    return ongoingFetch
+    // Create the fetch promise and store in both module and window scopes (browser)
+    const p = makeFetch()
+    ongoingFetch = p
+    if (typeof window !== 'undefined') {
+      try { window[GLOBAL_ONGOING_KEY] = p } catch (e) {}
+    }
+
+    return p
   }
 
   return {
