@@ -48,10 +48,25 @@ export function usePracticePatterns () {
   const patternKeys = computed(() => (isCachedForToday.value ? cache.value.patterns : []))
 
   async function refreshPracticePatterns ({ force = false } = {}) {
-    if (!force && isCachedForToday.value) return cache.value
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        // eslint-disable-next-line no-console
+        console.debug('[dev] refreshPracticePatterns called', { force, isCached: isCachedForToday.value, isLoading: isLoading.value })
+      } catch (e) {}
+    }
+
+    if (!force && isCachedForToday.value) {
+      if (process.env.NODE_ENV !== 'production') {
+        try { console.debug('[dev] refreshPracticePatterns using cache') } catch (e) {}
+      }
+      return cache.value
+    }
 
     // If a fetch is already in progress, return the same promise
     if (ongoingFetch) {
+      if (process.env.NODE_ENV !== 'production') {
+        try { console.debug('[dev] refreshPracticePatterns reusing ongoingFetch') } catch (e) {}
+      }
       return ongoingFetch
     }
 
@@ -60,6 +75,9 @@ export function usePracticePatterns () {
 
     ongoingFetch = (async () => {
       try {
+        if (process.env.NODE_ENV !== 'production') {
+          try { console.debug('[dev] fetchPracticePatterns starting network request') } catch (e) {}
+        }
         const fresh = await fetchPracticePatterns()
         const visitedFarmState = fresh?.visitedFarmState || {}
         const patterns = visitedFarmState.desert?.digging?.patterns || []
@@ -69,6 +87,10 @@ export function usePracticePatterns () {
           fetchedAt: Date.now(),
           landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
           patterns,
+        }
+
+        if (process.env.NODE_ENV !== 'production') {
+          try { console.debug('[dev] fetchPracticePatterns completed', { patternsLength: patterns.length }) } catch (e) {}
         }
 
         return cache.value
@@ -83,6 +105,9 @@ export function usePracticePatterns () {
       } finally {
         isLoading.value = false
         ongoingFetch = null
+        if (process.env.NODE_ENV !== 'production') {
+          try { console.debug('[dev] refreshPracticePatterns finished') } catch (e) {}
+        }
       }
     })()
 
