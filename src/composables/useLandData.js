@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
-import { PRACTICE_PATTERN_CACHE_KEY } from '@/composables/usePracticePatterns.js'
+import { PRACTICE_PATTERN_CACHE_KEY, usePracticePatterns } from '@/composables/usePracticePatterns.js'
 
 const PRACTICE_ENDPOINT = '/.netlify/functions/practice-patterns'
 
@@ -43,9 +43,9 @@ export function useLandData (defaults = {}) {
       : []
   })
 
-  // If local storage doesn't yet have today's patterns, try to fetch the
-  // Netlify function (which benefits from Netlify's CDN cache via s-maxage).
-  // This only runs in the browser (no-op during SSR).
+  // If local storage doesn't yet have today's patterns, ask the practice
+  // patterns composable to refresh (it implements single-flight so
+  // concurrent callers share one network request).
   if (typeof window !== 'undefined') {
     ;(async () => {
       try {
@@ -54,24 +54,10 @@ export function useLandData (defaults = {}) {
           return
         }
 
-        const res = await fetch(PRACTICE_ENDPOINT, { headers: { 'Content-Type': 'application/json' } })
-        if (!res.ok) return
-        const payload = await res.json()
-        // Normalize payload: function returns visitedFarmState at root
-        const visited = payload?.visitedFarmState || payload?.farm || payload || {}
-        const patterns = visited.desert?.digging?.patterns || []
-
-        if (Array.isArray(patterns) && patterns.length) {
-          practicePatternCache.value = {
-            date: todayUTC,
-            fetchedAt: Date.now(),
-            patterns,
-          }
-        }
+        const { refreshPracticePatterns } = usePracticePatterns()
+        await refreshPracticePatterns()
       } catch (err) {
-        // swallow fetch errors; app will continue to work with defaults
-        // CDN/backing API may be unreachable — that's okay.
-        // console.debug('practice-patterns fetch failed', err)
+        // ignore errors; we simply fall back to empty cache/local defaults
       }
     })()
   }

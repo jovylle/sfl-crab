@@ -38,41 +38,52 @@ export function usePracticePatterns () {
   const cache = useStorage(cacheKey, { ...defaultCache })
   const isLoading = ref(false)
   const error = ref('')
+  // single-flight promise to avoid duplicate network requests
+  let ongoingFetch = null
 
   const isCachedForToday = computed(() => cache.value.date === getTodayUTC() && (cache.value.patterns || []).length > 0)
   const patternKeys = computed(() => (isCachedForToday.value ? cache.value.patterns : []))
 
   async function refreshPracticePatterns ({ force = false } = {}) {
-    if (isLoading.value) return cache.value
     if (!force && isCachedForToday.value) return cache.value
+
+    // If a fetch is already in progress, return the same promise
+    if (ongoingFetch) {
+      return ongoingFetch
+    }
 
     isLoading.value = true
     error.value = ''
 
-    try {
-      const fresh = await fetchPracticePatterns()
-      const visitedFarmState = fresh?.visitedFarmState || {}
-      const patterns = visitedFarmState.desert?.digging?.patterns || []
+    ongoingFetch = (async () => {
+      try {
+        const fresh = await fetchPracticePatterns()
+        const visitedFarmState = fresh?.visitedFarmState || {}
+        const patterns = visitedFarmState.desert?.digging?.patterns || []
 
-      cache.value = {
-        date: getTodayUTC(),
-        fetchedAt: Date.now(),
-        landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
-        patterns,
-      }
+        cache.value = {
+          date: getTodayUTC(),
+          fetchedAt: Date.now(),
+          landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
+          patterns,
+        }
 
-      return cache.value
-    } catch (err) {
-      error.value = err?.message || "Failed to load today's practice patterns."
-
-      if (patternKeys.value.length > 0) {
         return cache.value
-      }
+      } catch (err) {
+        error.value = err?.message || "Failed to load today's practice patterns."
 
-      throw err
-    } finally {
-      isLoading.value = false
-    }
+        if (patternKeys.value.length > 0) {
+          return cache.value
+        }
+
+        throw err
+      } finally {
+        isLoading.value = false
+        ongoingFetch = null
+      }
+    })()
+
+    return ongoingFetch
   }
 
   return {
