@@ -3,7 +3,7 @@
     <InputLandIdOrRefresh />
     <button
       type="button"
-      class="btn btn-primary btn-sm"
+      class="btn text-base-100 btn-info btn-sm sm:btn-md"
       @click="goToPractice"
       title="Go to Practice"
     >

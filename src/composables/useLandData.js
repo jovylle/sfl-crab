@@ -4,6 +4,8 @@ import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import { PRACTICE_PATTERN_CACHE_KEY } from '@/composables/usePracticePatterns.js'
 
+const PRACTICE_ENDPOINT = '/.netlify/functions/practice-patterns'
+
 export function useLandData (defaults = {}) {
   const route = useRoute()
   const landId = route.params.landId
@@ -40,6 +42,39 @@ export function useLandData (defaults = {}) {
       ? cached.patterns
       : []
   })
+
+  // If local storage doesn't yet have today's patterns, try to fetch the
+  // Netlify function (which benefits from Netlify's CDN cache via s-maxage).
+  // This only runs in the browser (no-op during SSR).
+  if (typeof window !== 'undefined') {
+    ;(async () => {
+      try {
+        const cached = practicePatternCache.value
+        if (cached?.date === todayUTC && Array.isArray(cached.patterns) && cached.patterns.length) {
+          return
+        }
+
+        const res = await fetch(PRACTICE_ENDPOINT, { headers: { 'Content-Type': 'application/json' } })
+        if (!res.ok) return
+        const payload = await res.json()
+        // Normalize payload: function returns visitedFarmState at root
+        const visited = payload?.visitedFarmState || payload?.farm || payload || {}
+        const patterns = visited.desert?.digging?.patterns || []
+
+        if (Array.isArray(patterns) && patterns.length) {
+          practicePatternCache.value = {
+            date: todayUTC,
+            fetchedAt: Date.now(),
+            patterns,
+          }
+        }
+      } catch (err) {
+        // swallow fetch errors; app will continue to work with defaults
+        // CDN/backing API may be unreachable — that's okay.
+        // console.debug('practice-patterns fetch failed', err)
+      }
+    })()
+  }
 
   return { landData, inventory, desert, patternKeys, dailyPatternKeys }
 }

@@ -41,6 +41,7 @@ import InfoFooter     from '@/components/InfoFooter.vue'
 import { useLandData }    from '@/composables/useLandData'
 import { useGridManager } from '@/composables/useGridManager'
 import { useLandSync } from '@/composables/useLandSync'
+import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
 
 // 1) landId and persistent toggle
 const route = useRoute()
@@ -108,7 +109,16 @@ watch(
 
 
 // 🔁 Auto-reload landData if stale on initial app load
-onMounted(() => {
+onMounted(async () => {
+  // Warm the practice patterns cache for the main digging page too.
+  try {
+    const { refreshPracticePatterns } = usePracticePatterns()
+    await refreshPracticePatterns()
+    console.log('Practice patterns refreshed from Digging page')
+  } catch (err) {
+    console.warn('Practice patterns refresh failed:', err)
+  }
+
   console.log("App mounted, checking landData for stale visitedFarmState...")
   const landId = route.params.landId
   const today = new Date().toISOString().slice(0, 10)
