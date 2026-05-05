@@ -16,6 +16,9 @@ const defaultCache = {
   patterns: [],
 }
 
+// Module-scoped single-flight promise shared by all composable instances
+let ongoingFetch = null
+
 function readCachedPatternsFromStorage () {
   if (typeof window === 'undefined') return []
   try {
