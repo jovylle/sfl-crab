@@ -1,0 +1,40 @@
+name: Warm Daily Cache
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # daily at 00:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  warm_daily_cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm daily cached endpoints
+        run: |
+          # Prefer explicit site URL secret, otherwise try the two known domains.
+          if [ -n "${{ secrets.NETLIFY_SITE_URL }}" ]; then
+            ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/.netlify/functions/practice-patterns")
+          else
+            ENDPOINTS=("https://d1g.uk/.netlify/functions/practice-patterns" "https://beta.d1g.uk/.netlify/functions/practice-patterns")
+          fi
+
+          echo "Endpoints to try: ${ENDPOINTS[*]}"
+
+          for ENDPOINT in "${ENDPOINTS[@]}"; do
+            echo "Warming $ENDPOINT"
+            n=0
+            until [ $n -ge 3 ]
+            do
+              n=$((n+1))
+              echo "Attempt $n for $ENDPOINT"
+              if curl -sSf -o /dev/null "$ENDPOINT"; then
+                echo "Warm successful for $ENDPOINT"
+                break 2
+              fi
+              echo "Attempt $n failed for $ENDPOINT, retrying..."
+              sleep 2
+            done
+            echo "Failed to warm $ENDPOINT after 3 attempts, trying next endpoint..."
+          done
+
+          echo "All configured endpoints attempted"

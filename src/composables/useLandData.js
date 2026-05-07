@@ -2,7 +2,9 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
-import { PRACTICE_PATTERN_CACHE_KEY } from '@/composables/usePracticePatterns.js'
+import { PRACTICE_PATTERN_CACHE_KEY, usePracticePatterns } from '@/composables/usePracticePatterns.js'
+
+const PRACTICE_ENDPOINT = '/.netlify/functions/practice-patterns'
 
 export function useLandData (defaults = {}) {
   const route = useRoute()
@@ -40,6 +42,25 @@ export function useLandData (defaults = {}) {
       ? cached.patterns
       : []
   })
+
+  // If local storage doesn't yet have today's patterns, ask the practice
+  // patterns composable to refresh (it implements single-flight so
+  // concurrent callers share one network request).
+  if (typeof window !== 'undefined') {
+    ;(async () => {
+      try {
+        const cached = practicePatternCache.value
+        if (cached?.date === todayUTC && Array.isArray(cached.patterns) && cached.patterns.length) {
+          return
+        }
+
+        const { refreshPracticePatterns } = usePracticePatterns()
+        await refreshPracticePatterns()
+      } catch (err) {
+        // ignore errors; we simply fall back to empty cache/local defaults
+      }
+    })()
+  }
 
   return { landData, inventory, desert, patternKeys, dailyPatternKeys }
 }

@@ -1,6 +1,8 @@
 const PRACTICE_OWNER_ID = '1'
 const API_ORIGIN = 'https://api.sunflower-land.com'
 
+// no diagnostics in production function
+
 function secondsUntilUTCMidnight () {
   const now = new Date()
   const nextMidnightUtc = new Date(Date.UTC(

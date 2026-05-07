@@ -16,6 +16,10 @@ const defaultCache = {
   patterns: [],
 }
 
+// Module-scoped single-flight promise shared by all composable instances
+let ongoingFetch = null
+const GLOBAL_ONGOING_KEY = '__practicePatternsOngoing'
+
 function readCachedPatternsFromStorage () {
   if (typeof window === 'undefined') return []
   try {
@@ -43,36 +47,61 @@ export function usePracticePatterns () {
   const patternKeys = computed(() => (isCachedForToday.value ? cache.value.patterns : []))
 
   async function refreshPracticePatterns ({ force = false } = {}) {
-    if (isLoading.value) return cache.value
-    if (!force && isCachedForToday.value) return cache.value
+    if (!force && isCachedForToday.value) {
+      return cache.value
+    }
+
+    // If a fetch is already in progress, return the same promise.
+    if (typeof window !== 'undefined' && window[GLOBAL_ONGOING_KEY]) {
+      return window[GLOBAL_ONGOING_KEY]
+    }
+
+    if (ongoingFetch) {
+      return ongoingFetch
+    }
 
     isLoading.value = true
     error.value = ''
 
-    try {
-      const fresh = await fetchPracticePatterns()
-      const visitedFarmState = fresh?.visitedFarmState || {}
-      const patterns = visitedFarmState.desert?.digging?.patterns || []
+    const makeFetch = async () => {
+      try {
+        const fresh = await fetchPracticePatterns()
+        const visitedFarmState = fresh?.visitedFarmState || {}
+        const patterns = visitedFarmState.desert?.digging?.patterns || []
 
-      cache.value = {
-        date: getTodayUTC(),
-        fetchedAt: Date.now(),
-        landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
-        patterns,
-      }
+        cache.value = {
+          date: getTodayUTC(),
+          fetchedAt: Date.now(),
+          landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
+          patterns,
+        }
 
-      return cache.value
-    } catch (err) {
-      error.value = err?.message || "Failed to load today's practice patterns."
-
-      if (patternKeys.value.length > 0) {
         return cache.value
-      }
+      } catch (err) {
+        error.value = err?.message || "Failed to load today's practice patterns."
 
-      throw err
-    } finally {
-      isLoading.value = false
+        if (patternKeys.value.length > 0) {
+          return cache.value
+        }
+
+        throw err
+      } finally {
+        isLoading.value = false
+        ongoingFetch = null
+        if (typeof window !== 'undefined') {
+          try { delete window[GLOBAL_ONGOING_KEY] } catch (e) {}
+        }
+      }
     }
+
+    // Create the fetch promise and store in both module and window scopes (browser)
+    const p = makeFetch()
+    ongoingFetch = p
+    if (typeof window !== 'undefined') {
+      try { window[GLOBAL_ONGOING_KEY] = p } catch (e) {}
+    }
+
+    return p
   }
 
   return {
