@@ -17,11 +17,7 @@ function normalizePracticePayload (data) {
 }
 
 export async function fetchPracticePatterns () {
-  const response = await fetch(PRACTICE_PATTERN_ENDPOINT, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  const response = await fetch(PRACTICE_PATTERN_ENDPOINT)
 
   if (!response.ok) {
     const errorText = await response.text()

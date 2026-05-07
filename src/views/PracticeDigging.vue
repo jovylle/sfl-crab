@@ -227,6 +227,10 @@ function stopTodayRoundCooldown () {
 function startTimer () {
   stopTimer()
   if (!showTimer.value) return
+  if (isGameOver.value) {
+    elapsedMs.value = finalElapsedMs.value || elapsedMs.value
+    return
+  }
 
   elapsedMs.value = Date.now() - roundStartedAt.value
   timerId = setInterval(() => {

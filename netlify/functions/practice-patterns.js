@@ -14,6 +14,18 @@ function secondsUntilUTCMidnight () {
   return Math.max(0, Math.floor(deltaMs / 1000))
 }
 
+function buildSuccessHeaders (ttlSeconds) {
+  return {
+    'Content-Type': 'application/json',
+    // Keep browser copies short; shared caches honor CDN-* headers below.
+    'Cache-Control': 'public, max-age=60, must-revalidate',
+    // Generic CDN directive (useful with Cloudflare in front of Netlify).
+    'CDN-Cache-Control': `public, s-maxage=${ttlSeconds}, stale-while-revalidate=300, stale-if-error=86400`,
+    // Netlify-specific directive to improve edge hit rates across requests.
+    'Netlify-CDN-Cache-Control': `public, durable, s-maxage=${ttlSeconds}, stale-while-revalidate=300`,
+  }
+}
+
 exports.handler = async () => {
   if (!process.env.SFL_API_KEY) {
     return {
@@ -34,10 +46,19 @@ exports.handler = async () => {
     })
 
     const data = await response.json()
-    const headers = {
-      'Content-Type': 'application/json',
-      'Cache-Control': `public, max-age=0, s-maxage=${secondsUntilUTCMidnight()}`,
+
+    if (!response.ok) {
+      return {
+        statusCode: response.status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        },
+        body: JSON.stringify(data),
+      }
     }
+
+    const headers = buildSuccessHeaders(secondsUntilUTCMidnight())
 
     return {
       statusCode: response.status,
