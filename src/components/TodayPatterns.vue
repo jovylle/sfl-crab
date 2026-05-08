@@ -8,6 +8,12 @@
     >
       <h2 class="card-title text-center text-sm sm:text-lg">
         Today's Treasure Patterns
+        <span
+          class="tooltip inline-block text-xs opacity-75"
+          :data-tip="patternDateTooltip"
+        >
+          ({{ compactPatternDate }})
+        </span>
       </h2>
       <div
         class="
@@ -72,6 +78,10 @@ import { useReliableAssets } from '@/composables/useReliableAssets.js'
 const { getImageSrc } = useReliableAssets()
 const { dailyPatternKeys: patternKeys } = useLandData()
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
+const patternDateUTC = new Date().toISOString().slice(0, 10)
+const [patternYear, patternMonth, patternDay] = patternDateUTC.split('-')
+const compactPatternDate = `${Number(patternMonth)}/${Number(patternDay)}/${patternYear}`
+const patternDateTooltip = `Patterns are generated for UTC date ${patternDateUTC}. Today's list matches this specific date.`
 
 const GRID_SIZE = 4
 

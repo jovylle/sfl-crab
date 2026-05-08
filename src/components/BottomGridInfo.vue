@@ -7,7 +7,7 @@
   >
     <!-- Shortened URL -->
     
-    <span class="text-nowrap">🔗 url:{{ displayUrl }}</span>
+    <span class="text-nowrap">🔗 {{ displayUrl }}</span>
 
     <span class="flex items-center text-nowrap">
       <img
