@@ -82,7 +82,7 @@
     />
 
     <!-- BottomGridInfo component -->
-    <BottomGridInfo />
+    <BottomGridInfo :show-land-id-in-url="showLandIdInUrl" />
   </div>
 </template>
 
@@ -102,9 +102,10 @@ const { getImageSrc } = useReliableAssets()
 const possibleTreasures = useTodayTreasureNames();
 console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
 // your existing props
-const { showTreasureOrder, treasureOrderMap } = defineProps({
+const { showTreasureOrder, treasureOrderMap, showLandIdInUrl } = defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   treasureOrderMap:  { type: Array,   default: () => [] },
+  showLandIdInUrl:   { type: Boolean, default: true },
 })
 
 // init grid manager

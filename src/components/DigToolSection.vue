@@ -40,6 +40,20 @@
               Show Order
             </label>
 
+            <label
+              v-if="route.params.landId"
+              class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer"
+              data-tip="Hide numeric land ID from URL display"
+            >
+              <input
+                type="checkbox"
+                :checked="hideLandIdInUrl"
+                @change="$emit('update:hideLandIdInUrl', $event.target.checked)"
+                class="checkbox checkbox-sm mr-1 text-nowrap"
+              />
+              Don't show land id
+            </label>
+
             <button
               type="button"
               class="btn btn-error btn-sm tooltip"
@@ -69,10 +83,11 @@ const grid = useGridManager(landId)
 
 // Define the incoming prop and the event you'll emit
 defineProps({
-  showTreasureOrder: { type: Boolean, required: true }
+  showTreasureOrder: { type: Boolean, default: false },
+  hideLandIdInUrl: { type: Boolean, default: false },
 })
 // we'll emit update:showTreasureOrder via @change above
-defineEmits(['update:showTreasureOrder'])
+defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl'])
 
 function clearLandId () {
   if (route.name === 'Digging') {
