@@ -78,8 +78,15 @@ const displayUrl = computed(() => {
     const currentUrl = new URL(window.location.href)
     let path = route.path || currentUrl.pathname
 
+    // Keep URL display compact on digging pages.
+    path = path.replace(/\/digging\/?$/, '')
+
     if (!props.showLandIdInUrl) {
       path = path.replace(/^\/\d+(?=\/|$)/, '') || '/'
+    }
+
+    if (!path || path === '/') {
+      return currentUrl.host
     }
 
     return `${currentUrl.host}${path}`
