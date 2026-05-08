@@ -12,7 +12,10 @@
       >
         Today Treasure Patterns
         <span
-          class="tooltip inline-block text-xs opacity-75"
+          :class="[
+            'tooltip inline-block text-xs',
+            isPatternDateStale ? 'text-warning font-semibold' : 'opacity-75'
+          ]"
           :data-tip="patternDateTooltip"
         >
           ({{ compactPatternDate }})
@@ -72,7 +75,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useNow } from '@vueuse/core'
 import { useLandData } from '../composables/useLandData'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
@@ -83,9 +87,19 @@ const { dailyPatternKeys: patternKeys } = useLandData()
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 const patternDateUTC = new Date().toISOString().slice(0, 10)
 const [patternYear, patternMonth, patternDay] = patternDateUTC.split('-')
-const compactPatternDate = `${Number(patternMonth)}/${Number(patternDay)}/${patternYear}`
-const todayPatternsTitle = `Today's Treasure Patterns (${compactPatternDate})`
-const patternDateTooltip = `Patterns are generated for UTC date ${patternDateUTC}. Today's list matches this specific date.`
+const basePatternDate = `${Number(patternMonth)}/${Number(patternDay)}/${patternYear}`
+const now = useNow({ interval: 30000 })
+const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))
+const isPatternDateStale = computed(() => currentUtcDate.value !== patternDateUTC)
+const compactPatternDate = computed(() => (
+  isPatternDateStale.value ? `${basePatternDate} stale` : basePatternDate
+))
+const todayPatternsTitle = computed(() => `Today's Treasure Patterns (${compactPatternDate.value})`)
+const patternDateTooltip = computed(() => (
+  isPatternDateStale.value
+    ? `Showing stale patterns from UTC date ${patternDateUTC}. New UTC date ${currentUtcDate.value} is live. Reload to fetch latest patterns.`
+    : `Patterns are generated for UTC date ${patternDateUTC}.`
+))
 
 const GRID_SIZE = 4
 
