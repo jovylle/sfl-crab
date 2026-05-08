@@ -7,7 +7,7 @@
   >
     <!-- Shortened URL -->
     
-    <span class="text-nowrap">🔗 url:{{ displayUrl }}</span>
+    <span class="text-nowrap">🔗 {{ displayUrl }}</span>
 
     <span class="flex items-center text-nowrap">
       <img
@@ -22,6 +22,7 @@
 </template>
 <script setup>
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useLandData } from '@/composables/useLandData'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 
@@ -30,6 +31,10 @@ const { getImageSrc } = useReliableAssets()
 
 // ── Grab the entire `desert` object from your composable ──
 const { desert } = useLandData()
+const route = useRoute()
+const props = defineProps({
+  showLandIdInUrl: { type: Boolean, default: true },
+})
 
 /** 
  * How many digs have been used so far (both free and extra) 
@@ -68,12 +73,18 @@ const totalRemaining = computed(() => {
 })
 
 // ── URL‐shortening logic (unchanged) ──
-const appUrl = window.location.href
 const displayUrl = computed(() => {
   try {
-    return new URL(appUrl).origin.replace(/^https?:\/\//, '')
+    const currentUrl = new URL(window.location.href)
+    let path = route.path || currentUrl.pathname
+
+    if (!props.showLandIdInUrl) {
+      path = path.replace(/^\/\d+(?=\/|$)/, '') || '/'
+    }
+
+    return `${currentUrl.host}${path}`
   } catch {
-    return appUrl.replace(/^https?:\/\//, '')
+    return window.location.href.replace(/^https?:\/\//, '')
   }
 })
 </script>

@@ -7,12 +7,16 @@
         <div
           class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1"
         >
-          <DigToolSection v-model:showTreasureOrder="showTreasureOrder" />
+          <DigToolSection
+            v-model:showTreasureOrder="showTreasureOrder"
+            v-model:hideLandIdInUrl="hideLandIdInUrl"
+          />
 
           <!-- Pass the toggle and map down into Grid -->
           <Grid
             :show-treasure-order="showTreasureOrder"
             :treasure-order-map="treasureOrderMap"
+            :show-land-id-in-url="!hideLandIdInUrl"
           />
         </div>
       </div>
@@ -48,6 +52,9 @@ const route = useRoute()
 const landId = route.params.landId || 'guest'
 const showTreasureOrder = useLocalStorage(
   `showTreasureOrder-${landId}`, false
+)
+const hideLandIdInUrl = useLocalStorage(
+  `hideLandIdInUrl-${landId}`, false
 )
 
 // 2) grid engine + API watch
