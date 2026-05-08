@@ -6,8 +6,11 @@
     <div
       class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1 [@media(max-width:639px)]:pt-0"
     >
-      <h2 class="card-title text-center text-sm sm:text-lg">
-        Today's Treasure Patterns
+      <h2
+        class="card-title w-full whitespace-nowrap text-center text-sm sm:text-lg"
+        :title="todayPatternsTitle"
+      >
+        Today Treasure Patterns
         <span
           class="tooltip inline-block text-xs opacity-75"
           :data-tip="patternDateTooltip"
@@ -81,6 +84,7 @@ const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 const patternDateUTC = new Date().toISOString().slice(0, 10)
 const [patternYear, patternMonth, patternDay] = patternDateUTC.split('-')
 const compactPatternDate = `${Number(patternMonth)}/${Number(patternDay)}/${patternYear}`
+const todayPatternsTitle = `Today's Treasure Patterns (${compactPatternDate})`
 const patternDateTooltip = `Patterns are generated for UTC date ${patternDateUTC}. Today's list matches this specific date.`
 
 const GRID_SIZE = 4
