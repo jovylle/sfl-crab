@@ -55,18 +55,53 @@
         <div class="mb-8">
           <ThemeToggle />
         </div>
+        <div v-if="isProjectMateReady" class="divider px-5">Support</div>
+        <button
+          v-if="isProjectMateReady"
+          class="btn btn-primary btn-block"
+          @click="openProjectMate"
+        >
+          Open Help
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
 
 const route = useRoute()
 const router = useRouter()
+const isProjectMateReady = ref(false)
+
+function syncProjectMateReady () {
+  isProjectMateReady.value = Boolean(
+    window.ProjectMate && typeof window.ProjectMate.open === 'function'
+  )
+}
+
+function onProjectMateReadyEvent (event) {
+  isProjectMateReady.value = Boolean(event?.detail?.ready)
+}
+
+function openProjectMate () {
+  if (window.ProjectMate && typeof window.ProjectMate.open === 'function') {
+    window.ProjectMate.open()
+  }
+}
+
+onMounted(() => {
+  syncProjectMateReady()
+  window.addEventListener('projectmate:ready', onProjectMateReadyEvent)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('projectmate:ready', onProjectMateReadyEvent)
+})
 
 function goToDetails() {
   const id = route.params.landId
