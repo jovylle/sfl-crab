@@ -1,4 +1,5 @@
-const PRACTICE_PATTERN_ENDPOINT = '/.netlify/functions/practice-patterns'
+const PRACTICE_PATTERN_ENDPOINT = '/api/practice-patterns'
+const getTodayUTC = () => new Date().toISOString().slice(0, 10)
 
 function normalizePracticePayload (data) {
   if (!data) {
@@ -17,7 +18,11 @@ function normalizePracticePayload (data) {
 }
 
 export async function fetchPracticePatterns () {
-  const response = await fetch(PRACTICE_PATTERN_ENDPOINT)
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+  const url = new URL(PRACTICE_PATTERN_ENDPOINT, baseUrl)
+  // Keep one shared cache entry per UTC day across all users.
+  url.searchParams.set('utcDate', getTodayUTC())
+  const response = await fetch(url.toString())
 
   if (!response.ok) {
     const errorText = await response.text()

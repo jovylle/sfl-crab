@@ -1,2 +1,3 @@
-/.netlify/functions/*  /.netlify/functions/:splat  200
+/api/practice-patterns    /.netlify/functions/practice-patterns   200
+/api/build-daily-pattern  /.netlify/functions/build-daily-pattern 200
 /*                    /index.html               200

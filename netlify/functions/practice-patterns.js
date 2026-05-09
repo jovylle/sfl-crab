@@ -1,78 +1,68 @@
-const PRACTICE_OWNER_ID = '1'
-const API_ORIGIN = 'https://api.sunflower-land.com'
+const {
+  getTodayUTC,
+  parseUTCDate,
+  initBlobContext,
+  getExistingDailySnapshot,
+  createAndStoreDailySnapshot,
+} = require('./_practiceDailyStore')
 
-// no diagnostics in production function
-
-function secondsUntilUTCMidnight () {
+function secondsUntilUTCMidnightForDate (utcDate) {
   const now = new Date()
+  const todayUTC = getTodayUTC()
+  if (utcDate !== todayUTC) {
+    return 86400
+  }
+
   const nextMidnightUtc = new Date(Date.UTC(
     now.getUTCFullYear(),
     now.getUTCMonth(),
     now.getUTCDate() + 1,
   ))
-  const deltaMs = nextMidnightUtc - now
-  return Math.max(0, Math.floor(deltaMs / 1000))
+  return Math.max(0, Math.floor((nextMidnightUtc.getTime() - now.getTime()) / 1000))
 }
 
-function buildSuccessHeaders (ttlSeconds) {
+function buildSuccessHeaders (snapshotDate) {
+  const ttlSeconds = secondsUntilUTCMidnightForDate(snapshotDate)
   return {
     'Content-Type': 'application/json',
-    // Keep browser copies short; shared caches honor CDN-* headers below.
     'Cache-Control': 'public, max-age=60, must-revalidate',
-    // Generic CDN directive (useful with Cloudflare in front of Netlify).
-    'CDN-Cache-Control': `public, s-maxage=${ttlSeconds}, stale-while-revalidate=300, stale-if-error=86400`,
-    // Netlify-specific directive to improve edge hit rates across requests.
-    'Netlify-CDN-Cache-Control': `public, durable, s-maxage=${ttlSeconds}, stale-while-revalidate=300`,
+    'CDN-Cache-Control': `public, s-maxage=${ttlSeconds}, stale-while-revalidate=60, stale-if-error=600`,
+    'Netlify-CDN-Cache-Control': `public, durable, s-maxage=${ttlSeconds}, stale-while-revalidate=60`,
+    'X-Pattern-Date': snapshotDate,
+    'X-Pattern-Source': 'daily-snapshot-store',
   }
 }
 
-exports.handler = async () => {
-  if (!process.env.SFL_API_KEY) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'API key not configured' }),
-    }
-  }
-
-  const apiUrl = `${API_ORIGIN}/community/farms/${PRACTICE_OWNER_ID}`
-
+exports.handler = async (event) => {
+  initBlobContext(event)
+  const requestedUtcDate = parseUTCDate(event?.queryStringParameters?.utcDate)
   try {
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.SFL_API_KEY,
-      },
-    })
+    let snapshot = await getExistingDailySnapshot(requestedUtcDate)
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-        },
-        body: JSON.stringify(data),
-      }
+    // Fallback safety: if warm/scheduler misses, first request seeds the snapshot.
+    if (!snapshot) {
+      const created = await createAndStoreDailySnapshot(requestedUtcDate, { force: false })
+      snapshot = created.snapshot
     }
 
-    const headers = buildSuccessHeaders(secondsUntilUTCMidnight())
-
     return {
-      statusCode: response.status,
-      headers,
-      body: JSON.stringify(data),
+      statusCode: 200,
+      headers: buildSuccessHeaders(requestedUtcDate),
+      body: JSON.stringify({
+        date: snapshot.date,
+        visitedFarmState: snapshot.visitedFarmState || {},
+      }),
     }
   } catch (error) {
+    const statusCode = error?.statusCode || 502
     console.error('practice-patterns:', error)
     return {
-      statusCode: 502,
+      statusCode,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
       },
-      body: JSON.stringify({ error: 'Failed to fetch practice patterns' }),
+      body: JSON.stringify(error?.payload || { error: 'Failed to fetch practice patterns' }),
     }
   }
 }

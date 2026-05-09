@@ -2,39 +2,53 @@ name: Warm Daily Cache
 
 on:
   schedule:
-    - cron: '0 0 * * *' # daily at 00:00 UTC
+    - cron: '10 0 * * *' # daily at 00:10 UTC (avoid rollover race)
   workflow_dispatch: {}
 
 jobs:
   warm_daily_cache:
     runs-on: ubuntu-latest
     steps:
-      - name: Warm daily cached endpoints
+      - name: Build and warm daily pattern snapshot
         run: |
-          # Prefer explicit site URL secret, otherwise try the two known domains.
-          if [ -n "${{ secrets.NETLIFY_SITE_URL }}" ]; then
-            ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/.netlify/functions/practice-patterns")
-          else
-            ENDPOINTS=("https://d1g.uk/.netlify/functions/practice-patterns" "https://beta.d1g.uk/.netlify/functions/practice-patterns")
+          UTC_DATE="$(date -u +%F)"
+          AUTH_HEADER=()
+          if [ -n "${{ secrets.DAILY_SNAPSHOT_SECRET }}" ]; then
+            AUTH_HEADER=(-H "x-snapshot-secret: ${{ secrets.DAILY_SNAPSHOT_SECRET }}")
           fi
 
-          echo "Endpoints to try: ${ENDPOINTS[*]}"
+          # Prefer explicit site URL secret, otherwise try known domains.
+          if [ -n "${{ secrets.NETLIFY_SITE_URL }}" ]; then
+            BUILD_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/api/build-daily-pattern?utcDate=$UTC_DATE")
+            READ_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/api/practice-patterns?utcDate=$UTC_DATE")
+          else
+            BUILD_ENDPOINTS=("https://d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE" "https://beta.d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE")
+            READ_ENDPOINTS=("https://d1g.uk/api/practice-patterns?utcDate=$UTC_DATE" "https://beta.d1g.uk/api/practice-patterns?utcDate=$UTC_DATE")
+          fi
 
-          for ENDPOINT in "${ENDPOINTS[@]}"; do
-            echo "Warming $ENDPOINT"
+          echo "Build endpoints to try: ${BUILD_ENDPOINTS[*]}"
+          echo "Read endpoints to warm: ${READ_ENDPOINTS[*]}"
+
+          for ENDPOINT in "${BUILD_ENDPOINTS[@]}"; do
+            echo "Building snapshot via $ENDPOINT"
             n=0
             until [ $n -ge 3 ]
             do
               n=$((n+1))
               echo "Attempt $n for $ENDPOINT"
-              if curl -sSf -o /dev/null "$ENDPOINT"; then
-                echo "Warm successful for $ENDPOINT"
+              if curl -sSf "${AUTH_HEADER[@]}" -o /dev/null "$ENDPOINT"; then
+                echo "Build successful for $ENDPOINT"
                 break 2
               fi
               echo "Attempt $n failed for $ENDPOINT, retrying..."
               sleep 2
             done
-            echo "Failed to warm $ENDPOINT after 3 attempts, trying next endpoint..."
+            echo "Failed to build with $ENDPOINT after 3 attempts, trying next endpoint..."
           done
 
-          echo "All configured endpoints attempted"
+          for ENDPOINT in "${READ_ENDPOINTS[@]}"; do
+            echo "Warming read cache via $ENDPOINT"
+            curl -sSf -o /dev/null "$ENDPOINT" || true
+          done
+
+          echo "Build + warm flow completed"

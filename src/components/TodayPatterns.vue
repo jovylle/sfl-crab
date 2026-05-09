@@ -83,22 +83,24 @@ import { useReliableAssets } from '@/composables/useReliableAssets.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
-const { dailyPatternKeys: patternKeys } = useLandData()
+const { dailyPatternKeys: patternKeys, dailyPatternDate } = useLandData()
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
-const patternDateUTC = new Date().toISOString().slice(0, 10)
-const [patternYear, patternMonth, patternDay] = patternDateUTC.split('-')
-const basePatternDate = `${Number(patternMonth)}/${Number(patternDay)}/${patternYear}`
 const now = useNow({ interval: 30000 })
 const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))
-const isPatternDateStale = computed(() => currentUtcDate.value !== patternDateUTC)
+const displayedPatternDate = computed(() => dailyPatternDate.value || currentUtcDate.value)
+const formattedPatternDate = computed(() => {
+  const [year, month, day] = displayedPatternDate.value.split('-')
+  return `${Number(month)}/${Number(day)}/${year}`
+})
+const isPatternDateStale = computed(() => displayedPatternDate.value !== currentUtcDate.value)
 const compactPatternDate = computed(() => (
-  isPatternDateStale.value ? `${basePatternDate} stale` : basePatternDate
+  isPatternDateStale.value ? `${formattedPatternDate.value} stale` : formattedPatternDate.value
 ))
 const todayPatternsTitle = computed(() => `Today's Treasure Patterns (${compactPatternDate.value})`)
 const patternDateTooltip = computed(() => (
   isPatternDateStale.value
-    ? `Showing stale patterns from UTC date ${patternDateUTC}. New UTC date ${currentUtcDate.value} is live. Reload to fetch latest patterns.`
-    : `Patterns are generated for UTC date ${patternDateUTC}.`
+    ? `Showing stale patterns from UTC date ${displayedPatternDate.value}. Current UTC date is ${currentUtcDate.value}. Reload to fetch latest patterns.`
+    : `Patterns are generated for UTC date ${displayedPatternDate.value}.`
 ))
 
 const GRID_SIZE = 4
