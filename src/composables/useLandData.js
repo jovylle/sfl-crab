@@ -42,6 +42,7 @@ export function useLandData (defaults = {}) {
       ? cached.patterns
       : []
   })
+  const dailyPatternDate = computed(() => practicePatternCache.value?.date || '')
 
   // If local storage doesn't yet have today's patterns, ask the practice
   // patterns composable to refresh (it implements single-flight so
@@ -62,5 +63,5 @@ export function useLandData (defaults = {}) {
     })()
   }
 
-  return { landData, inventory, desert, patternKeys, dailyPatternKeys }
+  return { landData, inventory, desert, patternKeys, dailyPatternKeys, dailyPatternDate }
 }
