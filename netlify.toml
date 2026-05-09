@@ -13,7 +13,16 @@
   NODE_VERSION = "18"
 
 # Redirect rules (backup for _redirects file)
-# Note: Netlify functions are handled automatically, no redirect needed
+
+[[redirects]]
+  from = "/api/practice-patterns"
+  to = "/.netlify/functions/practice-patterns"
+  status = 200
+
+[[redirects]]
+  from = "/api/build-daily-pattern"
+  to = "/.netlify/functions/build-daily-pattern"
+  status = 200
 
 [[redirects]]
   from = "/*"
@@ -29,9 +38,9 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Headers for API functions
+# Headers for API routes
 [[headers]]
-  for = "/.netlify/functions/*"
+  for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Headers = "Content-Type"

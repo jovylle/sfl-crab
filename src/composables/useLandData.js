@@ -4,8 +4,6 @@ import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import { PRACTICE_PATTERN_CACHE_KEY, usePracticePatterns } from '@/composables/usePracticePatterns.js'
 
-const PRACTICE_ENDPOINT = '/.netlify/functions/practice-patterns'
-
 export function useLandData (defaults = {}) {
   const route = useRoute()
   const landId = route.params.landId

@@ -19,11 +19,11 @@ jobs:
 
           # Prefer explicit site URL secret, otherwise try known domains.
           if [ -n "${{ secrets.NETLIFY_SITE_URL }}" ]; then
-            BUILD_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/.netlify/functions/build-daily-pattern?utcDate=$UTC_DATE")
-            READ_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/.netlify/functions/practice-patterns?utcDate=$UTC_DATE")
+            BUILD_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/api/build-daily-pattern?utcDate=$UTC_DATE")
+            READ_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/api/practice-patterns?utcDate=$UTC_DATE")
           else
-            BUILD_ENDPOINTS=("https://d1g.uk/.netlify/functions/build-daily-pattern?utcDate=$UTC_DATE" "https://beta.d1g.uk/.netlify/functions/build-daily-pattern?utcDate=$UTC_DATE")
-            READ_ENDPOINTS=("https://d1g.uk/.netlify/functions/practice-patterns?utcDate=$UTC_DATE" "https://beta.d1g.uk/.netlify/functions/practice-patterns?utcDate=$UTC_DATE")
+            BUILD_ENDPOINTS=("https://d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE" "https://beta.d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE")
+            READ_ENDPOINTS=("https://d1g.uk/api/practice-patterns?utcDate=$UTC_DATE" "https://beta.d1g.uk/api/practice-patterns?utcDate=$UTC_DATE")
           fi
 
           echo "Build endpoints to try: ${BUILD_ENDPOINTS[*]}"

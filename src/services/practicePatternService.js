@@ -1,4 +1,4 @@
-const PRACTICE_PATTERN_ENDPOINT = '/.netlify/functions/practice-patterns'
+const PRACTICE_PATTERN_ENDPOINT = '/api/practice-patterns'
 const getTodayUTC = () => new Date().toISOString().slice(0, 10)
 
 function normalizePracticePayload (data) {
