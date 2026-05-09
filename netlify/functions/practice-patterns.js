@@ -1,6 +1,7 @@
 const {
   getTodayUTC,
   parseUTCDate,
+  initBlobContext,
   getExistingDailySnapshot,
   createAndStoreDailySnapshot,
 } = require('./_practiceDailyStore')
@@ -33,6 +34,7 @@ function buildSuccessHeaders (snapshotDate) {
 }
 
 exports.handler = async (event) => {
+  initBlobContext(event)
   const requestedUtcDate = parseUTCDate(event?.queryStringParameters?.utcDate)
   try {
     let snapshot = await getExistingDailySnapshot(requestedUtcDate)

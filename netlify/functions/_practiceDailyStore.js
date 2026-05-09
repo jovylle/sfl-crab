@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs')
+const { connectLambda, getStore } = require('@netlify/blobs')
 
 const PRACTICE_OWNER_ID = '1'
 const API_ORIGIN = 'https://api.sunflower-land.com'
@@ -31,6 +31,14 @@ function normalizePracticePayload (data) {
 
 function getSnapshotKey (utcDate) {
   return `${utcDate}.json`
+}
+
+function initBlobContext (event) {
+  try {
+    connectLambda(event)
+  } catch (error) {
+    // Netlify will already provide context in non-compat runtimes.
+  }
 }
 
 async function getExistingDailySnapshot (utcDate) {
@@ -93,6 +101,7 @@ async function createAndStoreDailySnapshot (utcDate, { force = false } = {}) {
 module.exports = {
   getTodayUTC,
   parseUTCDate,
+  initBlobContext,
   getExistingDailySnapshot,
   createAndStoreDailySnapshot,
 }

@@ -1,6 +1,7 @@
 const {
   getTodayUTC,
   parseUTCDate,
+  initBlobContext,
   createAndStoreDailySnapshot,
 } = require('./_practiceDailyStore')
 
@@ -18,6 +19,7 @@ function isAuthorized (event) {
 }
 
 exports.handler = async (event) => {
+  initBlobContext(event)
   if (!isAuthorized(event)) {
     return {
       statusCode: 401,
