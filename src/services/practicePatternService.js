@@ -1,20 +1,37 @@
 const PRACTICE_PATTERN_ENDPOINT = '/api/practice-patterns'
 const getTodayUTC = () => new Date().toISOString().slice(0, 10)
+const UTC_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
-function normalizePracticePayload (data) {
+function normalizeUTCDate (value) {
+  return typeof value === 'string' && UTC_DATE_PATTERN.test(value) ? value : ''
+}
+
+function normalizePracticePayload (data, responseDate = '') {
+  const date = normalizeUTCDate(data?.date) || normalizeUTCDate(responseDate)
+
   if (!data) {
-    return { visitedFarmState: {} }
+    return { date, visitedFarmState: {} }
   }
 
   if (data.visitedFarmState) {
-    return data
+    return {
+      ...data,
+      date,
+    }
   }
 
   if (data.farm) {
-    return { visitedFarmState: data.farm }
+    return {
+      ...data,
+      date,
+      visitedFarmState: data.farm,
+    }
   }
 
-  return { visitedFarmState: data }
+  return {
+    date,
+    visitedFarmState: data,
+  }
 }
 
 export async function fetchPracticePatterns () {
@@ -30,5 +47,5 @@ export async function fetchPracticePatterns () {
   }
 
   const payload = await response.json()
-  return normalizePracticePayload(payload)
+  return normalizePracticePayload(payload, response.headers.get('x-pattern-date') || '')
 }
