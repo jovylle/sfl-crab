@@ -2,7 +2,11 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
-import { PRACTICE_PATTERN_CACHE_KEY, usePracticePatterns } from '@/composables/usePracticePatterns.js'
+import {
+  PRACTICE_PATTERN_CACHE_KEY,
+  PRACTICE_PATTERN_CACHE_VERSION,
+  usePracticePatterns,
+} from '@/composables/usePracticePatterns.js'
 
 export function useLandData (defaults = {}) {
   const route = useRoute()
@@ -25,6 +29,7 @@ export function useLandData (defaults = {}) {
   }
 
   const practicePatternCache = useStorage(PRACTICE_PATTERN_CACHE_KEY, {
+    version: PRACTICE_PATTERN_CACHE_VERSION,
     date: '',
     fetchedAt: 0,
     patterns: [],
@@ -36,7 +41,10 @@ export function useLandData (defaults = {}) {
   const patternKeys = computed(() => desert.value.digging?.patterns || [])
   const dailyPatternKeys = computed(() => {
     const cached = practicePatternCache.value
-    return cached?.date === todayUTC && Array.isArray(cached.patterns)
+    return cached?.version === PRACTICE_PATTERN_CACHE_VERSION
+      && typeof cached?.date === 'string'
+      && cached.date
+      && Array.isArray(cached.patterns)
       ? cached.patterns
       : []
   })
@@ -49,7 +57,12 @@ export function useLandData (defaults = {}) {
     ;(async () => {
       try {
         const cached = practicePatternCache.value
-        if (cached?.date === todayUTC && Array.isArray(cached.patterns) && cached.patterns.length) {
+        if (
+          cached?.version === PRACTICE_PATTERN_CACHE_VERSION
+          && cached?.date === todayUTC
+          && Array.isArray(cached.patterns)
+          && cached.patterns.length
+        ) {
           return
         }
 

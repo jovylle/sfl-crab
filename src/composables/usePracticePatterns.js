@@ -4,12 +4,19 @@ import { fetchPracticePatterns } from '@/services/practicePatternService'
 import { PRACTICE_CONSTANTS } from '@/data/app/constants'
 
 const getTodayUTC = () => new Date().toISOString().slice(0, 10)
+const UTC_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+export const PRACTICE_PATTERN_CACHE_VERSION = 2
+
+function normalizeUTCDate (value) {
+  return typeof value === 'string' && UTC_DATE_PATTERN.test(value) ? value : ''
+}
 
 const cacheKey = `practice:today-patterns:${PRACTICE_CONSTANTS.ADAM_OWNER_ID}`
 
 export const PRACTICE_PATTERN_CACHE_KEY = cacheKey
 
 const defaultCache = {
+  version: PRACTICE_PATTERN_CACHE_VERSION,
   date: '',
   fetchedAt: 0,
   landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
@@ -26,6 +33,7 @@ function readCachedPatternsFromStorage () {
     const raw = window.localStorage?.getItem(cacheKey)
     if (!raw) return []
     const parsed = JSON.parse(raw)
+    if (parsed?.version !== PRACTICE_PATTERN_CACHE_VERSION) return []
     if (parsed?.date !== getTodayUTC()) return []
     return Array.isArray(parsed.patterns) ? parsed.patterns : []
   } catch (error) {
@@ -43,7 +51,11 @@ export function usePracticePatterns () {
   const isLoading = ref(false)
   const error = ref('')
 
-  const isCachedForToday = computed(() => cache.value.date === getTodayUTC() && (cache.value.patterns || []).length > 0)
+  const isCachedForToday = computed(() => (
+    cache.value.version === PRACTICE_PATTERN_CACHE_VERSION
+    && cache.value.date === getTodayUTC()
+    && (cache.value.patterns || []).length > 0
+  ))
   const patternKeys = computed(() => (isCachedForToday.value ? cache.value.patterns : []))
 
   async function refreshPracticePatterns ({ force = false } = {}) {
@@ -68,12 +80,19 @@ export function usePracticePatterns () {
         const fresh = await fetchPracticePatterns()
         const visitedFarmState = fresh?.visitedFarmState || {}
         const patterns = visitedFarmState.desert?.digging?.patterns || []
+        const snapshotDate = normalizeUTCDate(fresh?.date) || getTodayUTC()
+        const isStaleSnapshot = snapshotDate !== getTodayUTC()
 
         cache.value = {
-          date: getTodayUTC(),
+          version: PRACTICE_PATTERN_CACHE_VERSION,
+          date: snapshotDate,
           fetchedAt: Date.now(),
           landId: PRACTICE_CONSTANTS.ADAM_OWNER_ID,
           patterns,
+        }
+
+        if (isStaleSnapshot) {
+          throw new Error(`Loaded stale practice patterns for ${snapshotDate}.`)
         }
 
         return cache.value
