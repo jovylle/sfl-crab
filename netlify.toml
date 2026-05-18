@@ -10,11 +10,15 @@
 
 # Local dev: Netlify on :8888 (functions + redirects) → Vite on :5173
 [dev]
-  command = "npm run dev:vite"
+  command = "npx vite"
   targetPort = 5173
   port = 8888
   publish = "dist"
   autoLaunch = false
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
 
 [build.environment]
   # Node.js version

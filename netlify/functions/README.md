@@ -15,4 +15,4 @@ Old data may still be in Netlify Blobs `dig-day-snapshots`. Import with `sfl-dig
 
 ## Practice patterns (`practice-patterns`)
 
-Daily pattern cache in store `practice-daily-patterns`. See `_practiceDailyStore.js`.
+Daily pattern cache in store `practice-daily-patterns`. See `_practiceDailyStore.cjs`.

@@ -7,7 +7,10 @@
       Round Patterns
     </h2>
 
-    <div class="pattern-strip flex-1 min-h-0">
+    <div
+      class="pattern-strip flex-1 min-h-0"
+      :style="patternStripStyle"
+    >
       <button
         v-for="(key, i) in patternKeys"
         :key="i"
@@ -45,15 +48,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, toRef } from 'vue'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { usePatternStripLayout } from '@/composables/usePatternStripLayout.js'
 
 const { getImageSrc } = useReliableAssets()
 
-defineProps({
+const props = defineProps({
   patternKeys: { type: Array, default: () => [] },
 })
+
+const { patternStripStyle } = usePatternStripLayout(toRef(props, 'patternKeys'))
 
 const GRID_SIZE = 4
 const marked = ref(new Set())

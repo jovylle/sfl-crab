@@ -16,7 +16,10 @@
       </span>
     </h2>
 
-    <div class="pattern-strip flex-1 min-h-0">
+    <div
+      class="pattern-strip flex-1 min-h-0"
+      :style="patternStripStyle"
+    >
       <button
         v-for="(key, i) in patternKeys"
         :key="i"
@@ -59,10 +62,12 @@ import { useNow } from '@vueuse/core'
 import { useLandData } from '../composables/useLandData'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { usePatternStripLayout } from '@/composables/usePatternStripLayout.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
 const { dailyPatternKeys: patternKeys, dailyPatternDate } = useLandData()
+const { patternStripStyle } = usePatternStripLayout(patternKeys)
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 const now = useNow({ interval: 30000 })
 const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))

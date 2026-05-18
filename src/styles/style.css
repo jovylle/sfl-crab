@@ -392,9 +392,11 @@ body {
   min-height: 100%;
 }
 
+/* Mobile / stacked: 2 rows; --pattern-mobile-cols from usePatternStripLayout (~4 for 7–8) */
 .digging-patterns-col .pattern-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(3.25rem, 1fr));
+  grid-template-columns: repeat(var(--pattern-mobile-cols, 4), minmax(3.25rem, 1fr));
+  grid-template-rows: repeat(2, auto);
   gap: 0.375rem;
   width: 100%;
   max-width: min(100%, 22rem);
@@ -405,9 +407,11 @@ body {
 @media (min-width: 640px) {
   .digging-patterns-col .pattern-strip {
     gap: 0.5rem;
+    grid-template-columns: repeat(var(--pattern-mobile-cols, 4), minmax(3.5rem, 1fr));
   }
 }
 
+/* Desktop sidebar: 2 columns, rows stack vertically */
 @media (min-width: 1024px) {
   .digging-patterns-col {
     border-left: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
@@ -417,21 +421,17 @@ body {
   }
 
   .digging-patterns-col .pattern-strip {
+    grid-template-columns: repeat(2, minmax(3.5rem, 1fr));
+    grid-template-rows: unset;
+    grid-auto-rows: minmax(3.5rem, auto);
     max-width: none;
     margin-inline: 0;
     align-content: space-evenly;
-    grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
   }
 
   .digging-patterns-col .pattern-thumb {
     width: 100%;
     max-width: none;
-  }
-}
-
-@container digging-patterns (min-height: 28rem) {
-  .digging-patterns-col .pattern-strip {
-    grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
   }
 }
 
