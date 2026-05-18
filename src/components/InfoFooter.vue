@@ -17,9 +17,20 @@
           >
             sfl.world/land/1/treasures
           </a>
-          digging guide of sfl.world. A personal tool to assist Sunflower Land players
-          with digging. You can visualize hint patterns (sand, crab, treasure)
+          digging guide of sfl.world. An unofficial fan tool to assist
+          <a
+            href="https://sunflower-land.com"
+            target="_blank"
+            rel="noopener"
+            class="link link-primary"
+          >Sunflower Land</a>
+          players with digging. You can visualize hint patterns (sand, crab, treasure)
           and simulate digging logic with interactive tiles.
+        </p>
+        <p class="mt-2 text-sm text-base-content/70">
+          Not affiliated with Thought Farm or Sunflower Land. Game assets and mechanics
+          belong to their respective owners. Practice mode is a training simulator only —
+          it does not award in-game items or affect your farm.
         </p>
       </div>
 

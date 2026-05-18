@@ -5,6 +5,10 @@
     >
       <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
 
+        <p class="text-[0.65rem] text-base-content/60 text-center m-0 mb-2">
+          Unofficial training simulator — no in-game rewards. Not affiliated with Sunflower Land.
+        </p>
+
         <!-- Header row -->
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <h2 class="card-title text-sm sm:text-base">

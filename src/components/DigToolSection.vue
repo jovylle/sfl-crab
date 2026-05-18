@@ -1,5 +1,9 @@
 <template>
-  <div class="flex gap-4 mb-1 justify-center items-center">
+  <div class="flex flex-col gap-1 mb-1">
+  <p v-if="digDaySyncLabel" class="text-center text-[0.65rem] text-base-content/60 m-0">
+    {{ digDaySyncLabel }}
+  </p>
+  <div class="flex gap-4 justify-center items-center">
     <InputLandIdOrRefresh />
     <button
       type="button"
@@ -67,25 +71,57 @@
       </div>
     </div>
   </div>
+  </div>
 
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route  = useRoute()
 const router = useRouter()
-// grid.clear() still lives here
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
 
-// Define the incoming prop and the event you'll emit
-defineProps({
+// Public dig-day snapshots: data is keyed by landId + UTC date (no ownership in v1).
+const props = defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   hideLandIdInUrl: { type: Boolean, default: false },
+  digDaySyncStatus: { type: String, default: 'idle' },
+  digDayUpdatedAt: { type: String, default: null },
 })
+
+const digDaySyncLabel = computed(() => {
+  if (!route.params.landId) return ''
+  switch (props.digDaySyncStatus) {
+    case 'loading':
+      return 'Loading saved dig day…'
+    case 'syncing':
+      return 'Saving dig day…'
+    case 'saved':
+      return props.digDayUpdatedAt
+        ? `Dig day saved · ${formatShortTime(props.digDayUpdatedAt)}`
+        : 'Dig day saved'
+    case 'error':
+      return 'Dig day sync failed (will retry on next change)'
+    default:
+      return ''
+  }
+})
+
+function formatShortTime (iso) {
+  try {
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return ''
+  }
+}
 // we'll emit update:showTreasureOrder via @change above
 defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl'])
 
