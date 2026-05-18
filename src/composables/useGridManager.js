@@ -1,6 +1,7 @@
 // src/composables/useGridManager.js
 import { useGridEngine } from './useGridEngine'
 import { useHintsStorage } from './useHintsStorage'
+import { getMarkJournalHandlers } from './markJournalBridge'
 
 const cache = {}
 
@@ -57,6 +58,9 @@ export function useGridManager (rawLandId, gridSize = 10) {
 
     // clear everything
     function clear () {
+      const journalHandlers = getMarkJournalHandlers(landKey)
+      journalHandlers?.onClearAll?.()
+
       // remove all hint-*/near-hint-* classes
       engine.clearEngineHints()
       // wipe out stored hints
@@ -88,6 +92,9 @@ export function useGridManager (rawLandId, gridSize = 10) {
         }
 
         storage.save();
+
+        const journalHandlers = getMarkJournalHandlers(landKey)
+        journalHandlers?.onPick?.(index, flat)
       },
       clear
     }

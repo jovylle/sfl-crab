@@ -10,6 +10,8 @@
           <DigToolSection
             v-model:showTreasureOrder="showTreasureOrder"
             v-model:hideLandIdInUrl="hideLandIdInUrl"
+            :dig-day-sync-status="digDaySyncStatus"
+            :dig-day-updated-at="digDayUpdatedAt"
           />
 
           <!-- Pass the toggle and map down into Grid -->
@@ -46,6 +48,8 @@ import { useLandData }    from '@/composables/useLandData'
 import { useGridManager } from '@/composables/useGridManager'
 import { useLandSync } from '@/composables/useLandSync'
 import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
+import { useDigDayStore } from '@/composables/useDigDayStore.js'
+import { buildTreasureOrderMap } from '@/utils/buildDigTimeline.js'
 
 // 1) landId and persistent toggle
 const route = useRoute()
@@ -61,6 +65,12 @@ const hideLandIdInUrl = useLocalStorage(
 const grid = useGridManager(landId)
 const defaults = { visitedFarmState: { inventory: {}, desert: { digging: { grid: [] } } } }
 const { desert } = useLandData(defaults)
+
+const { syncStatus: digDaySyncStatus, lastUpdatedAt: digDayUpdatedAt } = useDigDayStore(
+  landId,
+  desert
+)
+
 watch(
   () => desert.value.digging?.grid,
   rawGrid => {
@@ -72,46 +82,13 @@ watch(
   { immediate: true }
 )
 
-// ── 4) Build a 1D map (tileIndex → 1-based treasure order)
-/**
- * Updated treasureOrderMap:
- * 1. Flattens any nested arrays inside `digging.grid`.
- * 2. Sorts all digs by `dugAt` (timestamp) so ordering is strictly chronological.
- * 3. Builds a map of length `total` that assigns each (x,y) cell its "dig order index".
- */
- const treasureOrderMap = computed(() => {
-  const tilesArray = grid.tiles.value;
-  const total = tilesArray.length;
-  const map = Array.from({ length: total }, () => null);
-
-  const rawGrid = desert.value.digging?.grid || [];
-
-  // Prepare entries with their unified dugAt and grouped tiles
-  const entries = rawGrid.map((entry) => {
-    if (Array.isArray(entry)) {
-      return { dugAt: entry[0]?.dugAt || 0, tiles: entry };
-    } else {
-      return { dugAt: entry.dugAt, tiles: [entry] };
-    }
-  });
-
-  // Sort entries by dugAt timestamp
-  entries.sort((a, b) => a.dugAt - b.dugAt);
-
-  // Assign order index (shared for grouped digs)
-  entries.forEach((entry, orderIndex) => {
-    const digNumber = orderIndex + 1;
-    entry.tiles.forEach(({ x, y }) => {
-      const size = Math.sqrt(total);
-      const idx = y * size + x;
-      if (Number.isInteger(idx) && idx >= 0 && idx < total) {
-        map[idx] = digNumber;
-      }
-    });
-  });
-
-  return map;
-});
+const treasureOrderMap = computed(() => {
+  const total = grid.tiles.value.length
+  if (!total) return []
+  const gridSize = Math.sqrt(total)
+  const rawGrid = desert.value.digging?.grid || []
+  return buildTreasureOrderMap(rawGrid, gridSize)
+})
 
 
 
@@ -126,20 +103,16 @@ onMounted(async () => {
     console.warn('Practice patterns refresh failed:', err)
   }
 
-  console.log("App mounted, checking landData for stale visitedFarmState...")
-  const landId = route.params.landId
+  const routeLandId = route.params.landId
   const today = new Date().toISOString().slice(0, 10)
 
-  if (landId) {
-    const raw = JSON.parse(localStorage.getItem(`landData_${landId}`) || '{}')
+  if (routeLandId) {
+    const raw = JSON.parse(localStorage.getItem(`landData_${routeLandId}`) || '{}')
     const isStale = raw?.date !== today || !raw?.visitedFarmState
-    console.log("Checking landData for ID:", raw?.date , "Stale:", raw?.visitedFarmState)
     if (isStale) {
-      const { reloadFromServer } = useLandSync({ landId })
-      reloadFromServer({ landId })
+      const { reloadFromServer } = useLandSync({ landId: routeLandId })
+      reloadFromServer({ landId: routeLandId })
     }
-  }else {
-    console.log("No landId provided, skipping stale check.")
   }
 })
 </script>
