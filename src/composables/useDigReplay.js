@@ -10,6 +10,7 @@ const STEP_MS = 700
 
 /**
  * Modal replay player: digs 0..N + marks by afterDigOrder (partial session OK).
+ * Destructure refs at the call site (do not pass `replay.isOpen` from a plain object).
  * @param {string} landId
  * @param {import('vue').Ref | (() => object)} desertSource
  */
