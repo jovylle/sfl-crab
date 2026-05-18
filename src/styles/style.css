@@ -388,10 +388,6 @@ body {
   container-name: digging-patterns;
 }
 
-.digging-patterns-col .digging-patterns {
-  min-height: 100%;
-}
-
 /* Mobile / stacked: 2 rows; --pattern-mobile-cols from usePatternStripLayout (~4 for 7–8) */
 .digging-patterns-col .pattern-strip {
   display: grid;
@@ -402,6 +398,8 @@ body {
   max-width: min(100%, 22rem);
   margin-inline: auto;
   align-content: start;
+  height: fit-content;
+  flex: none;
 }
 
 .digging-patterns-col .pattern-thumb {
@@ -450,6 +448,13 @@ body {
     padding-left: 1.25rem;
     min-height: 100%;
     container-type: size;
+  }
+
+  .digging-patterns-col .digging-patterns {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100%;
   }
 
   .digging-patterns-col .pattern-strip {

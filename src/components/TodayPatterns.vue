@@ -1,5 +1,5 @@
 <template>
-  <div class="digging-patterns h-full flex flex-col min-h-0">
+  <div class="digging-patterns h-full">
     <h2
       class="text-center lg:text-left text-xs sm:text-sm font-semibold mb-2 sm:mb-3 leading-tight"
       :title="todayPatternsTitle"
@@ -17,7 +17,7 @@
     </h2>
 
     <div
-      class="pattern-strip flex-1 min-h-0"
+      class="pattern-strip"
       :style="patternStripStyle"
     >
       <button
