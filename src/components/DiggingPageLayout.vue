@@ -7,17 +7,19 @@
         </header>
 
         <div
-          class="digging-workspace mt-3 grid grid-cols-1 gap-4 lg:gap-5 xl:gap-6 items-start"
-          :class="hasPatterns ? 'lg:grid-cols-[minmax(0,1fr)_minmax(220px,340px)]' : ''"
+          class="digging-workspace mt-3 flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-5 xl:gap-6"
         >
           <section
-            class="digging-grid-col w-full max-w-[min(100%,min(92vw,520px))] lg:max-w-none mx-auto lg:mx-0"
+            class="digging-grid-col w-full max-w-[min(100%,min(92vw,520px))] mx-auto shrink-0 lg:mx-0 lg:w-[min(100%,520px)]"
             :class="hasPatterns ? '' : 'lg:max-w-[min(100%,560px)] lg:mx-auto'"
           >
             <slot name="grid" />
           </section>
 
-          <aside v-if="hasPatterns" class="digging-patterns-col w-full min-w-0">
+          <aside
+            v-if="hasPatterns"
+            class="digging-patterns-col w-full min-w-0 lg:flex-1 lg:self-stretch flex flex-col justify-center"
+          >
             <slot name="patterns" />
           </aside>
         </div>

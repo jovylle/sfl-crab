@@ -22,11 +22,13 @@
         </button>
       </div>
 
-      <ReplayGrid
-        :cells="replayCells"
-        :treasure-order-map="replayOrderMap"
-        :show-treasure-order="true"
-      />
+      <div ref="captureEl" class="replay-capture bg-base-200/30 rounded-lg p-1">
+        <ReplayGrid
+          :cells="replayCells"
+          :treasure-order-map="replayOrderMap"
+          :show-treasure-order="true"
+        />
+      </div>
 
       <div class="flex flex-wrap items-center gap-2 mt-4">
         <button
@@ -65,26 +67,25 @@
       </div>
 
       <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
-        Step 0 = before any dig. You do not need to finish the desert to replay.
+        Step 0 = before any dig. Marks show when they were placed. Partial sessions replay fine.
       </p>
 
-      <div
-        v-if="hubReplayUrl"
-        class="modal-action flex-wrap justify-center gap-2 mt-2 sm:mt-0"
-      >
+      <div class="modal-action flex-wrap justify-center gap-2 mt-2 sm:mt-0">
         <button
+          v-if="replayShareUrl"
           type="button"
           class="btn btn-sm btn-ghost"
-          @click="copyHubLink"
+          @click="copyReplayLink"
         >
-          {{ hubCopied ? 'Link copied' : 'Copy share link' }}
+          {{ replayCopied ? 'Replay link copied' : 'Copy replay link' }}
         </button>
         <button
           type="button"
           class="btn btn-sm btn-secondary"
-          @click="openHub"
+          :disabled="exportingGif || maxStep < 1"
+          @click="exportGif"
         >
-          Open on Hub ↗
+          {{ exportingGif ? exportProgressLabel : 'Export GIF' }}
         </button>
       </div>
     </div>
@@ -95,41 +96,79 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import ReplayGrid from '@/components/ReplayGrid.vue'
+import { buildReplayShareUrl } from '@/utils/shareLinks.js'
+import { exportReplayGif, downloadGif } from '@/utils/exportReplayGif.js'
+import { copyToClipboard } from '@/utils/gridStateCodec.js'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
+  landId: { type: String, default: '' },
   step: { type: Number, default: 0 },
   maxStep: { type: Number, default: 0 },
   stepLabel: { type: String, default: '' },
   isPlaying: { type: Boolean, default: false },
   replayCells: { type: Array, default: () => [] },
   replayOrderMap: { type: Array, default: () => [] },
-  hubReplayUrl: { type: String, default: null },
 })
 
-defineEmits(['close', 'prev', 'next', 'update:step', 'toggle-play'])
+const emit = defineEmits([
+  'close',
+  'prev',
+  'next',
+  'update:step',
+  'toggle-play',
+  'pause',
+])
 
-const hubCopied = ref(false)
-let hubCopiedTimer = null
+const captureEl = ref(null)
+const replayCopied = ref(false)
+const exportingGif = ref(false)
+const exportProgressLabel = ref('Exporting…')
+let replayCopiedTimer = null
 
-function openHub () {
-  if (!props.hubReplayUrl) return
-  window.open(props.hubReplayUrl, '_blank', 'noopener,noreferrer')
+const replayShareUrl = computed(() => buildReplayShareUrl(props.landId))
+
+async function copyReplayLink () {
+  const url = replayShareUrl.value
+  if (!url) return
+  const ok = await copyToClipboard(url)
+  if (!ok) return
+  replayCopied.value = true
+  if (replayCopiedTimer) clearTimeout(replayCopiedTimer)
+  replayCopiedTimer = setTimeout(() => {
+    replayCopied.value = false
+  }, 2000)
 }
 
-async function copyHubLink () {
-  if (!props.hubReplayUrl) return
+async function exportGif () {
+  if (exportingGif.value || !captureEl.value || props.maxStep < 1) return
+
+  exportingGif.value = true
+  exportProgressLabel.value = 'Exporting…'
+  emit('pause')
+
+  const savedStep = props.step
   try {
-    await navigator.clipboard.writeText(props.hubReplayUrl)
-    hubCopied.value = true
-    if (hubCopiedTimer) clearTimeout(hubCopiedTimer)
-    hubCopiedTimer = setTimeout(() => {
-      hubCopied.value = false
-    }, 2000)
-  } catch {
-    openHub()
+    const bytes = await exportReplayGif({
+      element: captureEl.value,
+      maxStep: props.maxStep,
+      setStep: (n) => emit('update:step', n),
+      onProgress: (s, total) => {
+        exportProgressLabel.value = `Frame ${s}/${total}…`
+      },
+    })
+    const id = props.landId || 'replay'
+    downloadGif(bytes, `dig-replay-${id}.gif`)
+  } catch (err) {
+    console.error('GIF export failed:', err)
+    exportProgressLabel.value = 'Export failed'
+    await new Promise((r) => setTimeout(r, 1500))
+  } finally {
+    emit('update:step', savedStep)
+    exportingGif.value = false
+    exportProgressLabel.value = 'Export GIF'
   }
 }
 </script>

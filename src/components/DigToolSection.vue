@@ -44,6 +44,16 @@
               Replay
             </button>
 
+            <button
+              v-if="route.params.landId"
+              type="button"
+              class="btn btn-secondary btn-sm w-full tooltip"
+              data-tip="Copy a link for a friend: your hint marks on their land grid"
+              @click="copyMarksLink"
+            >
+              {{ marksLinkCopied ? 'Marks link copied' : 'Share marks link' }}
+            </button>
+
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
               <input
                 type="checkbox"
@@ -86,7 +96,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { buildMarksShareUrlForLand } from '@/utils/shareLinks.js'
+import { copyToClipboard } from '@/utils/gridStateCodec.js'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -105,6 +117,30 @@ const props = defineProps({
   digDaySyncError: { type: String, default: null },
   canReplay: { type: Boolean, default: false },
 })
+
+const marksLinkCopied = ref(false)
+let marksLinkCopiedTimer = null
+
+async function copyMarksLink () {
+  const fromId = route.params.landId
+  if (!fromId) return
+
+  const toId = window.prompt(
+    "Friend's land ID — they'll see your marks on their grid (same daily desert):",
+    ''
+  )
+  if (!toId || !/^\d+$/.test(String(toId).trim())) return
+
+  const url = buildMarksShareUrlForLand(fromId, String(toId).trim(), grid)
+  if (!url) return
+  const ok = await copyToClipboard(url)
+  if (!ok) return
+  marksLinkCopied.value = true
+  if (marksLinkCopiedTimer) clearTimeout(marksLinkCopiedTimer)
+  marksLinkCopiedTimer = setTimeout(() => {
+    marksLinkCopied.value = false
+  }, 2000)
+}
 
 const digDaySyncLabel = computed(() => {
   if (!route.params.landId) return ''

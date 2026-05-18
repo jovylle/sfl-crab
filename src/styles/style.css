@@ -386,10 +386,30 @@ body {
   padding-top: 0;
 }
 
+.digging-patterns-col .pattern-strip {
+  align-content: center;
+}
+
 @media (min-width: 1024px) {
   .digging-patterns-col {
     border-left: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
     padding-left: 1.25rem;
+    min-height: 100%;
+  }
+
+  .digging-patterns-col .pattern-strip {
+    max-width: 100%;
+  }
+
+  .digging-patterns-col .pattern-thumb {
+    max-width: min(5.5rem, 100%);
+  }
+}
+
+@media (max-width: 1023px) {
+  .digging-patterns-col {
+    border-top: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
+    padding-top: 1rem;
   }
 }
 

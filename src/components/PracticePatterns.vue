@@ -8,7 +8,8 @@
     </h2>
 
     <div
-      class="grid grid-cols-4 gap-1.5 sm:gap-2 max-w-[320px] mx-auto lg:max-w-none lg:mx-0"
+      class="pattern-strip grid grid-rows-2 gap-1.5 sm:gap-2 w-full max-w-[min(100%,22rem)] mx-auto lg:max-w-none lg:mx-0"
+      :style="patternStripStyle"
     >
       <button
         v-for="(key, i) in patternKeys"
@@ -18,7 +19,7 @@
         :title="formatKey(key)"
         @click="toggleMark(i)"
         :class="[
-          'pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
+          'pattern-thumb w-full max-w-[5.5rem] mx-auto cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
           isMarked(i)
             ? 'ring-2 ring-success bg-success/20'
@@ -47,15 +48,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 
 const { getImageSrc } = useReliableAssets()
 
-defineProps({
+const props = defineProps({
   patternKeys: { type: Array, default: () => [] },
 })
+
+const patternColumnCount = computed(() => {
+  const n = props.patternKeys.length
+  if (n <= 0) return 4
+  return Math.ceil(n / 2)
+})
+
+const patternStripStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${patternColumnCount.value}, minmax(3.25rem, 1fr))`,
+}))
 
 const GRID_SIZE = 4
 const marked = ref(new Set())

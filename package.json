@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:netlify": "netlify dev",
     "build": "vite build",
     "preview": "vite preview",
     "prerender": "node scripts/prerender.js",
@@ -20,6 +21,8 @@
     "@vueuse/head": "^2.0.0",
     "daisyui": "^5.0.28",
     "decimal.js-light": "^2.5.1",
+    "gifenc": "^1.0.3",
+    "html-to-image": "^1.11.13",
     "i18next": "^25.3.2",
     "react-i18next": "^15.6.1",
     "vue": "^3.5.13",

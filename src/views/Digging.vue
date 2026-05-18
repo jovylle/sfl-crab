@@ -1,6 +1,21 @@
 <template>
   <DiggingPageLayout>
     <template #toolbar>
+      <div
+        v-if="marksGuideBanner"
+        class="alert alert-info text-sm py-2 px-3 mb-2 shadow-sm"
+        role="status"
+      >
+        <span class="flex-1">{{ marksGuideBanner }}</span>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs shrink-0"
+          aria-label="Dismiss"
+          @click="marksGuideBanner = null"
+        >
+          ✕
+        </button>
+      </div>
       <DigToolSection
         v-model:showTreasureOrder="showTreasureOrder"
         v-model:hideLandIdInUrl="hideLandIdInUrl"
@@ -26,18 +41,19 @@
 
     <DigReplayModal
       :open="replayOpen"
+      :land-id="String(landId)"
       :step="replayStep"
       :max-step="replayMaxStep"
       :step-label="replayStepLabel"
       :is-playing="replayIsPlaying"
       :replay-cells="replayCells"
       :replay-order-map="replayOrderMap"
-      :hub-replay-url="hubReplayUrl"
       @close="closeReplay()"
       @prev="stepPrev()"
       @next="stepNext()"
       @update:step="setReplayStep($event)"
       @toggle-play="toggleReplayPlay()"
+      @pause="pauseReplay()"
     />
 
     <div class="mt-6">
@@ -48,8 +64,8 @@
   </DiggingPageLayout>
 </template>
 <script setup>
-import { watch, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { watch, computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import DiggingPageLayout from '@/components/DiggingPageLayout.vue'
 import DigToolSection from '@/components/DigToolSection.vue'
@@ -65,8 +81,14 @@ import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
 import { useDigDayStore } from '@/composables/useDigDayStore.js'
 import { useDigReplay } from '@/composables/useDigReplay.js'
 import { buildTreasureOrderMap } from '@/utils/buildDigTimeline.js'
+import {
+  decodeGridState,
+  applySharedMarks,
+  isValidEncodedState,
+} from '@/utils/gridStateCodec.js'
 
 const route = useRoute()
+const router = useRouter()
 const landId = route.params.landId || 'guest'
 const showTreasureOrder = useLocalStorage(
   `showTreasureOrder-${landId}`, false
@@ -84,7 +106,6 @@ const {
   syncStatus: digDaySyncStatus,
   lastUpdatedAt: digDayUpdatedAt,
   syncError: digDaySyncError,
-  hubReplayUrl,
 } = useDigDayStore(landId, desert)
 
 const {
@@ -102,7 +123,56 @@ const {
   stepPrev,
   stepNext,
   togglePlay: toggleReplayPlay,
+  pause: pauseReplay,
 } = useDigReplay(landId, desert)
+
+const marksGuideBanner = ref(null)
+let marksFromLinkApplied = false
+let replayFromLinkOpened = false
+
+function stripShareQuery () {
+  const q = { ...route.query }
+  delete q.replay
+  delete q.marks
+  delete q.grid
+  router.replace({ query: q })
+}
+
+function tryApplyMarksFromLink () {
+  if (marksFromLinkApplied) return
+  const encoded = route.query.marks || route.query.grid
+  if (!encoded || typeof encoded !== 'string') return
+  if (!isValidEncodedState(encoded)) return
+  if (!grid.tiles.value.length) return
+
+  try {
+    const state = decodeGridState(encoded)
+    const count = applySharedMarks(state, grid)
+    if (count > 0) {
+      marksFromLinkApplied = true
+      marksGuideBanner.value =
+        `Guide marks loaded (${count} cells). Use this grid while you dig in Sunflower Land.`
+      stripShareQuery()
+    }
+  } catch (err) {
+    console.warn('Invalid marks link:', err)
+  }
+}
+
+function tryOpenReplayFromLink () {
+  if (replayFromLinkOpened) return
+  if (!route.query.replay) return
+  if (!canReplay.value) return
+  replayFromLinkOpened = true
+  openReplay()
+  stripShareQuery()
+}
+
+watch(() => grid.tiles.value.length, () => tryApplyMarksFromLink())
+
+watch(canReplay, (ok) => {
+  if (ok) tryOpenReplayFromLink()
+}, { immediate: true })
 
 watch(
   () => desert.value.digging?.grid,
