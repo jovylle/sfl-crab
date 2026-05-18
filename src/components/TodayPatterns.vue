@@ -1,75 +1,56 @@
 <template>
-  <div
-    v-if="patternKeys?.length"
-    class="card grow max-w-md basis-[265px] mx-auto md:mx-0"
-  >
-    <div
-      class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1 [@media(max-width:639px)]:pt-0"
+  <div class="digging-patterns h-full">
+    <h2
+      class="text-center text-xs sm:text-sm font-semibold mb-2 sm:mb-3 leading-tight"
+      :title="todayPatternsTitle"
     >
-      <h2
-        class="card-title w-full whitespace-nowrap text-center text-sm sm:text-lg"
-        :title="todayPatternsTitle"
+      Today&apos;s Treasures
+      <span
+        :class="[
+          'tooltip inline-block text-[0.65rem] sm:text-xs font-normal',
+          isPatternDateStale ? 'text-warning font-semibold' : 'opacity-70',
+        ]"
+        :data-tip="patternDateTooltip"
       >
-        Today Treasure Patterns
-        <span
-          :class="[
-            'tooltip inline-block text-xs',
-            isPatternDateStale ? 'text-warning font-semibold' : 'opacity-75'
-          ]"
-          :data-tip="patternDateTooltip"
-        >
-          ({{ compactPatternDate }})
-        </span>
-      </h2>
-      <div
-        class="
-          flex flex-wrap         /* wrap into new rows */
-          gap-2 sm:gap-4                  /* consistent gutters */
-        "
+        ({{ compactPatternDate }})
+      </span>
+    </h2>
+
+    <div
+      class="grid grid-cols-4 gap-1.5 sm:gap-2 max-w-[320px] mx-auto lg:max-w-none lg:mx-0"
+    >
+      <button
+        v-for="(key, i) in patternKeys"
+        :key="i"
+        type="button"
+        :aria-label="patternLabel(key)"
+        :title="patternLabel(key)"
+        @click="toggleMark(i)"
+        :class="[
+          'pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
+          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
+          isMarked(i)
+            ? 'ring-2 ring-success bg-success/20'
+            : 'bg-base-100 dark:bg-neutral-content',
+        ]"
       >
         <div
-          v-for="(key, i) in patternKeys"
-          :key="i"
-          @click="toggleMark(i)"
-          :class="[
-            'cursor-pointer transition-shadow relative group',
-            isMarked(i)
-              ? 'bg-success'
-              : 'bg-base-100 dark:bg-neutral-content',
-            /* flex item sizing: */
-            'md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px]'
-          ]"
+          class="grid grid-cols-4 w-full border border-base-300 dark:border-slate-500 aspect-square"
         >
-          <span
-            class="absolute opacity-0 group-hover:opacity-100 transition-opacity left-1/2 transform -translate-x-1/2 -bottom-3 mt-1 text-[0.750rem] bg-base-100 sm:text-625rem whitespace-nowrap"
-          >
-            {{ key
-      .toLowerCase()
-      .split('_')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ')
-            }}
-          </span>
-
-          <!-- your existing 4×4 grid inside -->
           <div
-            class="grid grid-cols-4 mx-auto border border-base-300 dark:border-slate-500"
+            v-for="cell in 16"
+            :key="cell"
+            class="border border-base-300 flex items-center justify-center aspect-square p-px sm:p-0.5"
           >
-            <div
-              v-for="cell in 16"
-              :key="cell"
-              class="border border-base-300 flex items-center justify-center aspect-square p-0.5"
-            >
-              <img
-                v-if="getPlotAt(key, cell)"
-                :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name)).value"
-                :alt="getPlotAt(key, cell).name"
-                class="max-w-full max-h-full object-contain w-full"
-              />
-            </div>
+            <img
+              v-if="getPlotAt(key, cell)"
+              :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name)).value"
+              :alt="getPlotAt(key, cell).name"
+              class="max-w-full max-h-full object-contain w-full"
+            />
           </div>
         </div>
-      </div>
+      </button>
     </div>
   </div>
 </template>
@@ -104,6 +85,14 @@ const patternDateTooltip = computed(() => (
 ))
 
 const GRID_SIZE = 4
+
+function patternLabel(key: string) {
+  return key
+    .toLowerCase()
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
 
 function toggleMark(index: number) {
   marked.value.has(index)

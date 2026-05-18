@@ -351,7 +351,8 @@ body {
   background: #dc2626;
 }
 
-.site-main .contain-please .grid {
+.site-main .contain-please .grid,
+.digging-grid-col .contain-please .grid {
   width: 100%;
   aspect-ratio: 1 / 1;
   display: grid;
@@ -371,8 +372,24 @@ body {
 
 /* Optional: tweak gaps on small screens */
 @media (max-width: 400px) {
-  .site-main .contain-please .grid {
+  .site-main .contain-please .grid,
+  .digging-grid-col .contain-please .grid {
     gap: 0px;
+  }
+}
+
+.digging-grid-col .contain-please {
+  width: 100%;
+}
+
+.digging-patterns-col {
+  padding-top: 0;
+}
+
+@media (min-width: 1024px) {
+  .digging-patterns-col {
+    border-left: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
+    padding-left: 1.25rem;
   }
 }
 

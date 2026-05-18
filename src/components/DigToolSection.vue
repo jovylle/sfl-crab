@@ -1,9 +1,9 @@
 <template>
-  <div class="flex flex-col gap-1 mb-1">
-  <p v-if="digDaySyncLabel" class="text-center text-[0.65rem] text-base-content/60 m-0">
+  <div class="flex flex-col gap-1.5">
+  <p v-if="digDaySyncLabel" class="text-center text-[0.65rem] text-base-content/60 m-0 px-1">
     {{ digDaySyncLabel }}
   </p>
-  <div class="flex gap-4 justify-center items-center">
+  <div class="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
     <InputLandIdOrRefresh />
     <button
       type="button"
@@ -37,31 +37,11 @@
             <button
               type="button"
               class="btn btn-primary btn-sm w-full tooltip"
-              data-tip="Step through today's digs and marks"
+              data-tip="Play today's digs and marks in a modal"
               :disabled="!canReplay"
               @click="$emit('open-replay')"
             >
               Replay
-            </button>
-
-            <button
-              v-if="hubReplayUrl"
-              type="button"
-              class="btn btn-secondary btn-sm w-full tooltip"
-              data-tip="Open today's dig replay on SFL Digging Hub"
-              @click="openHubReplay"
-            >
-              Open in Hub ↗
-            </button>
-
-            <button
-              v-if="hubReplayUrl"
-              type="button"
-              class="btn btn-ghost btn-sm w-full tooltip"
-              data-tip="Copy hub replay link"
-              @click="copyHubReplayLink"
-            >
-              {{ hubLinkCopied ? 'Link copied' : 'Copy hub link' }}
             </button>
 
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
@@ -106,7 +86,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -123,12 +103,8 @@ const props = defineProps({
   digDaySyncStatus: { type: String, default: 'idle' },
   digDayUpdatedAt: { type: String, default: null },
   digDaySyncError: { type: String, default: null },
-  hubReplayUrl: { type: String, default: null },
   canReplay: { type: Boolean, default: false },
 })
-
-const hubLinkCopied = ref(false)
-let hubLinkCopiedTimer = null
 
 const digDaySyncLabel = computed(() => {
   if (!route.params.landId) return ''
@@ -150,25 +126,6 @@ const digDaySyncLabel = computed(() => {
       return ''
   }
 })
-
-function openHubReplay () {
-  if (!props.hubReplayUrl) return
-  window.open(props.hubReplayUrl, '_blank', 'noopener,noreferrer')
-}
-
-async function copyHubReplayLink () {
-  if (!props.hubReplayUrl) return
-  try {
-    await navigator.clipboard.writeText(props.hubReplayUrl)
-    hubLinkCopied.value = true
-    if (hubLinkCopiedTimer) clearTimeout(hubLinkCopiedTimer)
-    hubLinkCopiedTimer = setTimeout(() => {
-      hubLinkCopied.value = false
-    }, 2000)
-  } catch {
-    openHubReplay()
-  }
-}
 
 function formatShortTime (iso) {
   try {

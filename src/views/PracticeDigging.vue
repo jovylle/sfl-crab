@@ -1,75 +1,74 @@
 <template>
-  <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
-    <div
-      class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
-    >
-      <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
+  <DiggingPageLayout>
+    <template #toolbar>
+      <p class="text-[0.65rem] text-base-content/60 text-center m-0">
+        Unofficial training simulator — no in-game rewards. Not affiliated with Sunflower Land.
+      </p>
 
-        <p class="text-[0.65rem] text-base-content/60 text-center m-0 mb-2">
-          Unofficial training simulator — no in-game rewards. Not affiliated with Sunflower Land.
-        </p>
-
-        <!-- Header row -->
-        <div class="flex items-center justify-between gap-2 flex-wrap">
-          <h2 class="card-title text-sm sm:text-base">
+      <div class="flex flex-col gap-2 mt-1.5">
+        <div class="flex items-center justify-center gap-2 flex-wrap">
+          <h2 class="text-sm sm:text-base font-semibold m-0">
             Practice Mode
             <span class="badge badge-secondary badge-sm">Round {{ roundCount }}</span>
           </h2>
-          <div class="flex gap-2 flex-wrap">
-            <button
-              v-if="!isGameOver"
-              class="btn btn-sm btn-warning"
-              @click="giveUp"
-            >
-              Give Up
-            </button>
-            <button
-              class="btn btn-sm btn-outline"
-              :class="showTimer ? 'btn-success' : ''"
-              @click="showTimer = !showTimer"
-            >
-              {{ showTimer ? 'Hide Timer' : 'Show Timer' }}
-            </button>
-            <button
-              class="btn btn-sm btn-primary"
-              :disabled="isLoading || isStartingTodayRound || todayRoundCooldownActive"
-              @click="newTodayRound"
-            >
-              <span v-if="isStartingTodayRound" class="loading loading-spinner loading-xs"></span>
-              <span v-else-if="todayRoundCooldownActive">
-                Retry later
-              </span>
-              <span v-else>
-                New Today's Pattern Round ↺
-              </span>
-            </button>
-            <button class="btn btn-sm btn-secondary" @click="newRandomRound">
-              New Random Pattern Round
-            </button>
-          </div>
         </div>
 
-        <div class="flex items-center justify-between gap-2 text-xs text-base-content/60">
-          <!-- <span>
-            Today's shared patterns
-            <span v-if="isCachedForToday" class="badge badge-outline badge-xs ml-1">cached</span>
-          </span> -->
-          <span v-if="isLoading || isStartingTodayRound" class="loading loading-dots loading-xs"></span>
+        <div class="flex flex-wrap gap-2 justify-center items-center">
+          <button
+            v-if="!isGameOver"
+            class="btn btn-sm btn-warning"
+            @click="giveUp"
+          >
+            Give Up
+          </button>
+          <button
+            class="btn btn-sm btn-outline"
+            :class="showTimer ? 'btn-success' : ''"
+            @click="showTimer = !showTimer"
+          >
+            {{ showTimer ? 'Hide Timer' : 'Show Timer' }}
+          </button>
+          <button
+            class="btn btn-sm btn-primary"
+            :disabled="isLoading || isStartingTodayRound || todayRoundCooldownActive"
+            @click="newTodayRound"
+          >
+            <span v-if="isStartingTodayRound" class="loading loading-spinner loading-xs"></span>
+            <span v-else-if="todayRoundCooldownActive">
+              Retry later
+            </span>
+            <span v-else>
+              Today&apos;s Patterns ↺
+            </span>
+          </button>
+          <button class="btn btn-sm btn-secondary" @click="newRandomRound">
+            Random Round
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template #grid>
+      <div class="flex flex-col gap-2">
+        <div
+          v-if="isLoading || isStartingTodayRound"
+          class="flex justify-center text-xs text-base-content/60"
+        >
+          <span class="loading loading-dots loading-xs"></span>
         </div>
 
         <div v-if="todayRoundErrorMessage || error" class="alert alert-warning py-2 text-xs">
           <span v-if="todayRoundErrorMessage">{{ todayRoundErrorMessage }}</span>
           <span v-else>{{ error }}</span>
           <span class="block">
-            Use <strong>New Random Pattern Round</strong> for now.
+            Use <strong>Random Round</strong> for now.
           </span>
           <span v-if="todayRoundCooldownActive" class="block">
             Retry available in <strong>5s</strong>.
           </span>
         </div>
 
-        <!-- Live stats -->
-        <div class="flex items-center gap-4 text-sm">
+        <div class="flex items-center justify-center gap-3 sm:gap-4 text-sm flex-wrap">
           <span>
             Digs: <strong class="text-lg">{{ digsMade }}</strong>
           </span>
@@ -84,7 +83,6 @@
           <span class="text-base-content/50 text-xs">lower digs = better</span>
         </div>
 
-        <!-- Game over / victory banner -->
         <div v-if="isGameOver" class="alert py-2 text-sm gap-2" :class="bannerClass">
           <span v-if="isVictory">
             🎉 Found all {{ totalTreasures }} treasure{{ totalTreasures !== 1 ? 's' : '' }} in
@@ -105,7 +103,6 @@
           </span>
         </div>
 
-        <!-- Practice grid — keyed by round so it fully remounts each game -->
         <PracticeGrid
           :key="`round-${roundCount}`"
           :tiles="displayTiles"
@@ -116,8 +113,7 @@
           @dig="dig"
         />
 
-        <!-- Legend + controls hint -->
-        <div class="flex gap-3 text-[0.65rem] text-base-content/50 mt-1 flex-wrap justify-center">
+        <div class="flex gap-3 text-[0.65rem] text-base-content/50 flex-wrap justify-center">
           <span class="flex items-center gap-1">
             <Icon icon="noto:shovel" class="w-3.5 h-3.5" /> Click to dig
           </span>
@@ -136,22 +132,21 @@
             Right-click to mark
           </span>
         </div>
-
       </div>
-    </div>
+    </template>
 
-    <!-- Right: pattern reference for this round -->
-    <PracticePatterns :pattern-keys="usedFormationKeys" />
-  </div>
+    <template v-if="usedFormationKeys.length" #patterns>
+      <PracticePatterns :pattern-keys="usedFormationKeys" />
+    </template>
 
-  <div>
     <InfoFooter :show-what-is-this="false" :show-features="false" />
-  </div>
+  </DiggingPageLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import DiggingPageLayout from '@/components/DiggingPageLayout.vue'
 import { usePracticeEngine } from '@/composables/usePracticeEngine.js'
 import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
@@ -181,7 +176,6 @@ const {
 const { getImageSrc } = useReliableAssets()
 const {
   error,
-  isCachedForToday,
   isLoading,
   patternKeys,
   refreshPracticePatterns,
@@ -278,7 +272,6 @@ async function newTodayRound () {
     startGame(practicePatternKeys.value, { exact: true })
     resetRoundTimer()
   } catch {
-    // If the network is unavailable and no cache exists yet, use the local fallback set.
     todayRoundErrorMessage.value = "Today's pattern round failed to load."
     stopTodayRoundCooldown()
     todayRoundCooldownActive.value = true

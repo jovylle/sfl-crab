@@ -1,5 +1,5 @@
 <template>
-  <div class="contain-please relative mt-1 sm:mt-4 mx-auto" @contextmenu.prevent.stop>
+  <div class="contain-please relative mt-0 sm:mt-1 mx-auto" @contextmenu.prevent.stop>
     <!-- COL LABELS OVERLAY -->
     <div class="overlay-cols text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
       <div v-for="L in colLabels" :key="L" class="overlay-cell justify-center items-end">{{ L }}</div>
