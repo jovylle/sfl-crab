@@ -141,7 +141,7 @@ export function useDigDayStore (landId, desertSource) {
     watch(
       () => getDesert().digging?.grid,
       () => scheduleSync(),
-      { deep: true }
+      { deep: true, immediate: true }
     )
 
     watch(

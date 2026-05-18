@@ -12,13 +12,27 @@
             v-model:hideLandIdInUrl="hideLandIdInUrl"
             :dig-day-sync-status="digDaySyncStatus"
             :dig-day-updated-at="digDayUpdatedAt"
+            :can-replay="digReplay.canReplay"
+            @open-replay="digReplay.openReplay()"
           />
 
-          <!-- Pass the toggle and map down into Grid -->
+          <DigReplayControls
+            :open="digReplay.isOpen"
+            :step="digReplay.step"
+            :max-step="digReplay.maxStep"
+            :step-label="digReplay.stepLabel"
+            @close="digReplay.closeReplay()"
+            @prev="digReplay.stepPrev()"
+            @next="digReplay.stepNext()"
+            @update:step="digReplay.setStep($event)"
+          />
+
           <Grid
-            :show-treasure-order="showTreasureOrder"
+            :show-treasure-order="showTreasureOrder || digReplay.isOpen"
             :treasure-order-map="treasureOrderMap"
             :show-land-id-in-url="!hideLandIdInUrl"
+            :replay-tiles="digReplay.replayCells"
+            :replay-read-only="digReplay.isOpen"
           />
         </div>
       </div>
@@ -40,6 +54,7 @@ import { watch, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import DigToolSection from '@/components/DigToolSection.vue'
+import DigReplayControls from '@/components/DigReplayControls.vue'
 import Grid           from '@/components/Grid.vue'
 import TodayPatterns  from '@/components/TodayPatterns.vue'
 import DigStats       from '@/components/DigStats.vue'
@@ -49,6 +64,7 @@ import { useGridManager } from '@/composables/useGridManager'
 import { useLandSync } from '@/composables/useLandSync'
 import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
 import { useDigDayStore } from '@/composables/useDigDayStore.js'
+import { useDigReplay } from '@/composables/useDigReplay.js'
 import { buildTreasureOrderMap } from '@/utils/buildDigTimeline.js'
 
 // 1) landId and persistent toggle
@@ -71,6 +87,8 @@ const { syncStatus: digDaySyncStatus, lastUpdatedAt: digDayUpdatedAt } = useDigD
   desert
 )
 
+const digReplay = useDigReplay(landId, desert)
+
 watch(
   () => desert.value.digging?.grid,
   rawGrid => {
@@ -87,7 +105,12 @@ const treasureOrderMap = computed(() => {
   if (!total) return []
   const gridSize = Math.sqrt(total)
   const rawGrid = desert.value.digging?.grid || []
-  return buildTreasureOrderMap(rawGrid, gridSize)
+  const map = buildTreasureOrderMap(rawGrid, gridSize)
+  if (digReplay.isOpen.value) {
+    const cap = digReplay.step.value
+    return map.map((n) => (n != null && n <= cap ? n : null))
+  }
+  return map
 })
 
 

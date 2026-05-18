@@ -34,6 +34,16 @@
 
 
             <!-- Controlled checkbox -->
+            <button
+              type="button"
+              class="btn btn-primary btn-sm w-full tooltip"
+              data-tip="Step through today's digs and marks"
+              :disabled="!canReplay"
+              @click="$emit('open-replay')"
+            >
+              Replay
+            </button>
+
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
               <input
                 type="checkbox"
@@ -92,6 +102,7 @@ const props = defineProps({
   hideLandIdInUrl: { type: Boolean, default: false },
   digDaySyncStatus: { type: String, default: 'idle' },
   digDayUpdatedAt: { type: String, default: null },
+  canReplay: { type: Boolean, default: false },
 })
 
 const digDaySyncLabel = computed(() => {
@@ -123,7 +134,7 @@ function formatShortTime (iso) {
   }
 }
 // we'll emit update:showTreasureOrder via @change above
-defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl'])
+defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'open-replay'])
 
 function clearLandId () {
   if (route.name === 'Digging') {

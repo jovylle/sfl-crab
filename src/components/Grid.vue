@@ -26,10 +26,13 @@
 
     <div class="grid w-full p-0.5 gap-0.5 bg-base-300 dark:bg-slate-500">
       <div
-        v-for="(tile, index) in tiles"
+        v-for="(tile, index) in displayTiles"
         :key="index"
         class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative"
-        :class="normalizeTile(tile)"
+        :class="[
+          normalizeTile(tile),
+          replayReadOnly ? 'cursor-default opacity-95' : '',
+        ]"
         @click="onTileClick($event, index)"
         @contextmenu.prevent="onTileClick($event, index)"
       >
@@ -87,7 +90,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed } from 'vue'
+import { ref, computed, toRefs } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
@@ -102,11 +105,16 @@ const { getImageSrc } = useReliableAssets()
 const possibleTreasures = useTodayTreasureNames();
 console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
 // your existing props
-const { showTreasureOrder, treasureOrderMap, showLandIdInUrl } = defineProps({
+const props = defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   treasureOrderMap:  { type: Array,   default: () => [] },
   showLandIdInUrl:   { type: Boolean, default: true },
+  replayTiles:       { type: Array,   default: null },
+  replayReadOnly:    { type: Boolean, default: false },
 })
+
+const { showTreasureOrder, treasureOrderMap, showLandIdInUrl, replayTiles, replayReadOnly } =
+  toRefs(props)
 
 // init grid manager
 const route  = useRoute()
@@ -114,8 +122,12 @@ const landId = route.params.landId || '0'
 const grid   = useGridManager(landId)
 
 // reactive tiles & picker
-const tiles  = grid.tiles
+const tiles = grid.tiles
 const picker = ref(null)
+
+const displayTiles = computed(() =>
+  replayTiles.value?.length ? replayTiles.value : tiles.value
+)
 
 // static labels for overlays
 const colLabels = computed(() =>
@@ -128,7 +140,9 @@ const rowLabels = computed(() =>
 )
 
 // click handler
-function onTileClick(event, index) {
+function onTileClick (event, index) {
+  if (replayReadOnly.value) return
+
   const container   = event.currentTarget.closest('.contain-please')
   const containerR  = container.getBoundingClientRect()
   const tileR       = event.currentTarget.getBoundingClientRect()
