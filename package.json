@@ -31,6 +31,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.4",
     "@vitejs/plugin-vue": "^5.2.2",
+    "netlify-cli": "^17.38.1",
     "node-fetch": "^3.3.2",
     "prettier": "^3.5.3",
     "puppeteer": "^24.8.2",
