@@ -1,16 +1,13 @@
 <template>
-  <div class="digging-patterns h-full">
+  <div class="digging-patterns">
     <h2
-      class="text-center text-xs sm:text-sm font-semibold mb-2 sm:mb-3 leading-tight"
+      class="text-center text-xs sm:text-sm font-semibold m-0 leading-tight shrink-0"
       title="Patterns for this practice round"
     >
       Round Patterns
     </h2>
 
-    <div
-      class="pattern-strip"
-      :style="patternStripStyle"
-    >
+    <div class="pattern-strip">
       <button
         v-for="(key, i) in patternKeys"
         :key="i"
@@ -19,10 +16,10 @@
         :title="formatKey(key)"
         @click="toggleMark(i)"
         :class="[
-          'pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
+          'max-w-[100px] pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
           isMarked(i)
-            ? 'ring-2 ring-success bg-success/20'
+            ? 'bg-success'
             : 'bg-base-100 dark:bg-neutral-content',
         ]"
       >
@@ -48,18 +45,15 @@
 </template>
 
 <script setup>
-import { ref, toRef } from 'vue'
+import { ref } from 'vue'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
-import { usePatternStripLayout } from '@/composables/usePatternStripLayout.js'
 
 const { getImageSrc } = useReliableAssets()
 
-const props = defineProps({
+defineProps({
   patternKeys: { type: Array, default: () => [] },
 })
-
-const { patternStripStyle } = usePatternStripLayout(toRef(props, 'patternKeys'))
 
 const GRID_SIZE = 4
 const marked = ref(new Set())

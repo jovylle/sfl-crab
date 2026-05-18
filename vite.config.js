@@ -1,10 +1,17 @@
 // vite.config.js
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
-export default defineConfig({
+/** Where /api/* is proxied when using `npm run dev:vite` (not `netlify dev`). */
+const defaultApiProxy = 'https://beta.d1g.uk'
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const apiProxyTarget = env.VITE_API_PROXY_TARGET || defaultApiProxy
+
+  return {
   define: {
     __APP_VERSION__: JSON.stringify(process.env.COMMIT_REF || '')
   },
@@ -26,10 +33,15 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api': {
+        target: apiProxyTarget,
+        changeOrigin: true,
+      },
       '/.netlify/functions': {
-        target: 'http://localhost:8888',
+        target: env.VITE_NETLIFY_DEV_URL || 'http://localhost:8888',
         changeOrigin: true,
       },
     },
   },
+  }
 })

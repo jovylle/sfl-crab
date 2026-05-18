@@ -1,7 +1,7 @@
 <template>
-  <div class="digging-patterns h-full">
+  <div class="digging-patterns">
     <h2
-      class="text-center lg:text-left text-xs sm:text-sm font-semibold mb-2 sm:mb-3 leading-tight"
+      class="text-center lg:text-left text-xs sm:text-sm font-semibold m-0 leading-tight shrink-0"
       :title="todayPatternsTitle"
     >
       Today&apos;s Treasures
@@ -16,10 +16,7 @@
       </span>
     </h2>
 
-    <div
-      class="pattern-strip"
-      :style="patternStripStyle"
-    >
+    <div class="pattern-strip">
       <button
         v-for="(key, i) in patternKeys"
         :key="i"
@@ -28,10 +25,10 @@
         :title="patternLabel(key)"
         @click="toggleMark(i)"
         :class="[
-          'pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
+          'max-w-[100px] pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
           isMarked(i)
-            ? 'ring-2 ring-success bg-success/20'
+            ? 'bg-success'
             : 'bg-base-100 dark:bg-neutral-content',
         ]"
       >
@@ -62,12 +59,9 @@ import { useNow } from '@vueuse/core'
 import { useLandData } from '../composables/useLandData'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
-import { usePatternStripLayout } from '@/composables/usePatternStripLayout.js'
-
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
 const { dailyPatternKeys: patternKeys, dailyPatternDate } = useLandData()
-const { patternStripStyle } = usePatternStripLayout(patternKeys)
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 const now = useNow({ interval: 30000 })
 const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))
