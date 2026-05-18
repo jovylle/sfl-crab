@@ -8,6 +8,14 @@
   # Functions directory
   functions = "netlify/functions"
 
+# Local dev: Netlify on :8888 (functions + redirects) → Vite on :5173
+[dev]
+  command = "npm run dev:vite"
+  targetPort = 5173
+  port = 8888
+  publish = "dist"
+  autoLaunch = false
+
 [build.environment]
   # Node.js version
   NODE_VERSION = "18"
