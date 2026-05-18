@@ -3,6 +3,26 @@
 
 const VERSION = 1
 
+/** Count user-placed marks (excludes auto near-/actual- hints). */
+export function countCustomMarks (gridManager) {
+  if (!gridManager?.tiles?.value) return 0
+  let count = 0
+  for (const tileClasses of gridManager.tiles.value) {
+    if (!tileClasses?.length) continue
+    if (
+      tileClasses.some(
+        cls =>
+          cls.startsWith('hint-') &&
+          !cls.includes('near-') &&
+          !cls.includes('actual-')
+      )
+    ) {
+      count += 1
+    }
+  }
+  return count
+}
+
 /**
  * Encode grid state to a compressed string for sharing
  * @param {Object} gridManager - The grid manager instance

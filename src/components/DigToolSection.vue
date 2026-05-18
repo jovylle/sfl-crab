@@ -48,10 +48,10 @@
               v-if="route.params.landId"
               type="button"
               class="btn btn-secondary btn-sm w-full tooltip"
-              data-tip="Copy a link for a friend: your hint marks on their land grid"
-              @click="copyMarksLink"
+              data-tip="Copy a link for the beginner: your marks on this land’s grid (same daily desert in-game)"
+              @click="copyMarksLink($event)"
             >
-              {{ marksLinkCopied ? 'Marks link copied' : 'Share marks link' }}
+              {{ marksLinkCopied ? 'Guide link copied' : 'Copy guide link' }}
             </button>
 
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
@@ -97,7 +97,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { buildMarksShareUrlForLand } from '@/utils/shareLinks.js'
+import { buildGuideMarksUrl } from '@/utils/shareLinks.js'
 import { copyToClipboard } from '@/utils/gridStateCodec.js'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
@@ -121,18 +121,27 @@ const props = defineProps({
 const marksLinkCopied = ref(false)
 let marksLinkCopiedTimer = null
 
-async function copyMarksLink () {
-  const fromId = route.params.landId
-  if (!fromId) return
+async function copyMarksLink (event) {
+  let recipientId = route.params.landId
+  if (!recipientId) return
 
-  const toId = window.prompt(
-    "Friend's land ID — they'll see your marks on their grid (same daily desert):",
-    ''
-  )
-  if (!toId || !/^\d+$/.test(String(toId).trim())) return
+  // Shift+click: share same marks to a different land ID (optional).
+  if (event?.shiftKey) {
+    const entered = window.prompt(
+      "Beginner's land ID (URL will be /theirId/digging?marks=…):",
+      String(recipientId)
+    )
+    if (!entered || !/^\d+$/.test(String(entered).trim())) return
+    recipientId = String(entered).trim()
+  }
 
-  const url = buildMarksShareUrlForLand(fromId, String(toId).trim(), grid)
-  if (!url) return
+  const url = buildGuideMarksUrl(recipientId, grid)
+  if (!url) {
+    window.alert(
+      'Place marks on the grid first (click cells), then copy the guide link for this land.'
+    )
+    return
+  }
   const ok = await copyToClipboard(url)
   if (!ok) return
   marksLinkCopied.value = true

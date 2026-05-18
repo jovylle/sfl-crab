@@ -151,7 +151,7 @@ function tryApplyMarksFromLink () {
     if (count > 0) {
       marksFromLinkApplied = true
       marksGuideBanner.value =
-        `Guide marks loaded (${count} cells). Use this grid while you dig in Sunflower Land.`
+        `Coach marks loaded (${count} cells) — dig in Sunflower Land with this grid open on d1g.`
       stripShareQuery()
     }
   } catch (err) {
@@ -168,7 +168,16 @@ function tryOpenReplayFromLink () {
   stripShareQuery()
 }
 
-watch(() => grid.tiles.value.length, () => tryApplyMarksFromLink())
+watch(
+  () => [
+    route.query.marks,
+    route.query.grid,
+    grid.tiles.value.length,
+    desert.value.digging?.grid?.length,
+  ],
+  () => tryApplyMarksFromLink(),
+  { immediate: true }
+)
 
 watch(canReplay, (ok) => {
   if (ok) tryOpenReplayFromLink()
