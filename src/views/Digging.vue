@@ -12,6 +12,8 @@
             v-model:hideLandIdInUrl="hideLandIdInUrl"
             :dig-day-sync-status="digDaySyncStatus"
             :dig-day-updated-at="digDayUpdatedAt"
+            :dig-day-sync-error="digDaySyncError"
+            :hub-replay-url="hubReplayUrl"
             :can-replay="digReplay.canReplay"
             @open-replay="digReplay.openReplay()"
           />
@@ -82,10 +84,12 @@ const grid = useGridManager(landId)
 const defaults = { visitedFarmState: { inventory: {}, desert: { digging: { grid: [] } } } }
 const { desert } = useLandData(defaults)
 
-const { syncStatus: digDaySyncStatus, lastUpdatedAt: digDayUpdatedAt } = useDigDayStore(
-  landId,
-  desert
-)
+const {
+  syncStatus: digDaySyncStatus,
+  lastUpdatedAt: digDayUpdatedAt,
+  syncError: digDaySyncError,
+  hubReplayUrl,
+} = useDigDayStore(landId, desert)
 
 const digReplay = useDigReplay(landId, desert)
 

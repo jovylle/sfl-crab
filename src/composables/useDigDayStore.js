@@ -7,7 +7,8 @@ import {
 } from '@/utils/buildDigTimeline.js'
 import { useMarkJournal, getMarkEventsSnapshot } from '@/composables/useMarkJournal.js'
 import { registerMarkJournalHandlers } from '@/composables/markJournalBridge.js'
-import { fetchDigDay, saveDigDay } from '@/services/digDayApiService.js'
+import { DigDayApiError, fetchDigDay, saveDigDay } from '@/services/digDayApiService.js'
+import { resolveHubReplayUrl } from '@/utils/hubReplayUrl.js'
 
 const instances = new Map()
 const SYNC_DEBOUNCE_MS = 400
@@ -20,13 +21,15 @@ function isPersistableLandId (landId) {
 const noopStore = {
   syncStatus: ref('idle'),
   lastUpdatedAt: ref(null),
+  syncError: ref(null),
+  hubReplayUrl: ref(null),
   loadFromServer: async () => {},
   scheduleSync: () => {},
   upsertFromApi: () => {},
 }
 
 /**
- * Per landId + UTC date: sync lean dig snapshot to Netlify Blobs (public, no ownership v1).
+ * Per landId + UTC date: sync lean dig snapshot via /api/dig-day → SFL Digging Hub.
  * @param {string} landId
  * @param {import('vue').Ref | (() => object)} desertSource reactive desert or getter
  */
@@ -38,8 +41,22 @@ export function useDigDayStore (landId, desertSource) {
     const journal = useMarkJournal(key)
     const syncStatus = ref('idle')
     const lastUpdatedAt = ref(null)
+    const syncError = ref(null)
+    const hubReplayUrl = ref(null)
     let syncTimer = null
     let lastPayloadJson = ''
+
+    function applyRemote (remote) {
+      if (!remote) return
+      if (remote.markEvents?.length) {
+        journal.mergeServerEvents(remote.markEvents)
+      }
+      if (remote.updatedAt) {
+        lastUpdatedAt.value = remote.updatedAt
+      }
+      const url = resolveHubReplayUrl(remote)
+      if (url) hubReplayUrl.value = url
+    }
 
     function getDesert () {
       const src = desertSource
@@ -91,17 +108,15 @@ export function useDigDayStore (landId, desertSource) {
 
     async function loadFromServer () {
       syncStatus.value = 'loading'
+      syncError.value = null
       try {
         const remote = await fetchDigDay(key, getTodayUTC())
-        if (remote?.markEvents?.length) {
-          journal.mergeServerEvents(remote.markEvents)
-        }
-        if (remote?.updatedAt) {
-          lastUpdatedAt.value = remote.updatedAt
-        }
+        applyRemote(remote)
         syncStatus.value = 'idle'
       } catch (err) {
         console.warn('dig-day load failed:', err)
+        syncError.value =
+          err instanceof Error ? err.message : 'Failed to load dig day'
         syncStatus.value = 'error'
       }
     }
@@ -112,16 +127,21 @@ export function useDigDayStore (landId, desertSource) {
       if (json === lastPayloadJson) return
 
       syncStatus.value = 'syncing'
+      syncError.value = null
       try {
         const saved = await saveDigDay(payload)
         lastPayloadJson = json
-        if (saved?.markEvents?.length) {
-          journal.mergeServerEvents(saved.markEvents)
-        }
+        applyRemote(saved)
         lastUpdatedAt.value = saved?.updatedAt || payload.updatedAt
         syncStatus.value = 'saved'
       } catch (err) {
         console.warn('dig-day sync failed:', err)
+        syncError.value =
+          err instanceof DigDayApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : 'Dig day sync failed'
         syncStatus.value = 'error'
       }
     }
@@ -152,6 +172,8 @@ export function useDigDayStore (landId, desertSource) {
     const store = {
       syncStatus,
       lastUpdatedAt,
+      syncError,
+      hubReplayUrl,
       loadFromServer,
       scheduleSync,
       upsertFromApi,

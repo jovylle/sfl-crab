@@ -1,5 +1,17 @@
 const API_BASE = '/api/dig-day'
 
+export class DigDayApiError extends Error {
+  /**
+   * @param {string} message
+   * @param {{ status?: number }} [options]
+   */
+  constructor (message, { status } = {}) {
+    super(message)
+    this.name = 'DigDayApiError'
+    this.status = status
+  }
+}
+
 /**
  * @param {string} landId
  * @param {string} utcDate
@@ -36,7 +48,12 @@ export async function saveDigDay (payload) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || `Failed to save dig day (${res.status})`)
+    const message =
+      err.error ||
+      (res.status === 413
+        ? 'Dig day is too large to save (256 KB limit). Try clearing marks or extra history.'
+        : `Failed to save dig day (${res.status})`)
+    throw new DigDayApiError(message, { status: res.status })
   }
 
   return res.json()

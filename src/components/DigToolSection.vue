@@ -44,6 +44,26 @@
               Replay
             </button>
 
+            <button
+              v-if="hubReplayUrl"
+              type="button"
+              class="btn btn-secondary btn-sm w-full tooltip"
+              data-tip="Open today's dig replay on SFL Digging Hub"
+              @click="openHubReplay"
+            >
+              Open in Hub ↗
+            </button>
+
+            <button
+              v-if="hubReplayUrl"
+              type="button"
+              class="btn btn-ghost btn-sm w-full tooltip"
+              data-tip="Copy hub replay link"
+              @click="copyHubReplayLink"
+            >
+              {{ hubLinkCopied ? 'Link copied' : 'Copy hub link' }}
+            </button>
+
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
               <input
                 type="checkbox"
@@ -86,7 +106,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -102,8 +122,13 @@ const props = defineProps({
   hideLandIdInUrl: { type: Boolean, default: false },
   digDaySyncStatus: { type: String, default: 'idle' },
   digDayUpdatedAt: { type: String, default: null },
+  digDaySyncError: { type: String, default: null },
+  hubReplayUrl: { type: String, default: null },
   canReplay: { type: Boolean, default: false },
 })
+
+const hubLinkCopied = ref(false)
+let hubLinkCopiedTimer = null
 
 const digDaySyncLabel = computed(() => {
   if (!route.params.landId) return ''
@@ -117,11 +142,33 @@ const digDaySyncLabel = computed(() => {
         ? `Dig day saved · ${formatShortTime(props.digDayUpdatedAt)}`
         : 'Dig day saved'
     case 'error':
-      return 'Dig day sync failed (will retry on next change)'
+      return (
+        props.digDaySyncError ||
+        'Dig day sync failed (will retry on next change)'
+      )
     default:
       return ''
   }
 })
+
+function openHubReplay () {
+  if (!props.hubReplayUrl) return
+  window.open(props.hubReplayUrl, '_blank', 'noopener,noreferrer')
+}
+
+async function copyHubReplayLink () {
+  if (!props.hubReplayUrl) return
+  try {
+    await navigator.clipboard.writeText(props.hubReplayUrl)
+    hubLinkCopied.value = true
+    if (hubLinkCopiedTimer) clearTimeout(hubLinkCopiedTimer)
+    hubLinkCopiedTimer = setTimeout(() => {
+      hubLinkCopied.value = false
+    }, 2000)
+  } catch {
+    openHubReplay()
+  }
+}
 
 function formatShortTime (iso) {
   try {
