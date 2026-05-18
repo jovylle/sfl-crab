@@ -2,22 +2,16 @@
 
 ## Dig day snapshots (`dig-day`)
 
-Stores lean per-land, per-UTC-date dig history in Netlify Blobs store `dig-day-snapshots`.
+Proxies to **SFL Digging Hub** (`HUB_API_BASE` + `HUB_WRITE_SECRET` in Netlify env).
 
 - **GET** `/api/dig-day?landId=12345&utcDate=2026-05-18`
 - **POST** `/api/dig-day` with JSON body (`v`, `landId`, `utcDate`, `patterns`, `digs`, `markEvents`, `stats`)
 
-Data is public by `landId` in v1 (no ownership). Mark events merge append-only by `seq`.
+Data is public by `landId`. Mark events merge append-only by `seq` (handled on hub).
 
-### Retrieve blobs
+### Legacy blobs (migration only)
 
-1. **App API** — URLs above (primary).
-2. **Netlify dashboard** — Site → Storage → Blobs → `dig-day-snapshots` → keys like `12345/2026-05-18.json`.
-3. **Netlify CLI**:
-   ```bash
-   netlify blobs:list --store dig-day-snapshots
-   netlify blobs:get dig-day-snapshots 12345/2026-05-18.json
-   ```
+Old data may still be in Netlify Blobs `dig-day-snapshots`. Import with `sfl-digging-hub/scripts/import-blobs-to-hub.mjs`.
 
 ## Practice patterns (`practice-patterns`)
 

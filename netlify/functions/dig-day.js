@@ -1,13 +1,3 @@
-const { connectLambda } = require('@netlify/blobs')
-const {
-  getTodayUTC,
-  parseUTCDate,
-  isValidLandId,
-  emptySnapshot,
-  getDigDay,
-  saveDigDay,
-} = require('./_digDayStore')
-
 const CORS_ORIGINS = [
   'https://d1g.uk',
   'https://beta.d1g.uk',
@@ -16,18 +6,9 @@ const CORS_ORIGINS = [
   'http://127.0.0.1:5173',
 ]
 
-// Per-instance rate limit (best-effort on serverless)
-const rateBuckets = new Map()
 const RATE_LIMIT = 30
 const RATE_WINDOW_MS = 60_000
-
-function initBlobContext (event) {
-  try {
-    connectLambda(event)
-  } catch {
-    // Non-compat runtimes may already provide context
-  }
-}
+const rateBuckets = new Map()
 
 function corsHeaders (origin) {
   const allowed =
@@ -66,8 +47,49 @@ function checkRateLimit (ip) {
   }
 }
 
+function hubBase () {
+  const base = process.env.HUB_API_BASE || 'https://beta.api.d1g.uk'
+  return base.replace(/\/$/, '')
+}
+
+async function proxyToHub (event) {
+  const secret = process.env.HUB_WRITE_SECRET
+  const base = hubBase()
+  const qs = event.queryStringParameters
+    ? `?${new URLSearchParams(event.queryStringParameters).toString()}`
+    : ''
+
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  }
+  if (secret && event.httpMethod === 'POST') {
+    headers['X-Hub-Write-Secret'] = secret
+  }
+
+  const url =
+    event.httpMethod === 'GET'
+      ? `${base}/v1/dig-day${qs}`
+      : `${base}/v1/dig-day`
+
+  const res = await fetch(url, {
+    method: event.httpMethod,
+    headers,
+    body: event.httpMethod === 'POST' ? event.body : undefined,
+  })
+
+  const text = await res.text()
+  let body = text
+  try {
+    body = JSON.parse(text)
+  } catch {
+    /* plain text error */
+  }
+
+  return { status: res.status, body }
+}
+
 exports.handler = async (event) => {
-  initBlobContext(event)
   const origin = event.headers.origin || event.headers.Origin
   const headers = {
     'Content-Type': 'application/json',
@@ -88,60 +110,28 @@ exports.handler = async (event) => {
     }
   }
 
+  if (!process.env.HUB_API_BASE) {
+    console.warn('dig-day: HUB_API_BASE not set, using https://beta.api.d1g.uk')
+  }
+
   try {
-    if (event.httpMethod === 'GET') {
-      const landId = String(event.queryStringParameters?.landId || '')
-      const utcDate = parseUTCDate(event.queryStringParameters?.utcDate)
-
-      if (!isValidLandId(landId)) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: 'Invalid landId' }),
-        }
-      }
-
-      const snapshot = await getDigDay(landId, utcDate)
-      if (!snapshot) {
-        return {
-          statusCode: 404,
-          headers,
-          body: JSON.stringify(emptySnapshot(landId, utcDate)),
-        }
-      }
-
-      return {
-        statusCode: 200,
-        headers: {
-          ...headers,
-          'Cache-Control': 'public, max-age=30, must-revalidate',
-        },
-        body: JSON.stringify(snapshot),
-      }
-    }
-
-    if (event.httpMethod === 'POST') {
-      const payload = JSON.parse(event.body || '{}')
-      const merged = await saveDigDay(payload)
-      return {
-        statusCode: 200,
-        headers: { ...headers, 'Cache-Control': 'no-store' },
-        body: JSON.stringify(merged),
-      }
-    }
-
+    const { status, body } = await proxyToHub(event)
+    const cache =
+      event.httpMethod === 'GET'
+        ? 'public, max-age=30, must-revalidate'
+        : 'no-store'
     return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }),
+      statusCode: status,
+      headers: { ...headers, 'Cache-Control': cache },
+      body: typeof body === 'string' ? body : JSON.stringify(body),
     }
   } catch (error) {
-    console.error('dig-day:', error)
+    console.error('dig-day proxy:', error)
     return {
-      statusCode: error.statusCode || 500,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: error.message || 'Internal server error',
+        error: error.message || 'Hub proxy failed',
       }),
     }
   }
