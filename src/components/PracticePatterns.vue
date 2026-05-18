@@ -27,18 +27,18 @@
         ]"
       >
         <div
-          class="grid grid-cols-4 w-full border border-base-300 dark:border-slate-500 aspect-square"
+          class="pattern-preview"
         >
           <div
             v-for="cell in 16"
             :key="cell"
-            class="border border-base-300 flex items-center justify-center aspect-square p-px sm:p-0.5"
+            class="pattern-cell"
           >
             <img
               v-if="getPlotAt(key, cell)"
               :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name)).value"
               :alt="getPlotAt(key, cell).name"
-              class="max-w-full max-h-full object-contain w-full"
+              class="max-w-full max-h-full object-contain"
             />
           </div>
         </div>
