@@ -82,8 +82,9 @@ export function initChatWidget () {
 
   // Listen for your event
   window.addEventListener('landDataReady', e => onDataReady(e.detail))
+
   // Option B: fallback polling if we don’t emit the event
-  (function pollStorage () {
+  ;(function pollStorage () {
     // derive the same key your app uses
     const landId = window.SFL_LAND_ID || 1
     const key = `landData_${landId}`
