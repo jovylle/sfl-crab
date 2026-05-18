@@ -18,7 +18,7 @@
 
           <aside
             v-if="hasPatterns"
-            class="digging-patterns-col w-full min-w-0 lg:flex-1 lg:self-stretch flex flex-col justify-center"
+            class="digging-patterns-col w-full min-w-0 min-h-0 lg:flex-1 lg:self-stretch flex flex-col"
           >
             <slot name="patterns" />
           </aside>
