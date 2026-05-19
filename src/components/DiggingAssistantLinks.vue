@@ -25,33 +25,10 @@
         >{{ link.label }}</a><span v-if="i < devLinks.length - 1" class="mx-1">|</span>
       </template>
     </div>
-
-    <p :class="compact ? 'text-[0.7rem] text-base-content/50 leading-snug' : 'text-xs text-base-content/55'">
-      <template v-if="isTestServer">
-        Using
-        <button
-          type="button"
-          class="word-toggle font-medium"
-          @click="toggleTestnet"
-        >testnet-server</button>.
-        Example farm
-        <button type="button" class="word-toggle font-mono" @click="openExampleTestLand">
-          {{ testExampleLandId }}
-        </button>
-        ·
-        <button type="button" class="word-toggle" @click="toggleTestnet">production</button>
-      </template>
-      <template v-else>
-        Want to try
-        <button type="button" class="word-toggle" @click="toggleTestnet">testnet-server</button>?
-      </template>
-    </p>
   </div>
 </template>
 
 <script setup>
-import { useApiEnvironmentSwitch } from '@/composables/useApiEnvironmentSwitch.js'
-
 defineProps({
   compact: { type: Boolean, default: false },
 })
@@ -67,25 +44,4 @@ const devLinks = [
   { href: 'https://development.d1g.uk', label: 'development.d1g.uk' },
   { href: 'https://beta.d1g.uk', label: 'beta.d1g.uk' },
 ]
-
-const { isTestServer, toggleTestnet, openExampleTestLand, testExampleLandId } =
-  useApiEnvironmentSwitch()
 </script>
-
-<style scoped>
-.word-toggle {
-  display: inline;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  line-height: inherit;
-  cursor: pointer;
-  text-decoration: none;
-}
-.word-toggle:hover {
-  opacity: 0.75;
-}
-</style>
