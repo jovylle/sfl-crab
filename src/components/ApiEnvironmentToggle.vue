@@ -1,10 +1,5 @@
 <template>
   <div class="space-y-3">
-    <p class="text-sm text-base-content/70">
-      Load farm data from production or the Sunflower Land test API
-      (<code class="text-xs">api-dev</code>). Test farms use a separate API key on the server.
-    </p>
-
     <div class="join join-vertical w-full sm:join-horizontal">
       <button
         type="button"

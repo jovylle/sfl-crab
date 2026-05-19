@@ -2,11 +2,18 @@
   <div class="drawer drawer-end z-50">
     <input id="main-drawer" type="checkbox" class="drawer-toggle" />
 
-    <!-- FAB Toggle Button -->
+    <!-- FAB: long-press ~1s unlocks hidden API server controls for this session -->
     <div class="fixed bottom-4 right-4">
       <label
         for="main-drawer"
         class="btn btn-primary btn-lg btn-circle shadow-xl text-2xl"
+        @mousedown="onMenuPressStart"
+        @mouseup="onMenuPressEnd"
+        @mouseleave="onMenuPressEnd"
+        @touchstart.passive="onMenuPressStart"
+        @touchend="onMenuPressEnd"
+        @touchcancel="onMenuPressEnd"
+        @contextmenu.prevent
       >
         <span class="-mt-1 text-white dark:text-black">☰</span>
       </label>
@@ -51,10 +58,12 @@
         <div>
           <LandControls />
         </div>
-        <div class="divider px-5">API server</div>
-        <div class="mb-6">
-          <ApiEnvironmentToggle />
-        </div>
+        <template v-if="showApiDevControls">
+          <div class="divider px-5">API server</div>
+          <div class="mb-6">
+            <ApiEnvironmentToggle />
+          </div>
+        </template>
         <div class="divider px-5">Theme</div>
         <div class="mb-8">
           <ThemeToggle />
@@ -80,11 +89,15 @@ import LandControls from '@/components/LandControls.vue'
 import ApiEnvironmentToggle from '@/components/ApiEnvironmentToggle.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
+import { unlockApiDevMenu } from '@/utils/apiDevUnlock.js'
+
+const MENU_LONG_PRESS_MS = 1000
 
 const route = useRoute()
 const router = useRouter()
-const { isTestServer } = useApiEnvironment()
+const { isTestServer, showApiDevControls } = useApiEnvironment()
 const isProjectMateReady = ref(false)
+let menuPressTimer = null
 
 function syncProjectMateReady () {
   isProjectMateReady.value = Boolean(
@@ -99,6 +112,21 @@ function onProjectMateReadyEvent (event) {
 function openProjectMate () {
   if (window.ProjectMate && typeof window.ProjectMate.open === 'function') {
     window.ProjectMate.open()
+  }
+}
+
+function onMenuPressStart () {
+  if (menuPressTimer) return
+  menuPressTimer = setTimeout(() => {
+    menuPressTimer = null
+    unlockApiDevMenu()
+  }, MENU_LONG_PRESS_MS)
+}
+
+function onMenuPressEnd () {
+  if (menuPressTimer) {
+    clearTimeout(menuPressTimer)
+    menuPressTimer = null
   }
 }
 

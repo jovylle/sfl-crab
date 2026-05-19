@@ -8,6 +8,7 @@ import TodaysChecklist from '@/views/TodaysChecklist.vue'
 import FeedbackGallery from '@/views/FeedbackGallery.vue'
 import PracticeDigging from '@/views/PracticeDigging.vue'
 import { syncApiEnvFromRoute } from '@/utils/landRoutes.js'
+import { unlockApiDevMenuFromQuery } from '@/utils/apiDevUnlock.js'
 
 const productionMeta = { apiEnv: 'production' }
 const testMeta = { apiEnv: 'test' }
@@ -145,6 +146,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  if (unlockApiDevMenuFromQuery(to.query)) {
+    const { api: _api, ...query } = to.query
+    return { ...to, query, replace: true }
+  }
   syncApiEnvFromRoute(to)
 })
 

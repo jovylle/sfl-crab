@@ -13,8 +13,14 @@ function parseUTCDate (value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : getTodayUTC()
 }
 
+// api-dev test farms use 15+ digit IDs (e.g. 913531074720548); keep in sync with digging-hub.
+const LAND_ID_MAX_LEN = 20
+
 function isValidLandId (landId) {
-  return typeof landId === 'string' && /^\d{1,12}$/.test(landId)
+  return (
+    typeof landId === 'string'
+    && new RegExp(`^\\d{1,${LAND_ID_MAX_LEN}}$`).test(landId)
+  )
 }
 
 function blobKey (landId, utcDate) {
