@@ -151,7 +151,7 @@ function tryApplyMarksFromLink () {
     if (count > 0) {
       marksFromLinkApplied = true
       marksGuideBanner.value =
-        `Coach marks loaded (${count} cells) — dig in Sunflower Land with this grid open on d1g.`
+        `Marks from link loaded (${count} cells) — dig in Sunflower Land with this grid open on d1g.`
       stripShareQuery()
     }
   } catch (err) {

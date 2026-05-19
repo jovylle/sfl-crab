@@ -23,15 +23,20 @@ export async function exportReplayGif ({
   if (!element) throw new Error('Nothing to capture')
   if (maxStep < 0) throw new Error('No replay steps')
 
+  const bg =
+    getComputedStyle(element).backgroundColor === 'rgba(0, 0, 0, 0)'
+      ? '#ffffff'
+      : getComputedStyle(element).backgroundColor
+
   const imageDatas = []
 
   for (let s = 0; s <= maxStep; s++) {
     await setStep(s)
     await waitForPaint()
     const canvas = await toCanvas(element, {
-      pixelRatio: 1,
+      pixelRatio: 2,
       cacheBust: true,
-      skipFonts: true,
+      backgroundColor: bg,
     })
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('Could not read replay frame')
@@ -52,11 +57,10 @@ function waitForPaint () {
 
 function encodeGifFrames (imageDatas, delayMs) {
   const gif = GIFEncoder()
-  let palette = null
 
   for (const frame of imageDatas) {
     const { data, width, height } = frame
-    if (!palette) palette = quantize(data, 256)
+    const palette = quantize(data, 256)
     const index = applyPalette(data, palette)
     gif.writeFrame(index, width, height, { palette, delay: delayMs })
   }

@@ -48,10 +48,10 @@
               v-if="route.params.landId"
               type="button"
               class="btn btn-secondary btn-sm w-full tooltip"
-              data-tip="Copy a link for the beginner: your marks on this land’s grid (same daily desert in-game)"
+              data-tip="Copy a link to this land’s dig page with your custom marks (same daily desert in-game)"
               @click="copyMarksLink($event)"
             >
-              {{ marksLinkCopied ? 'Guide link copied' : 'Copy guide link' }}
+              {{ marksLinkCopied ? 'Dig link copied' : 'Copy dig link (marks)' }}
             </button>
 
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
@@ -128,7 +128,7 @@ async function copyMarksLink (event) {
   // Shift+click: share same marks to a different land ID (optional).
   if (event?.shiftKey) {
     const entered = window.prompt(
-      "Beginner's land ID (URL will be /theirId/digging?marks=…):",
+      "Their land ID (URL will be /theirId/digging?marks=…):",
       String(recipientId)
     )
     if (!entered || !/^\d+$/.test(String(entered).trim())) return
@@ -138,7 +138,7 @@ async function copyMarksLink (event) {
   const url = buildGuideMarksUrl(recipientId, grid)
   if (!url) {
     window.alert(
-      'Place marks on the grid first (click cells), then copy the guide link for this land.'
+      'Place marks on the grid first (click cells), then copy the dig link with your marks.'
     )
     return
   }

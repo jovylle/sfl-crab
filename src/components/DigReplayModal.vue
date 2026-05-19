@@ -6,28 +6,33 @@
     @close="$emit('close')"
     @click.self="$emit('close')"
   >
-    <div class="modal-box max-w-lg w-[95vw] p-4 sm:p-5">
-      <div class="flex items-start justify-between gap-2 mb-3">
-        <div>
+    <div class="modal-box max-w-lg w-[95vw] p-4 sm:p-5 relative">
+      <button
+        type="button"
+        class="btn btn-sm btn-circle btn-ghost absolute top-3 right-3 z-10"
+        aria-label="Close replay"
+        @click="$emit('close')"
+      >
+        <Icon icon="mdi:close" class="w-4 h-4" />
+      </button>
+
+      <div ref="captureEl" class="replay-export bg-base-100 rounded-lg pr-8">
+        <div class="mb-3">
           <h3 class="font-bold text-lg text-primary m-0">Dig replay</h3>
           <p class="text-xs text-base-content/70 m-0 mt-1">{{ stepLabel }}</p>
         </div>
-        <button
-          type="button"
-          class="btn btn-sm btn-circle btn-ghost"
-          aria-label="Close replay"
-          @click="$emit('close')"
-        >
-          ✕
-        </button>
-      </div>
 
-      <div ref="captureEl" class="replay-capture bg-base-200/30 rounded-lg p-1">
-        <ReplayGrid
-          :cells="replayCells"
-          :treasure-order-map="replayOrderMap"
-          :show-treasure-order="true"
-        />
+        <div class="replay-capture bg-base-200/30 rounded-lg p-1">
+          <ReplayGrid
+            :cells="replayCells"
+            :treasure-order-map="replayOrderMap"
+            :show-treasure-order="true"
+          />
+        </div>
+
+        <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
+          Step 0 = before any dig. Marks show when they were placed. Partial sessions replay fine.
+        </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 mt-4">
@@ -45,7 +50,7 @@
           aria-label="Previous step"
           @click="$emit('prev')"
         >
-          ◀
+          <Icon icon="mdi:chevron-left" class="w-4 h-4" />
         </button>
         <input
           type="range"
@@ -62,13 +67,9 @@
           aria-label="Next step"
           @click="$emit('next')"
         >
-          ▶
+          <Icon icon="mdi:chevron-right" class="w-4 h-4" />
         </button>
       </div>
-
-      <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
-        Step 0 = before any dig. Marks show when they were placed. Partial sessions replay fine.
-      </p>
 
       <div class="modal-action flex-wrap justify-center gap-2 mt-2 sm:mt-0">
         <button
@@ -97,6 +98,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { Icon } from '@iconify/vue'
 import ReplayGrid from '@/components/ReplayGrid.vue'
 import { buildReplayShareUrl } from '@/utils/shareLinks.js'
 import { exportReplayGif, downloadGif } from '@/utils/exportReplayGif.js'

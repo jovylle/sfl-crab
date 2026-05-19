@@ -28,10 +28,10 @@ export function encodeMarksPayload (gridManager) {
 }
 
 /**
- * Guide link for the beginner: open on *their* land so digs load + your marks overlay.
- * Coaching flow: pro visits /{friendLandId}/digging → add marks → share this URL.
+ * Dig link with custom marks: open on the recipient's land so digs load + marks overlay.
+ * Flow: visit /{friendLandId}/digging → place marks → share this URL.
  *
- * @param {string} recipientLandId — beginner's land ID (path segment)
+ * @param {string} recipientLandId — recipient's land ID (path segment)
  * @param {object} gridManager — marks placed while viewing that land
  * @param {string} [baseUrl]
  */
