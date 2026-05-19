@@ -16,7 +16,11 @@
         <Icon icon="mdi:close" class="w-4 h-4" />
       </button>
 
-      <div ref="captureEl" class="replay-export bg-base-100 rounded-lg pr-8">
+      <div
+        ref="captureEl"
+        class="replay-export bg-base-100 rounded-lg pr-8"
+        :class="{ 'replay-export-capturing': exportingGif }"
+      >
         <div class="mb-3">
           <h3 class="font-bold text-lg text-primary m-0">Dig replay</h3>
           <p class="text-xs text-base-content/70 m-0 mt-1">{{ stepLabel }}</p>
@@ -97,7 +101,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
 import ReplayGrid from '@/components/ReplayGrid.vue'
 import { buildReplayShareUrl } from '@/utils/shareLinks.js'
@@ -150,13 +154,17 @@ async function exportGif () {
   exportingGif.value = true
   exportProgressLabel.value = 'Exporting…'
   emit('pause')
+  await nextTick()
 
   const savedStep = props.step
   try {
     const bytes = await exportReplayGif({
       element: captureEl.value,
       maxStep: props.maxStep,
-      setStep: (n) => emit('update:step', n),
+      setStep: async (n) => {
+        emit('update:step', n)
+        await nextTick()
+      },
       onProgress: (s, total) => {
         exportProgressLabel.value = `Frame ${s}/${total}…`
       },
@@ -174,3 +182,10 @@ async function exportGif () {
   }
 }
 </script>
+
+<style scoped>
+/* GIF capture must not catch .tile background-color mid-transition (style.css 0.1s). */
+.replay-export-capturing :deep(.tile) {
+  transition: none !important;
+}
+</style>

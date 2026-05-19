@@ -35,7 +35,10 @@ export async function exportReplayGif ({
   const imageDatas = []
 
   for (let s = 0; s <= maxStep; s++) {
-    await setStep(s)
+    const stepResult = setStep(s)
+    if (stepResult != null && typeof stepResult.then === 'function') {
+      await stepResult
+    }
     await waitForPaint()
     const canvas = await toCanvas(element, {
       pixelRatio: 2,
