@@ -20,5 +20,5 @@ export function resolveHubReplayUrl (data) {
   if (id == null || id === '') return null
 
   const base = String(DEFAULT_HUB_UI).replace(/\/$/, '')
-  return `${base}/replay/${encodeURIComponent(String(id))}`
+  return `${base}/dig/${encodeURIComponent(String(id))}`
 }
