@@ -51,6 +51,10 @@
         <div>
           <LandControls />
         </div>
+        <div class="divider px-5">API server</div>
+        <div class="mb-6">
+          <ApiEnvironmentToggle />
+        </div>
         <div class="divider px-5">Theme</div>
         <div class="mb-8">
           <ThemeToggle />
@@ -73,6 +77,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
+import ApiEnvironmentToggle from '@/components/ApiEnvironmentToggle.vue'
 
 const route = useRoute()
 const router = useRouter()

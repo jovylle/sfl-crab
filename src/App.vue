@@ -7,6 +7,16 @@
     <div
       class="flex flex-col min-h-screen p-4 md:p-6 w-full max-w-screen-xl mx-auto text-center "
     >
+      <div
+        v-if="isTestServer"
+        class="alert alert-warning text-sm py-2 shadow-md"
+        role="status"
+      >
+        Test API mode — using
+        <span class="font-mono">api-dev.sunflower-land.com</span>.
+        Refresh land data after switching; production land IDs may not exist here.
+      </div>
+
       <!-- Tabs -->
       <div class="tabs tabs-lift tabs-sm sm:tabs-md md:tabs-lg ">
         <!-- Turn each tab into a router-link -->
@@ -40,10 +50,10 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import MainDrawer from '@/components/MainDrawer.vue'
 import EndSection from './components/EndSection.vue'
+import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 
-
-// read the current route so we can rebuild tabs when params change
 const route = useRoute()
+const { isTestServer } = useApiEnvironment()
 
 // define your tabs and their target routes
 const tabs = computed(() => {

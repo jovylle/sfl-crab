@@ -20,6 +20,7 @@ The API key is now handled securely using a **Netlify serverless function** that
 
 ```bash
 SFL_API_KEY=sfl.YOUR_ACTUAL_API_KEY_HERE
+SFL_API_KEY_DEV=sfl.YOUR_TEST_API_KEY_HERE
 ```
 
 3. Copy from `env.example` if needed:
@@ -61,8 +62,13 @@ For Netlify deployment, add your environment variable in the Netlify dashboard:
 1. Go to your site settings in Netlify
 2. Navigate to "Environment variables"
 3. Add: `SFL_API_KEY` = `sfl.YOUR_ACTUAL_API_KEY`
+4. Add: `SFL_API_KEY_DEV` = your test-server key (for `api-dev.sunflower-land.com`)
 
-The serverless function will automatically use this environment variable.
+The serverless function will automatically use the matching key when visitors choose **Test server** in the menu (☰ → API server).
+
+### Test server (visitor toggle)
+
+Visitors can switch between production and test API in the side menu. The browser sends `x-sfl-api-env: test`; the proxy then calls `https://api-dev.sunflower-land.com` with `SFL_API_KEY_DEV`. There is no land ID `1` on test — use a test farm ID (e.g. `913531074720548`).
 
 ## Testing
 

@@ -3,6 +3,7 @@ import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLandData } from '@/composables/useLandData'
 import { fetchLandData } from '@/services/landSyncService'
+import { getLandCooldownStorageKey } from '@/config/api.js'
 
 const instances = new Map()
 
@@ -14,7 +15,7 @@ export function useLandSync (opts = {}) {
     const route = useRoute()
     landId = route.params.landId
   }
-  const cooldownKey = `landCooldownEnd_${landId}`
+  const cooldownKey = getLandCooldownStorageKey(landId)
 
   if (!instances.has(landId)) {
     // 1️⃣ grab the landData ref once, at composable init:

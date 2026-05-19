@@ -7,14 +7,14 @@ import {
   PRACTICE_PATTERN_CACHE_VERSION,
   usePracticePatterns,
 } from '@/composables/usePracticePatterns.js'
+import { getLandDataStorageKey } from '@/config/api.js'
 
 export function useLandData (defaults = {}) {
   const route = useRoute()
   const landId = route.params.landId
-  const storageKey = `landData_${landId}`
+  const storageKey = computed(() => getLandDataStorageKey(landId))
   const todayUTC = new Date().toISOString().slice(0, 10)
 
-  // reactive + persisted ref
   const landData = useStorage(storageKey, {
     date: todayUTC,
     ...defaults

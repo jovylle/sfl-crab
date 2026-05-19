@@ -89,6 +89,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { openMainDrawer as openDrawer } from '@/utils/drawerToggle'
 import HandySpot from '../components/HandySpot.vue'
+import { getLandDataStorageKey } from '@/config/api.js'
 
 // --- Keys & Route ---
 const route = useRoute()
@@ -102,7 +103,7 @@ function loadFromStorage(id) {
     landRaw.value = { visitedFarmState: { npcs: {} } }
     return
   }
-  const raw = localStorage.getItem(`landData_${id}`)
+  const raw = localStorage.getItem(getLandDataStorageKey(id))
   landRaw.value = raw ? JSON.parse(raw) : { visitedFarmState: { npcs: {} } }
 }
 // --- landId logic (URL param wins) ---

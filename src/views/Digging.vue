@@ -86,6 +86,7 @@ import {
   applySharedMarks,
   isValidEncodedState,
 } from '@/utils/gridStateCodec.js'
+import { getLandDataStorageKey } from '@/config/api.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -213,7 +214,9 @@ onMounted(async () => {
   const today = new Date().toISOString().slice(0, 10)
 
   if (routeLandId) {
-    const raw = JSON.parse(localStorage.getItem(`landData_${routeLandId}`) || '{}')
+    const raw = JSON.parse(
+      localStorage.getItem(getLandDataStorageKey(routeLandId)) || '{}',
+    )
     const isStale = raw?.date !== today || !raw?.visitedFarmState
     if (isStale) {
       const { reloadFromServer } = useLandSync({ landId: routeLandId })

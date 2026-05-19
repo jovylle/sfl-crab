@@ -1,6 +1,8 @@
 // src/utils/chatWidgetLoader.js
 // Waits for landData, then boots ProjectMate embed.js without floating launcher.
 
+import { getLandDataStorageKey } from '@/config/api.js'
+
 export function initChatWidget () {
   let hasInitialized = false
   const EMBED_SRC = 'https://projectmate.uft1.com/embed.js'
@@ -87,7 +89,7 @@ export function initChatWidget () {
   ;(function pollStorage () {
     // derive the same key your app uses
     const landId = window.SFL_LAND_ID || 1
-    const key = `landData_${landId}`
+    const key = getLandDataStorageKey(landId)
     const raw = localStorage.getItem(key)
 
     if (raw) {
