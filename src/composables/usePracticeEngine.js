@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 
 const GRID_SIZE = 10
-const PRACTICE_ROUND_LIMIT = 5
+const PRACTICE_ROUND_LIMIT = 7
 const MAX_ARTEFACT_PATTERNS_PER_ROUND = 3
 
 function shuffle(values) {
