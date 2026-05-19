@@ -47,9 +47,6 @@
           <LandControls />
         </div>
         <div class="divider px-5">Links</div>
-        <div class="mb-4 px-1">
-          <DiggingAssistantLinks compact />
-        </div>
         <div class="divider px-5 mt-auto">Theme</div>
         <div class="mb-8">
           <ThemeToggle />
@@ -72,7 +69,6 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
-import DiggingAssistantLinks from '@/components/DiggingAssistantLinks.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 

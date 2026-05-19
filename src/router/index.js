@@ -111,7 +111,7 @@ router.beforeEach((to) => {
   }
 
   const landId = to.params.landId
-  if (landId && isTestnetLandId(landId) && !hasTestnetQuery(to.query)) {
+  if (landId && isTestnetLandId(landId) && !hasTestnetQuery(to.query, to.fullPath)) {
     return {
       path: to.path,
       query: withTestnetQuery({ ...to.query }, true),

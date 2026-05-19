@@ -70,7 +70,7 @@ export function swapTestnetOnRoute (route, useTest) {
 
 /** Apply `?testnet` in the URL to API environment. */
 export function syncApiEnvFromRoute (route) {
-  if (hasTestnetQuery(route.query)) {
+  if (hasTestnetQuery(route.query, route.fullPath)) {
     if (getApiEnvironment() !== 'test') {
       setApiEnvironment('test')
     }

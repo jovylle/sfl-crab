@@ -32,6 +32,6 @@ const show = computed(() => {
   if (dismissed.value) return false
   const id = route.params.landId
   if (!id || !isTestnetLandId(id)) return false
-  return isTestApiEnvironment() && hasTestnetQuery(route.query)
+  return isTestApiEnvironment() && hasTestnetQuery(route.query, route.fullPath)
 })
 </script>

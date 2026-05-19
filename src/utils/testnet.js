@@ -10,12 +10,22 @@ export function isTestnetLandId (landId) {
   return /^\d+$/.test(id) && id.length >= TESTNET_LAND_MIN_DIGITS
 }
 
-export function hasTestnetQuery (query) {
-  if (!query) return false
-  const v = query[TESTNET_QUERY]
-  if (v === undefined || v === null) return false
-  if (v === '' || v === '1' || v === 'true') return true
-  return String(v).toLowerCase() === 'true'
+/**
+ * True when the URL requests testnet (api-dev).
+ * Bare `?testnet` (no `=`) is valid; Vue Router may omit it from `query`, so pass `search` or `fullPath` too.
+ * @param {Record<string, unknown> | undefined | null} query
+ * @param {string} [searchOrFullPath] — e.g. route.fullPath or location.search
+ */
+export function hasTestnetQuery (query, searchOrFullPath = '') {
+  if (query && Object.prototype.hasOwnProperty.call(query, TESTNET_QUERY)) {
+    const v = query[TESTNET_QUERY]
+    if (v === null || v === undefined || v === '' || v === '1' || v === 'true') {
+      return true
+    }
+    return String(v).toLowerCase() === 'true'
+  }
+  const s = String(searchOrFullPath || '')
+  return /[?&]testnet(?=$|[=&])/.test(s)
 }
 
 export function testnetLandMessage (landId) {
