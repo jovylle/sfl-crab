@@ -11,13 +11,13 @@
         >
           <section
             class="digging-grid-col w-full max-w-[min(100%,min(92vw,520px))] mx-auto shrink-0 lg:mx-0 lg:w-[min(100%,520px)]"
-            :class="hasPatterns ? '' : 'lg:max-w-[min(100%,560px)] lg:mx-auto'"
+            :class="$slots.patterns ? '' : 'lg:max-w-[min(100%,560px)] lg:mx-auto'"
           >
             <slot name="grid" />
           </section>
 
           <aside
-            v-if="hasPatterns"
+            v-if="$slots.patterns"
             class="digging-patterns-col w-full min-w-0 lg:flex-1 lg:self-center lg:max-w-[250px] max-w-[500px] mx-auto lg:mx-0"
           >
             <slot name="patterns" />
@@ -29,10 +29,3 @@
     <slot />
   </div>
 </template>
-
-<script setup>
-import { computed, useSlots } from 'vue'
-
-const slots = useSlots()
-const hasPatterns = computed(() => Boolean(slots.patterns?.()))
-</script>

@@ -2,7 +2,7 @@
   <DiggingPageLayout>
     <template #toolbar>
       <p class="text-[0.65rem] text-base-content/60 text-center m-0">
-        Unofficial training simulator — no in-game rewards. Not affiliated with Sunflower Land.
+        Unofficial training simulator — no in-game rewards. No data pulled from the live game.
       </p>
 
       <div class="flex flex-col gap-2 mt-1.5">
@@ -135,7 +135,7 @@
       </div>
     </template>
 
-    <template v-if="usedFormationKeys.length" #patterns>
+    <template #patterns>
       <PracticePatterns :pattern-keys="usedFormationKeys" />
     </template>
 
