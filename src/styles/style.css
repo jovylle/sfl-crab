@@ -456,8 +456,6 @@ body {
 /* Desktop sidebar: 2 columns, rows stack vertically */
 @media (min-width: 1024px) {
   .digging-patterns-col {
-    border-left: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
-    padding-left: 1.25rem;
     align-self: center;
   }
 
@@ -470,7 +468,6 @@ body {
 
 @media (max-width: 1023px) {
   .digging-patterns-col {
-    border-top: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
     padding-top: 1rem;
   }
 }
