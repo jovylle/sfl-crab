@@ -66,12 +66,13 @@ For Netlify deployment, add your environment variable in the Netlify dashboard:
 
 The serverless function uses `SFL_API_KEY_DEV` when the browser sends `x-sfl-api-env: test` (test API mode).
 
-### Test server (hidden dev mode)
+### Test server (testnet)
 
-Not shown in the normal menu. Ways to use it:
+Uses api-dev, not shown as a menu section. Ways to use it:
 
 - **URL prefix:** `/test/{landId}/digging` (shareable; switches API to api-dev for that session).
-- **Unlock menu controls:** long-press the ☰ button ~1s, or open any page with `?api=test` (query is removed). Then use **API server** in the side menu.
+- **Footer / menu links:** click the plain word `testnet-server` under “SFL Digging Assistant Links” (no underline; looks like body text).
+- **Query:** `?api=test` on any page (removed from the URL after load).
 - **Example test farm:** `913531074720548` (there is no land ID `1` on api-dev).
 
 ## Testing

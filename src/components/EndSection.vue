@@ -2,27 +2,8 @@
 <template>
   <section class="card bg-base-200 shadow-md p-4 text-sm space-y-4">
     <div class="card-body space-y-2">
-      <h5 class="font-bold text-base">SFL Digging Assitant Links</h5>
+      <DiggingAssistantLinks />
 
-      <div class="">
-        <span class="italic">Production:</span>
-        <a href="https://sfl.uft1.com" class="link link-secondary ml-2 inline-block">sfl.uft1.com</a>
-        <span class="mx-1">|</span>
-        <a href="https://sfl-digging.uft1.com" class="link link-secondary inline-block">sfl-digging.uft1.com</a>
-        <span class="mx-1">|</span>
-        <a href="https://d1g.uk" class="link link-secondary inline-block">d1g.uk</a>
-      </div>
-
-      <div class="">
-        <span class="italic">Development / Beta:</span>
-        <a href="https://sfl-development.uft1.com" class="link link-secondary ml-2 inline-block">sfl-development.uft1.com</a>
-        <span class="mx-1">|</span>
-        <a href="https://development.d1g.uk" class="link link-secondary inline-block">development.d1g.uk</a>
-        <span class="mx-1">|</span>
-        <a href="https://beta.d1g.uk" class="link link-secondary inline-block">beta.d1g.uk</a>
-      </div>
-
-      <!-- New: Contribute & Report Issues -->
       <div class="pt-4 border-t border-base-300">
         <h4 class="text-lg font-semibold">🚀 Want to contribute?</h4>
         <p class="text-sm">
@@ -34,7 +15,6 @@
         </p>
       </div>
 
-      <!-- New: Feedback Form -->
       <div class="pt-4 border-t border-base-300">
         <h4 class="text-lg font-semibold">💬 Send feedback, suggestions, or bug reports:</h4>
         <a
@@ -51,9 +31,5 @@
 </template>
 
 <script setup>
-// no script logic needed
+import DiggingAssistantLinks from '@/components/DiggingAssistantLinks.vue'
 </script>
-
-<style scoped>
-/* styling handled by Tailwind + DaisyUI */
-</style>

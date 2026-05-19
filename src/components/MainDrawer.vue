@@ -2,31 +2,21 @@
   <div class="drawer drawer-end z-50">
     <input id="main-drawer" type="checkbox" class="drawer-toggle" />
 
-    <!-- FAB: long-press ~1s unlocks hidden API server controls for this session -->
     <div class="fixed bottom-4 right-4">
       <label
         for="main-drawer"
         class="btn btn-primary btn-lg btn-circle shadow-xl text-2xl"
-        @mousedown="onMenuPressStart"
-        @mouseup="onMenuPressEnd"
-        @mouseleave="onMenuPressEnd"
-        @touchstart.passive="onMenuPressStart"
-        @touchend="onMenuPressEnd"
-        @touchcancel="onMenuPressEnd"
-        @contextmenu.prevent
       >
         <span class="-mt-1 text-white dark:text-black">☰</span>
       </label>
     </div>
 
-    <!-- Drawer Content -->
     <div class="drawer-side">
       <label for="main-drawer" class="drawer-overlay"></label>
-      <div class="menu p-4 w-60 sm:w-80 min-h-full bg-base-100 text-base-content">
+      <div class="menu p-4 w-60 sm:w-80 min-h-full bg-base-100 text-base-content flex flex-col">
         <h2 class="text-xl font-bold mb-4">Menu</h2>
         <div class="divider px-5">Pages</div>
-        <ul class="space-y-2 my-4 mb-auto">
-          <!-- Land Details Navigation -->
+        <ul class="space-y-2 my-4">
           <li>
             <button
               class="btn btn-large py-6 btn-block"
@@ -35,7 +25,6 @@
               Land Raw Details
             </button>
           </li>
-          <!-- Digging -->
           <li>
             <button
               class="btn btn-large py-6 btn-block"
@@ -44,7 +33,6 @@
               Digging
             </button>
           </li>
-          <!-- Today’s Checklist -->
           <li>
             <button
               class="btn btn-large py-6 btn-block"
@@ -58,13 +46,11 @@
         <div>
           <LandControls />
         </div>
-        <template v-if="showApiDevControls">
-          <div class="divider px-5">API server</div>
-          <div class="mb-6">
-            <ApiEnvironmentToggle />
-          </div>
-        </template>
-        <div class="divider px-5">Theme</div>
+        <div class="divider px-5">Links</div>
+        <div class="mb-4 px-1">
+          <DiggingAssistantLinks compact />
+        </div>
+        <div class="divider px-5 mt-auto">Theme</div>
         <div class="mb-8">
           <ThemeToggle />
         </div>
@@ -86,18 +72,14 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
-import ApiEnvironmentToggle from '@/components/ApiEnvironmentToggle.vue'
+import DiggingAssistantLinks from '@/components/DiggingAssistantLinks.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
-import { unlockApiDevMenu } from '@/utils/apiDevUnlock.js'
-
-const MENU_LONG_PRESS_MS = 1000
 
 const route = useRoute()
 const router = useRouter()
-const { isTestServer, showApiDevControls } = useApiEnvironment()
+const { isTestServer } = useApiEnvironment()
 const isProjectMateReady = ref(false)
-let menuPressTimer = null
 
 function syncProjectMateReady () {
   isProjectMateReady.value = Boolean(
@@ -112,21 +94,6 @@ function onProjectMateReadyEvent (event) {
 function openProjectMate () {
   if (window.ProjectMate && typeof window.ProjectMate.open === 'function') {
     window.ProjectMate.open()
-  }
-}
-
-function onMenuPressStart () {
-  if (menuPressTimer) return
-  menuPressTimer = setTimeout(() => {
-    menuPressTimer = null
-    unlockApiDevMenu()
-  }, MENU_LONG_PRESS_MS)
-}
-
-function onMenuPressEnd () {
-  if (menuPressTimer) {
-    clearTimeout(menuPressTimer)
-    menuPressTimer = null
   }
 }
 
