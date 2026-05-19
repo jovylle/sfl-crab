@@ -35,7 +35,7 @@
               v-if="getPlotAt(key, cell)"
               :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name)).value"
               :alt="getPlotAt(key, cell).name"
-              class="max-w-full max-h-full object-contain"
+              class="w-full max-w-full max-h-full object-contain"
             />
           </div>
         </div>
