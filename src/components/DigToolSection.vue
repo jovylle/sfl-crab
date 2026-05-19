@@ -102,9 +102,12 @@ import { copyToClipboard } from '@/utils/gridStateCodec.js'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
+import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 
 const route  = useRoute()
 const router = useRouter()
+const { isTestServer } = useApiEnvironment()
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
 
@@ -186,21 +189,20 @@ function formatShortTime (iso) {
 defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'open-replay'])
 
 function clearLandId () {
-  if (route.name === 'Digging') {
-    // we're on /:landId/digging → go to /digging
-    router.push({ name: 'GuestDigging' })
-  } else {
-    // default to details no-id
-    router.push({ name: 'LandDetailsNoId' })
-  }
+  const test = isTestServer.value
+  const onDigging =
+    route.name === 'Digging' || route.name === 'TestDigging'
+  router.push(
+    resolveLandRoute(onDigging ? 'guestDigging' : 'detailsNoId', { test }),
+  )
 }
 
 function goToPractice () {
-  if (route.params.landId) {
-    router.push({ name: 'PracticeWithId', params: { landId: route.params.landId } })
-  } else {
-    router.push({ name: 'Practice' })
-  }
+  const test = isTestServer.value
+  const id = route.params.landId
+  router.push(
+    resolveLandRoute(id ? 'practice' : 'practiceNoId', { landId: id, test }),
+  )
 }
 
 </script>

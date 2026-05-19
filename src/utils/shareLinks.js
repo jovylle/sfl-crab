@@ -1,4 +1,6 @@
 import { countCustomMarks, encodeGridState } from '@/utils/gridStateCodec.js'
+import { isTestApiEnvironment } from '@/config/api.js'
+import { landDiggingPath } from '@/utils/landRoutes.js'
 
 function shareOrigin (baseUrl) {
   if (baseUrl) return String(baseUrl).replace(/\/$/, '')
@@ -11,11 +13,11 @@ function shareOrigin (baseUrl) {
  * @param {string} landId
  * @param {string} [baseUrl]
  */
-export function buildReplayShareUrl (landId, baseUrl) {
+export function buildReplayShareUrl (landId, baseUrl, { test = isTestApiEnvironment() } = {}) {
   const id = String(landId || '').trim()
   if (!id || id === 'guest' || id === '0') return null
   const base = shareOrigin(baseUrl)
-  return `${base}/${id}/digging?replay=1`
+  return `${base}${landDiggingPath(id, { test })}?replay=1`
 }
 
 /**
@@ -35,7 +37,12 @@ export function encodeMarksPayload (gridManager) {
  * @param {object} gridManager — marks placed while viewing that land
  * @param {string} [baseUrl]
  */
-export function buildGuideMarksUrl (recipientLandId, gridManager, baseUrl) {
+export function buildGuideMarksUrl (
+  recipientLandId,
+  gridManager,
+  baseUrl,
+  { test = isTestApiEnvironment() } = {},
+) {
   const to = String(recipientLandId || '').trim()
   if (!to || !/^\d+$/.test(to)) return null
   if (!countCustomMarks(gridManager)) return null
@@ -43,7 +50,7 @@ export function buildGuideMarksUrl (recipientLandId, gridManager, baseUrl) {
   if (!encoded) return null
   const base = shareOrigin(baseUrl)
   const param = encodeURIComponent(encoded)
-  return `${base}/${to}/digging?marks=${param}`
+  return `${base}${landDiggingPath(to, { test })}?marks=${param}`
 }
 
 /** @deprecated Use buildGuideMarksUrl */

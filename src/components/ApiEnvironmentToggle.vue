@@ -42,6 +42,7 @@
 import { useRoute, useRouter } from 'vue-router'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 import { useLandSync } from '@/composables/useLandSync'
+import { resolveLandRoute, swapTestPrefixInPath } from '@/utils/landRoutes.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,6 +61,7 @@ function selectEnvironment (env) {
   }
 
   setApiEnvironment(env)
+  router.replace(swapTestPrefixInPath(route.fullPath, env === 'test'))
 
   const landId = route.params.landId
   if (landId) {
@@ -72,7 +74,7 @@ function selectEnvironment (env) {
 
 function useExampleLandId () {
   const id = testExampleLandId
-  if (route.params.landId === id) return
-  router.push({ name: 'Digging', params: { landId: id } })
+  if (route.params.landId === id && isTestServer.value) return
+  router.push(resolveLandRoute('digging', { landId: id, test: true }))
 }
 </script>

@@ -25,21 +25,23 @@ import { useRoute, useRouter } from 'vue-router'
 
 import LandLoader      from '@/components/LandLoader.vue'
 import RefreshLandData from '@/components/RefreshLandData.vue'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
+import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 
 const route  = useRoute()
 const router = useRouter()
+const { isTestServer } = useApiEnvironment()
 
 // landId is undefined on the no-id pages
 const landId = computed(() => route.params.landId)
 
 // Clear the ID, but stay on whatever “mode” we’re in
 function clearLandId() {
-  if (route.name === 'Digging') {
-    // we’re on /:landId/digging → go to /digging
-    router.push({ name: 'GuestDigging' })
-  } else {
-    // default to details no-id
-    router.push({ name: 'LandDetailsNoId' })
-  }
+  const test = isTestServer.value
+  const onDigging =
+    route.name === 'Digging' || route.name === 'TestDigging'
+  router.push(
+    resolveLandRoute(onDigging ? 'guestDigging' : 'detailsNoId', { test }),
+  )
 }
 </script>

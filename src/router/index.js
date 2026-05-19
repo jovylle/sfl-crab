@@ -7,57 +7,130 @@ import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
 import FeedbackGallery from '@/views/FeedbackGallery.vue'
 import PracticeDigging from '@/views/PracticeDigging.vue'
+import { syncApiEnvFromRoute } from '@/utils/landRoutes.js'
+
+const productionMeta = { apiEnv: 'production' }
+const testMeta = { apiEnv: 'test' }
 
 const routes = [
   { path: '/', name: 'Home', redirect: '/digging' },
-  { path: '/digging', name: 'GuestDigging', component: GuestDigging },
+  {
+    path: '/digging',
+    name: 'GuestDigging',
+    component: GuestDigging,
+    meta: productionMeta,
+  },
+  {
+    path: '/test/digging',
+    name: 'TestGuestDigging',
+    component: GuestDigging,
+    meta: testMeta,
+  },
   {
     path: '/:landId(\\d+)/digging',
     name: 'Digging',
-    component: Digging
+    component: Digging,
+    meta: productionMeta,
   },
   {
-    path: '/:landId(\\d+)', name: 'DiggingAsHome',
-    redirect: to => {
-      return `/${to.params.landId}/digging`
-    },
+    path: '/test/:landId(\\d+)/digging',
+    name: 'TestDigging',
+    component: Digging,
+    meta: testMeta,
   },
-  { path: '/details', component: LandDetails },
+  {
+    path: '/:landId(\\d+)',
+    name: 'DiggingAsHome',
+    redirect: to => `/${to.params.landId}/digging`,
+  },
+  {
+    path: '/test/:landId(\\d+)',
+    name: 'TestDiggingAsHome',
+    redirect: to => `/test/${to.params.landId}/digging`,
+  },
+  { path: '/details', component: LandDetails, meta: productionMeta },
   {
     path: '/:landId(\\d+)/details',
     name: 'LandDetailsWithId',
-    component: LandDetails
+    component: LandDetails,
+    meta: productionMeta,
+  },
+  {
+    path: '/test/details',
+    name: 'TestLandDetailsNoId',
+    component: LandDetails,
+    props: () => ({ landId: undefined }),
+    meta: testMeta,
+  },
+  {
+    path: '/test/:landId(\\d+)/details',
+    name: 'TestLandDetailsWithId',
+    component: LandDetails,
+    meta: testMeta,
   },
   {
     path: '/details',
     name: 'LandDetailsNoId',
     component: LandDetails,
-    props: route => ({ landId: undefined }),
+    props: () => ({ landId: undefined }),
+    meta: productionMeta,
   },
-  // Today’s Checklist (no landId) — lets user input their own
   {
     path: '/todays-checklist',
     name: 'TodaysChecklist',
     component: TodaysChecklist,
-    props: { useParam: false }
+    props: { useParam: false },
+    meta: productionMeta,
   },
-  // Today’s Checklist scoped under a known landId
+  {
+    path: '/test/todays-checklist',
+    name: 'TestTodaysChecklist',
+    component: TodaysChecklist,
+    props: { useParam: false },
+    meta: testMeta,
+  },
   {
     path: '/:landId(\\w+)/todays-checklist',
     name: 'TodaysChecklistWithId',
     component: TodaysChecklist,
-    props: route => ({ useParam: true, landIdParam: route.params.landId })
+    props: route => ({ useParam: true, landIdParam: route.params.landId }),
+    meta: productionMeta,
+  },
+  {
+    path: '/test/:landId(\\w+)/todays-checklist',
+    name: 'TestTodaysChecklistWithId',
+    component: TodaysChecklist,
+    props: route => ({ useParam: true, landIdParam: route.params.landId }),
+    meta: testMeta,
   },
   {
     path: '/feedbacks',
     name: 'FeedbackGallery',
-    component: FeedbackGallery
+    component: FeedbackGallery,
   },
-  { path: '/practice', name: 'Practice', component: PracticeDigging },
+  {
+    path: '/practice',
+    name: 'Practice',
+    component: PracticeDigging,
+    meta: productionMeta,
+  },
+  {
+    path: '/test/practice',
+    name: 'TestPractice',
+    component: PracticeDigging,
+    meta: testMeta,
+  },
   {
     path: '/:landId(\\d+)/practice',
     name: 'PracticeWithId',
-    component: PracticeDigging
+    component: PracticeDigging,
+    meta: productionMeta,
+  },
+  {
+    path: '/test/:landId(\\d+)/practice',
+    name: 'TestPracticeWithId',
+    component: PracticeDigging,
+    meta: testMeta,
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
@@ -66,7 +139,13 @@ const history = import.meta.env.SSR
   ? createMemoryHistory()
   : createWebHistory()
 
-export default createRouter({
+const router = createRouter({
   history,
-  routes
+  routes,
 })
+
+router.beforeEach((to) => {
+  syncApiEnvFromRoute(to)
+})
+
+export default router

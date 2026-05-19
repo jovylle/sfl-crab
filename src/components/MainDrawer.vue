@@ -78,9 +78,12 @@ import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
 import ApiEnvironmentToggle from '@/components/ApiEnvironmentToggle.vue'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
+import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 
 const route = useRoute()
 const router = useRouter()
+const { isTestServer } = useApiEnvironment()
 const isProjectMateReady = ref(false)
 
 function syncProjectMateReady () {
@@ -110,28 +113,25 @@ onBeforeUnmount(() => {
 
 function goToDetails() {
   const id = route.params.landId
-  if (id) {
-    router.push({ name: 'LandDetailsWithId', params: { landId: id } })
-  } else {
-    router.push({ name: 'LandDetailsNoId' })
-  }
+  const test = isTestServer.value
+  router.push(
+    resolveLandRoute(id ? 'details' : 'detailsNoId', { landId: id, test }),
+  )
 }
 
 function goToDigging() {
   const id = route.params.landId
-  if (id) {
-    router.push({ name: 'Digging', params: { landId: id } })
-  } else {
-    router.push({ name: 'Digging' })
-  }
+  const test = isTestServer.value
+  router.push(
+    resolveLandRoute(id ? 'digging' : 'guestDigging', { landId: id, test }),
+  )
 }
 
 function goToChecklist() {
   const id = route.params.landId
-  if (id) {
-    router.push({ name: 'TodaysChecklistWithId', params: { landId: id } })
-  } else {
-    router.push({ name: 'TodaysChecklist' })
-  }
+  const test = isTestServer.value
+  router.push(
+    resolveLandRoute(id ? 'checklist' : 'checklistNoId', { landId: id, test }),
+  )
 }
 </script>

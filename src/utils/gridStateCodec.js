@@ -1,6 +1,8 @@
 // src/utils/gridStateCodec.js
 // Utility for encoding/decoding grid state for sharing
 
+import { landDiggingPath } from '@/utils/landRoutes.js'
+
 const VERSION = 1
 
 /** Count user-placed marks (excludes auto near-/actual- hints). */
@@ -134,7 +136,7 @@ export function importMarksToGrid (state, gridManager) {
 export function generateShareableUrl (encodedState, landId, baseUrl = window.location.origin) {
   const id = String(landId || 'guest')
   const url = new URL(baseUrl)
-  url.pathname = id && id !== 'guest' ? `/${id}/digging` : '/digging'
+  url.pathname = landDiggingPath(id !== 'guest' ? id : null)
   url.searchParams.set('marks', encodedState)
   return url.toString()
 }

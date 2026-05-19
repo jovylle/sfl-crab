@@ -23,6 +23,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useLandSync } from '@/composables/useLandSync'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 import { getLandDataStorageKey } from '@/config/api.js'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -56,10 +57,11 @@ function goToLand() {
   const isStale = raw?.date !== today
   const isMissingState = !raw?.visitedFarmState
 
-  if (route.name === 'GuestDigging') {
-    router.push({ name: 'Digging', params: { landId: id } })
+  const test = isTestServer.value
+  if (route.name === 'GuestDigging' || route.name === 'TestGuestDigging') {
+    router.push(resolveLandRoute('digging', { landId: id, test }))
   } else {
-    router.push({ name: 'LandDetailsWithId', params: { landId: id } })
+    router.push(resolveLandRoute('details', { landId: id, test }))
   }
 
   if (isMissingState || isStale) {

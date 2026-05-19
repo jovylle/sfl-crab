@@ -51,28 +51,32 @@ import { useRoute } from 'vue-router'
 import MainDrawer from '@/components/MainDrawer.vue'
 import EndSection from './components/EndSection.vue'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
 
 const route = useRoute()
 const { isTestServer } = useApiEnvironment()
 
-// define your tabs and their target routes
 const tabs = computed(() => {
   const landId = route.params.landId
+  const test = isTestServer.value
 
   return [
-    // { label: 'Home',              to: { name: 'Home' } },
-    { label: 'Digging',           to: landId
-                                ? { name: 'Digging', params: { landId } }
-                                : { name: 'GuestDigging' } },
-    { label: 'Details',           to: landId
-                                ? { name: 'LandDetailsWithId', params: { landId } }
-                                : { name: 'LandDetailsNoId' } },
-    { label: "Focused Checklist", to: landId
-                                ? { name: 'TodaysChecklistWithId', params: { landId } }
-                                : { name: 'TodaysChecklist' } },
-    { label: 'Practice',          to: landId
-                                ? { name: 'PracticeWithId', params: { landId } }
-                                : { name: 'Practice' } },
+    {
+      label: 'Digging',
+      to: resolveLandRoute(landId ? 'digging' : 'guestDigging', { landId, test }),
+    },
+    {
+      label: 'Details',
+      to: resolveLandRoute(landId ? 'details' : 'detailsNoId', { landId, test }),
+    },
+    {
+      label: 'Focused Checklist',
+      to: resolveLandRoute(landId ? 'checklist' : 'checklistNoId', { landId, test }),
+    },
+    {
+      label: 'Practice',
+      to: resolveLandRoute(landId ? 'practice' : 'practiceNoId', { landId, test }),
+    },
   ]
 })
 </script>
