@@ -1,7 +1,7 @@
 <template>
   <div class="digging-patterns">
     <h2
-      class="text-center lg:text-left text-xs sm:text-sm font-semibold m-0 leading-tight shrink-0"
+      class="text-center text-xs sm:text-sm font-semibold m-0 leading-tight shrink-0"
       :title="todayPatternsTitle"
     >
       Today&apos;s Treasures
