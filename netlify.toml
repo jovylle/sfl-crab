@@ -42,6 +42,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/practice-runs"
+  to = "/.netlify/functions/practice-runs"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

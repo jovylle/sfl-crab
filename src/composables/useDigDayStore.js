@@ -69,11 +69,16 @@ export function useDigDayStore (landId, desertSource) {
       const digging = getDesert().digging || {}
       const rawGrid = digging.grid || []
       const digs = buildDigTimeline(rawGrid)
+      const displayName =
+        typeof localStorage !== 'undefined'
+          ? localStorage.getItem('sfl-hub-display-name')?.trim()?.slice(0, 64) || undefined
+          : undefined
 
       return {
         v: 1,
         landId: key,
         utcDate: getTodayUTC(),
+        ...(displayName ? { displayName } : {}),
         patterns: [...(digging.patterns || [])],
         digs,
         markEvents: getMarkEventsSnapshot(key),

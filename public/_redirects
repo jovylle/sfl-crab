@@ -1,4 +1,5 @@
 /api/practice-patterns    /.netlify/functions/practice-patterns   200
 /api/build-daily-pattern  /.netlify/functions/build-daily-pattern 200
 /api/dig-day              /.netlify/functions/dig-day             200
+/api/practice-runs        /.netlify/functions/practice-runs       200
 /*                    /index.html               200

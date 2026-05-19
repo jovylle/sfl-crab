@@ -28,6 +28,10 @@
           >
             {{ showTimer ? 'Hide Timer' : 'Show Timer' }}
           </button>
+          <label class="label cursor-pointer gap-1 py-0">
+            <input v-model="saveScores" type="checkbox" class="checkbox checkbox-xs" />
+            <span class="label-text text-xs">Save score</span>
+          </label>
           <button
             class="btn btn-sm btn-primary"
             :disabled="isLoading || isStartingTodayRound || todayRoundCooldownActive"
@@ -154,6 +158,8 @@ import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import PracticeGrid from '@/components/PracticeGrid.vue'
 import PracticePatterns from '@/components/PracticePatterns.vue'
 import InfoFooter from '@/components/InfoFooter.vue'
+import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled } from '@/services/practiceHubService.js'
+import { getTodayUTC } from '@/utils/buildDigTimeline.js'
 
 const ALL_FORMATION_KEYS = Object.keys(DIGGING_FORMATIONS)
 
@@ -187,9 +193,13 @@ const TODAY_ROUND_ERROR_COOLDOWN_MS = 5000
 const todayRoundCooldownActive = ref(false)
 const todayRoundErrorMessage = ref('')
 const showTimer = ref(true)
+const saveScores = ref(isPracticeSaveScoresEnabled())
 const elapsedMs = ref(0)
 const finalElapsedMs = ref(0)
 const roundStartedAt = ref(Date.now())
+const patternSource = ref('daily')
+const patternDate = ref(getTodayUTC())
+const lastSubmittedRound = ref(0)
 let timerId = null
 
 const practicePatternKeys = computed(() => {
@@ -257,6 +267,25 @@ watch(isGameOver, done => {
   finalElapsedMs.value = Date.now() - roundStartedAt.value
   elapsedMs.value = finalElapsedMs.value
   stopTimer()
+
+  if (roundCount.value === lastSubmittedRound.value) return
+  lastSubmittedRound.value = roundCount.value
+
+  void submitPracticeRun({
+    patternSource: patternSource.value,
+    patternDate: patternSource.value === 'daily' ? patternDate.value : null,
+    patternKeys: [...usedFormationKeys.value],
+    digCount: digsMade.value,
+    durationMs: finalElapsedMs.value,
+    victory: isVictory.value,
+    treasureCount: totalTreasures.value,
+  }).catch(() => {
+    /* optional hub save — ignore failures */
+  })
+})
+
+watch(saveScores, enabled => {
+  setPracticeSaveScoresEnabled(enabled)
 })
 
 async function newTodayRound () {
@@ -265,6 +294,8 @@ async function newTodayRound () {
   isStartingTodayRound.value = true
   const startedAt = Date.now()
   todayRoundErrorMessage.value = ''
+  patternSource.value = 'daily'
+  patternDate.value = getTodayUTC()
 
   try {
     await nextTick()
@@ -295,6 +326,8 @@ function newRandomRound ({ preserveFailureState = false } = {}) {
     todayRoundErrorMessage.value = ''
     stopTodayRoundCooldown()
   }
+  patternSource.value = 'random'
+  patternDate.value = getTodayUTC()
   startGame(ALL_FORMATION_KEYS)
   resetRoundTimer()
 }
