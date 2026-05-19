@@ -394,6 +394,12 @@ body {
   min-width: 0;
 }
 
+@media (max-width: 1023px) {
+  .digging-patterns-col .digging-patterns {
+    flex-direction: column-reverse;
+  }
+}
+
 /*
  * pattern-strip: inline-block tiles (no grid/flex on the strip).
  * ~7–8 squares: 4 per row mobile, 2 per row desktop.
