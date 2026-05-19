@@ -39,7 +39,7 @@ const landId = computed(() => route.params.landId)
 function clearLandId() {
   const test = isTestServer.value
   const onDigging =
-    route.name === 'Digging' || route.name === 'TestDigging'
+    route.name === 'Digging'
   router.push(
     resolveLandRoute(onDigging ? 'guestDigging' : 'detailsNoId', { test }),
   )

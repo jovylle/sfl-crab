@@ -17,7 +17,9 @@ export function buildReplayShareUrl (landId, baseUrl, { test = isTestApiEnvironm
   const id = String(landId || '').trim()
   if (!id || id === 'guest' || id === '0') return null
   const base = shareOrigin(baseUrl)
-  return `${base}${landDiggingPath(id, { test })}?replay=1`
+  const path = landDiggingPath(id, { test })
+  const sep = path.includes('?') ? '&' : '?'
+  return `${base}${path}${sep}replay=1`
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useRoute, useRouter } from 'vue-router'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 import { useLandSync } from '@/composables/useLandSync'
-import { resolveLandRoute, swapTestPrefixInPath } from '@/utils/landRoutes.js'
+import { resolveLandRoute, swapTestnetOnRoute } from '@/utils/landRoutes.js'
 
 /** Switch production ↔ api-dev (testnet) and keep the route prefix in sync. */
 export function useApiEnvironmentSwitch () {
@@ -22,7 +22,7 @@ export function useApiEnvironmentSwitch () {
     }
 
     setApiEnvironment(env)
-    router.replace(swapTestPrefixInPath(route.fullPath, env === 'test'))
+    router.replace(swapTestnetOnRoute(route, env === 'test'))
 
     const landId = route.params.landId
     if (landId) {

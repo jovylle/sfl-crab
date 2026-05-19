@@ -1,6 +1,7 @@
 <template>
   <DiggingPageLayout>
     <template #toolbar>
+      <TestnetLandBanner />
       <div
         v-if="marksGuideBanner"
         class="alert alert-info text-sm py-2 px-3 mb-2 shadow-sm"
@@ -69,6 +70,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import DiggingPageLayout from '@/components/DiggingPageLayout.vue'
 import DigToolSection from '@/components/DigToolSection.vue'
+import TestnetLandBanner from '@/components/TestnetLandBanner.vue'
 import DigReplayModal from '@/components/DigReplayModal.vue'
 import Grid           from '@/components/Grid.vue'
 import TodayPatterns  from '@/components/TodayPatterns.vue'

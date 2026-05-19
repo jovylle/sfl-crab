@@ -9,9 +9,12 @@ import FeedbackGallery from '@/views/FeedbackGallery.vue'
 import PracticeDigging from '@/views/PracticeDigging.vue'
 import { syncApiEnvFromRoute } from '@/utils/landRoutes.js'
 import { setApiEnvironment, getApiEnvironment } from '@/config/api.js'
-
-const productionMeta = { apiEnv: 'production' }
-const testMeta = { apiEnv: 'test' }
+import {
+  hasTestnetQuery,
+  isTestnetLandId,
+  legacyTestPathRedirect,
+  withTestnetQuery,
+} from '@/utils/testnet.js'
 
 const routes = [
   { path: '/', name: 'Home', redirect: '/digging' },
@@ -19,90 +22,43 @@ const routes = [
     path: '/digging',
     name: 'GuestDigging',
     component: GuestDigging,
-    meta: productionMeta,
-  },
-  {
-    path: '/test/digging',
-    name: 'TestGuestDigging',
-    component: GuestDigging,
-    meta: testMeta,
   },
   {
     path: '/:landId(\\d+)/digging',
     name: 'Digging',
     component: Digging,
-    meta: productionMeta,
-  },
-  {
-    path: '/test/:landId(\\d+)/digging',
-    name: 'TestDigging',
-    component: Digging,
-    meta: testMeta,
   },
   {
     path: '/:landId(\\d+)',
     name: 'DiggingAsHome',
-    redirect: to => `/${to.params.landId}/digging`,
-  },
-  {
-    path: '/test/:landId(\\d+)',
-    name: 'TestDiggingAsHome',
-    redirect: to => `/test/${to.params.landId}/digging`,
-  },
-  { path: '/details', component: LandDetails, meta: productionMeta },
-  {
-    path: '/:landId(\\d+)/details',
-    name: 'LandDetailsWithId',
-    component: LandDetails,
-    meta: productionMeta,
-  },
-  {
-    path: '/test/details',
-    name: 'TestLandDetailsNoId',
-    component: LandDetails,
-    props: () => ({ landId: undefined }),
-    meta: testMeta,
-  },
-  {
-    path: '/test/:landId(\\d+)/details',
-    name: 'TestLandDetailsWithId',
-    component: LandDetails,
-    meta: testMeta,
+    redirect: to => ({
+      path: `/${to.params.landId}/digging`,
+      query: to.query,
+      hash: to.hash,
+    }),
   },
   {
     path: '/details',
     name: 'LandDetailsNoId',
     component: LandDetails,
     props: () => ({ landId: undefined }),
-    meta: productionMeta,
+  },
+  {
+    path: '/:landId(\\d+)/details',
+    name: 'LandDetailsWithId',
+    component: LandDetails,
   },
   {
     path: '/todays-checklist',
     name: 'TodaysChecklist',
     component: TodaysChecklist,
     props: { useParam: false },
-    meta: productionMeta,
-  },
-  {
-    path: '/test/todays-checklist',
-    name: 'TestTodaysChecklist',
-    component: TodaysChecklist,
-    props: { useParam: false },
-    meta: testMeta,
   },
   {
     path: '/:landId(\\w+)/todays-checklist',
     name: 'TodaysChecklistWithId',
     component: TodaysChecklist,
     props: route => ({ useParam: true, landIdParam: route.params.landId }),
-    meta: productionMeta,
-  },
-  {
-    path: '/test/:landId(\\w+)/todays-checklist',
-    name: 'TestTodaysChecklistWithId',
-    component: TodaysChecklist,
-    props: route => ({ useParam: true, landIdParam: route.params.landId }),
-    meta: testMeta,
   },
   {
     path: '/feedbacks',
@@ -113,25 +69,17 @@ const routes = [
     path: '/practice',
     name: 'Practice',
     component: PracticeDigging,
-    meta: productionMeta,
-  },
-  {
-    path: '/test/practice',
-    name: 'TestPractice',
-    component: PracticeDigging,
-    meta: testMeta,
   },
   {
     path: '/:landId(\\d+)/practice',
     name: 'PracticeWithId',
     component: PracticeDigging,
-    meta: productionMeta,
   },
+  // Legacy `/test/...` bookmarks → canonical path + ?testnet
   {
-    path: '/test/:landId(\\d+)/practice',
-    name: 'TestPracticeWithId',
-    component: PracticeDigging,
-    meta: testMeta,
+    path: '/test/:pathMatch(.*)*',
+    name: 'LegacyTestPath',
+    redirect: to => legacyTestPathRedirect(to) || '/digging',
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
@@ -149,14 +97,29 @@ router.beforeEach((to) => {
   const apiParam = String(to.query?.api || '').toLowerCase()
   if (apiParam === 'test' || apiParam === 'dev') {
     if (getApiEnvironment() !== 'test') setApiEnvironment('test')
-    const { api: _api, ...query } = to.query
-    return { ...to, query, replace: true }
+    return {
+      path: to.path,
+      query: withTestnetQuery({ ...to.query }, true),
+      hash: to.hash,
+      replace: true,
+    }
   }
   if (apiParam === 'production' || apiParam === 'prod') {
     if (getApiEnvironment() !== 'production') setApiEnvironment('production')
     const { api: _api, ...query } = to.query
     return { ...to, query, replace: true }
   }
+
+  const landId = to.params.landId
+  if (landId && isTestnetLandId(landId) && !hasTestnetQuery(to.query)) {
+    return {
+      path: to.path,
+      query: withTestnetQuery({ ...to.query }, true),
+      hash: to.hash,
+      replace: true,
+    }
+  }
+
   syncApiEnvFromRoute(to)
 })
 

@@ -135,8 +135,8 @@ export function importMarksToGrid (state, gridManager) {
  */
 export function generateShareableUrl (encodedState, landId, baseUrl = window.location.origin) {
   const id = String(landId || 'guest')
-  const url = new URL(baseUrl)
-  url.pathname = landDiggingPath(id !== 'guest' ? id : null)
+  const rel = landDiggingPath(id !== 'guest' ? id : null)
+  const url = new URL(rel, baseUrl)
   url.searchParams.set('marks', encodedState)
   return url.toString()
 }

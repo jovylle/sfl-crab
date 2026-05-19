@@ -51,7 +51,7 @@
               data-tip="Copy a link to this land’s dig page with your custom marks (same daily desert in-game)"
               @click="copyMarksLink($event)"
             >
-              {{ marksLinkCopied ? 'Dig link copied' : 'Copy dig link (marks)' }}
+              {{ marksLinkCopied ? 'Dig link copied' : 'Copy link with marks' }}
             </button>
 
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
@@ -191,7 +191,7 @@ defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'open-replay'
 function clearLandId () {
   const test = isTestServer.value
   const onDigging =
-    route.name === 'Digging' || route.name === 'TestDigging'
+    route.name === 'Digging'
   router.push(
     resolveLandRoute(onDigging ? 'guestDigging' : 'detailsNoId', { test }),
   )

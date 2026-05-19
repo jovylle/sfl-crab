@@ -70,9 +70,10 @@ The serverless function uses `SFL_API_KEY_DEV` when the browser sends `x-sfl-api
 
 Uses api-dev, not shown as a menu section. Ways to use it:
 
-- **URL prefix:** `/test/{landId}/digging` (shareable; switches API to api-dev for that session).
+- **Query flag:** `?testnet` on any page (e.g. `https://d1g.uk/913531074720548/digging?testnet`) — shareable; uses api-dev.
 - **Footer / menu links:** click the plain word `testnet-server` under “SFL Digging Assistant Links” (no underline; looks like body text).
-- **Query:** `?api=test` on any page (removed from the URL after load).
+- **Legacy:** `/test/{landId}/digging` redirects to `/{landId}/digging?testnet`; `?api=test` redirects to `?testnet`.
+- **Testnet land IDs** (13+ digits) require `?testnet`; dig-day is not synced to the hub on testnet.
 - **Example test farm:** `913531074720548` (there is no land ID `1` on api-dev).
 
 ## Testing

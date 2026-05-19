@@ -7,6 +7,7 @@ import {
 } from '@/utils/buildDigTimeline.js'
 import { useMarkJournal, getMarkEventsSnapshot } from '@/composables/useMarkJournal.js'
 import { registerMarkJournalHandlers } from '@/composables/markJournalBridge.js'
+import { isTestApiEnvironment } from '@/config/api.js'
 import { DigDayApiError, fetchDigDay, saveDigDay } from '@/services/digDayApiService.js'
 import { resolveHubReplayUrl } from '@/utils/hubReplayUrl.js'
 
@@ -35,7 +36,7 @@ const noopStore = {
  */
 export function useDigDayStore (landId, desertSource) {
   const key = String(landId || '')
-  if (!isPersistableLandId(key)) return noopStore
+  if (!isPersistableLandId(key) || isTestApiEnvironment()) return noopStore
 
   if (!instances.has(key)) {
     const journal = useMarkJournal(key)
