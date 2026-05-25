@@ -35,10 +35,7 @@ function adminJson (statusCode, body) {
 }
 
 function notConfiguredResponse () {
-  return adminJson(503, {
-    error: 'Admin not configured',
-    hint: 'Set ADMIN_PASSWORD in Netlify environment variables (or .env for netlify dev).',
-  })
+  return adminJson(503, { error: 'Admin not available' })
 }
 
 function unauthorizedResponse () {

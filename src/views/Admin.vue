@@ -2,10 +2,7 @@
   <section class="text-left max-w-6xl mx-auto w-full space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-3xl font-bold">Blob admin</h1>
-        <p class="text-sm opacity-70 mt-1">
-          Netlify Blobs for this site. Password is checked server-side via <code>ADMIN_PASSWORD</code>.
-        </p>
+        <h1 class="text-3xl font-bold">Admin</h1>
       </div>
       <button
         v-if="authenticated"
@@ -20,9 +17,6 @@
     <div v-if="!authenticated" class="card bg-base-200 shadow-md max-w-md">
       <div class="card-body">
         <h2 class="card-title text-lg">Sign in</h2>
-        <p class="text-sm opacity-70">
-          Set <code>ADMIN_PASSWORD</code> in Netlify (or <code>.env</code> for <code>netlify dev</code>).
-        </p>
         <label class="form-control w-full">
           <span class="label-text">Admin password</span>
           <input
@@ -206,10 +200,10 @@ async function login () {
   } catch (err) {
     loginError.value =
       err.status === 503
-        ? (err.payload?.hint || err.message)
+        ? 'Admin is not available.'
         : err.status === 401
           ? 'Wrong password.'
-          : err.message
+          : 'Could not sign in.'
   } finally {
     loggingIn.value = false
   }
