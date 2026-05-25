@@ -311,9 +311,11 @@ watch(isGameOver, done => {
 
   const digs = buildPracticeDigTimeline(digHistory.value, hiddenGrid.value)
 
+  const submittedSource = patternSource.value === 'replay' ? 'random' : patternSource.value
+
   void submitPracticeRun({
-    patternSource: patternSource.value,
-    patternDate: patternSource.value === 'daily' ? patternDate.value : null,
+    patternSource: submittedSource,
+    patternDate: submittedSource === 'daily' ? patternDate.value : null,
     patternKeys: [...usedFormationKeys.value],
     digCount: digsMade.value,
     durationMs: finalElapsedMs.value,
