@@ -47,6 +47,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/admin-blobs"
+  to = "/.netlify/functions/admin-blobs"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
@@ -65,5 +70,5 @@
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, x-admin-password"
+    Access-Control-Allow-Methods = "GET, POST, DELETE, OPTIONS"

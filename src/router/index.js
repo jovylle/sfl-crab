@@ -7,6 +7,7 @@ import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
 import FeedbackGallery from '@/views/FeedbackGallery.vue'
 import PracticeDigging from '@/views/PracticeDigging.vue'
+import Admin from '@/views/Admin.vue'
 import { syncApiEnvFromRoute } from '@/utils/landRoutes.js'
 import { setApiEnvironment, getApiEnvironment } from '@/config/api.js'
 import {
@@ -69,6 +70,12 @@ const routes = [
     path: '/practice',
     name: 'Practice',
     component: PracticeDigging,
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: Admin,
+    meta: { hideChrome: true },
   },
   {
     path: '/:landId(\\d+)/practice',

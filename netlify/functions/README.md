@@ -16,3 +16,9 @@ Old data may still be in Netlify Blobs `dig-day-snapshots`. Import with `sfl-dig
 ## Practice patterns (`practice-patterns`)
 
 Daily pattern cache in store `practice-daily-patterns`. See `_practiceDailyStore.cjs`.
+
+## Admin UI (`/admin`)
+
+Password-protected blob browser. Set `ADMIN_PASSWORD` in Netlify env (or `.env` for `netlify dev`), then open `/admin` on the site.
+
+API: `GET/DELETE/POST /api/admin-blobs` with `Authorization: Bearer <ADMIN_PASSWORD>` (see `admin-blobs.cjs`).

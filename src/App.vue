@@ -3,12 +3,15 @@
     id="app"
     class="min-h-screen bg-base-200 bg-cross-lines text-base-content flex flex-col transition-colors duration-300"
   >
-    <MainDrawer />
+    <MainDrawer v-if="!hideChrome" />
     <div
       class="flex flex-col min-h-screen p-4 md:p-6 w-full max-w-screen-xl mx-auto text-center "
     >
       <!-- Tabs -->
-      <div class="tabs tabs-lift tabs-sm sm:tabs-md md:tabs-lg ">
+      <div
+        v-if="!hideChrome"
+        class="tabs tabs-lift tabs-sm sm:tabs-md md:tabs-lg "
+      >
         <!-- Turn each tab into a router-link -->
         <router-link
           v-for="tab in tabs"
@@ -25,8 +28,8 @@
       <main class="block bg-base-100 p-2 lg:p-6 flex-1">
         <router-view />
       </main>
-      <EndSection />
-      <footer class="py-6 text-center text-sm pb-1">
+      <EndSection v-if="!hideChrome" />
+      <footer v-if="!hideChrome" class="py-6 text-center text-sm pb-1">
         <div class="w-full max-w-screen-lg mx-auto px-4">
           By the community for community Tool
         </div>
@@ -44,6 +47,8 @@ import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { isTestApiEnvironment } from '@/config/api.js'
 
 const route = useRoute()
+
+const hideChrome = computed(() => Boolean(route.meta.hideChrome))
 
 const tabs = computed(() => {
   const landId = route.params.landId
