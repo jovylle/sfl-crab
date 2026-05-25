@@ -90,6 +90,8 @@ exports.handler = async (event) => {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   }
+  const secret = process.env.HUB_WRITE_SECRET
+  if (secret) forwardHeaders['X-Hub-Write-Secret'] = secret
   const auth = event.headers.authorization || event.headers.Authorization
   if (auth) forwardHeaders.Authorization = auth
 
