@@ -71,6 +71,7 @@ export async function submitPracticeRun (payload) {
     },
     body: JSON.stringify({
       ...payload,
+      formations: undefined, // not yet supported by the hub API
       anonymousId: getAnonymousId(),
       ...(nickname ? { nickname } : {}),
     }),
