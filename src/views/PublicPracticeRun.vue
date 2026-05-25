@@ -102,9 +102,22 @@
           </div>
 
           <div class="flex flex-wrap gap-2 items-center border-t border-base-300 pt-4">
-            <router-link :to="{ name: 'Practice' }" class="btn btn-primary btn-sm">
-              Try it yourself
+            <router-link :to="{ name: 'Practice' }" class="btn btn-outline btn-sm">
+              Try a new round
             </router-link>
+            <router-link
+              v-if="run.formations?.length"
+              :to="{ name: 'Practice', query: { run: runId } }"
+              class="btn btn-primary btn-sm"
+            >
+              Play this exact grid
+            </router-link>
+            <span
+              v-else
+              class="text-xs text-base-content/40 italic"
+            >
+              (Grid replay not available for this run)
+            </span>
           </div>
         </template>
 

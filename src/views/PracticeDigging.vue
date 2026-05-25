@@ -10,6 +10,7 @@
           <h2 class="text-sm sm:text-base font-semibold m-0">
             Practice Mode
             <span class="badge badge-secondary badge-sm">Round {{ roundCount }}</span>
+            <span v-if="isReplayMode" class="badge badge-accent badge-sm">Shared Grid</span>
           </h2>
         </div>
 
@@ -173,6 +174,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import DiggingPageLayout from '@/components/DiggingPageLayout.vue'
 import { usePracticeEngine } from '@/composables/usePracticeEngine.js'
@@ -183,10 +185,13 @@ import PracticeGrid from '@/components/PracticeGrid.vue'
 import PracticePatterns from '@/components/PracticePatterns.vue'
 import InfoFooter from '@/components/InfoFooter.vue'
 import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled, getNickname, setNickname } from '@/services/practiceHubService.js'
+import { fetchPracticeRun } from '@/services/practiceRunApiService.js'
 import { getTodayUTC } from '@/utils/buildDigTimeline.js'
 import { buildPracticeDigTimeline } from '@/utils/buildPracticeDigTimeline.js'
 
 const ALL_FORMATION_KEYS = Object.keys(DIGGING_FORMATIONS)
+
+const route = useRoute()
 
 const {
   displayTiles,
@@ -201,6 +206,7 @@ const {
   treasuresFound,
   totalTreasures,
   startGame,
+  startGameFromPlacements,
   dig,
   giveUp,
   finishGame,
@@ -229,6 +235,8 @@ const roundStartedAt = ref(Date.now())
 const patternSource = ref('daily')
 const patternDate = ref(getTodayUTC())
 const lastSubmittedRound = ref(0)
+const replayRunId = ref(null)
+const isReplayMode = ref(false)
 let timerId = null
 
 const practicePatternKeys = computed(() => {
@@ -368,10 +376,42 @@ function newRandomRound ({ preserveFailureState = false } = {}) {
     stopTodayRoundCooldown()
   }
   lastRunId.value = null
+  isReplayMode.value = false
+  replayRunId.value = null
   patternSource.value = 'random'
   patternDate.value = getTodayUTC()
   startGame(ALL_FORMATION_KEYS)
   resetRoundTimer()
+}
+
+async function startReplayRound (runId) {
+  isStartingTodayRound.value = true
+  todayRoundErrorMessage.value = ''
+  lastRunId.value = null
+
+  try {
+    const run = await fetchPracticeRun(runId)
+    if (!run?.formations?.length) {
+      throw new Error('This run has no formation data to replay.')
+    }
+    isReplayMode.value = true
+    replayRunId.value = runId
+    patternSource.value = 'replay'
+    patternDate.value = null
+    startGameFromPlacements(run.formations)
+    resetRoundTimer()
+  } catch (err) {
+    todayRoundErrorMessage.value = err?.message || 'Failed to load the replay grid.'
+    stopTodayRoundCooldown()
+    todayRoundCooldownActive.value = true
+    todayRoundCooldownTimerId = setTimeout(() => {
+      todayRoundCooldownActive.value = false
+      todayRoundCooldownTimerId = null
+    }, TODAY_ROUND_ERROR_COOLDOWN_MS)
+    newRandomRound({ preserveFailureState: true })
+  } finally {
+    isStartingTodayRound.value = false
+  }
 }
 
 const bannerClass = computed(() => {
@@ -381,7 +421,12 @@ const bannerClass = computed(() => {
 })
 
 onMounted(() => {
-  void newTodayRound()
+  const runId = String(route.query.run || '').trim()
+  if (runId) {
+    void startReplayRound(runId)
+  } else {
+    void newTodayRound()
+  }
 })
 
 onUnmounted(() => {
