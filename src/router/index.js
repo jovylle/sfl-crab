@@ -7,6 +7,8 @@ import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
 import FeedbackGallery from '@/views/FeedbackGallery.vue'
 import PracticeDigging from '@/views/PracticeDigging.vue'
+import PublicPracticeRun from '@/views/PublicPracticeRun.vue'
+import PublicDigDay from '@/views/PublicDigDay.vue'
 import Admin from '@/views/Admin.vue'
 import { syncApiEnvFromRoute } from '@/utils/landRoutes.js'
 import { setApiEnvironment, getApiEnvironment } from '@/config/api.js'
@@ -81,6 +83,16 @@ const routes = [
     path: '/:landId(\\d+)/practice',
     name: 'PracticeWithId',
     component: PracticeDigging,
+  },
+  {
+    path: '/practice/run/:id',
+    name: 'PublicPracticeRun',
+    component: PublicPracticeRun,
+  },
+  {
+    path: '/:landId(\\d+)/dig-day',
+    name: 'PublicDigDay',
+    component: PublicDigDay,
   },
   // Legacy `/test/...` bookmarks → canonical path + ?testnet
   {

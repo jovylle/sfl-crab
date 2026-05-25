@@ -49,6 +49,17 @@
             Random Round
           </button>
         </div>
+
+        <div class="flex flex-wrap gap-2 justify-center items-center">
+          <input
+            v-model="nickname"
+            type="text"
+            maxlength="32"
+            placeholder="Nickname (optional)"
+            class="input input-bordered input-xs w-36"
+          />
+          <span class="text-xs text-base-content/40">shown on the hub</span>
+        </div>
       </div>
     </template>
 
@@ -88,23 +99,36 @@
         </div>
 
         <div v-if="isGameOver" class="alert py-2 text-sm gap-2" :class="bannerClass">
-          <span v-if="isVictory">
-            🎉 Found all {{ totalTreasures }} treasure{{ totalTreasures !== 1 ? 's' : '' }} in
-            <strong>{{ digsMade }} dig{{ digsMade !== 1 ? 's' : '' }}</strong>!
-            <span v-if="showTimer" class="ml-1">
-              Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+          <div class="flex flex-col gap-1 w-full">
+            <span v-if="isVictory">
+              🎉 Found all {{ totalTreasures }} treasure{{ totalTreasures !== 1 ? 's' : '' }} in
+              <strong>{{ digsMade }} dig{{ digsMade !== 1 ? 's' : '' }}</strong>!
+              <span v-if="showTimer" class="ml-1">
+                Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+              </span>
+              <span v-if="digsMade <= totalTreasures + 2"> Impressive!</span>
             </span>
-            <span v-if="digsMade <= totalTreasures + 2"> Impressive!</span>
-          </span>
-          <span v-else>
-            Round over — found
-            <strong>{{ treasuresFound }}</strong> / {{ totalTreasures }} in
-            <strong>{{ digsMade }}</strong> digs.
-            <span v-if="showTimer" class="ml-1">
-              Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+            <span v-else>
+              Round over — found
+              <strong>{{ treasuresFound }}</strong> / {{ totalTreasures }} in
+              <strong>{{ digsMade }}</strong> digs.
+              <span v-if="showTimer" class="ml-1">
+                Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+              </span>
+              Ghosted tiles show what was hidden.
             </span>
-            Ghosted tiles show what was hidden.
-          </span>
+            <div v-if="saveScores" class="flex items-center gap-2 mt-0.5">
+              <router-link
+                v-if="lastRunId"
+                :to="{ name: 'PublicPracticeRun', params: { id: lastRunId } }"
+                class="btn btn-xs btn-ghost underline"
+                target="_blank"
+              >
+                View &amp; share run
+              </router-link>
+              <span v-else class="text-xs opacity-60 italic">Saving to hub…</span>
+            </div>
+          </div>
         </div>
 
         <PracticeGrid
@@ -158,8 +182,9 @@ import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import PracticeGrid from '@/components/PracticeGrid.vue'
 import PracticePatterns from '@/components/PracticePatterns.vue'
 import InfoFooter from '@/components/InfoFooter.vue'
-import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled } from '@/services/practiceHubService.js'
+import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled, getNickname, setNickname } from '@/services/practiceHubService.js'
 import { getTodayUTC } from '@/utils/buildDigTimeline.js'
+import { buildPracticeDigTimeline } from '@/utils/buildPracticeDigTimeline.js'
 
 const ALL_FORMATION_KEYS = Object.keys(DIGGING_FORMATIONS)
 
@@ -170,6 +195,8 @@ const {
   isVictory,
   usedFormationKeys,
   hiddenGrid,
+  digHistory,
+  formationPlacements,
   roundCount,
   treasuresFound,
   totalTreasures,
@@ -194,6 +221,8 @@ const todayRoundCooldownActive = ref(false)
 const todayRoundErrorMessage = ref('')
 const showTimer = ref(true)
 const saveScores = ref(isPracticeSaveScoresEnabled())
+const nickname = ref(getNickname())
+const lastRunId = ref(null)
 const elapsedMs = ref(0)
 const finalElapsedMs = ref(0)
 const roundStartedAt = ref(Date.now())
@@ -270,6 +299,9 @@ watch(isGameOver, done => {
 
   if (roundCount.value === lastSubmittedRound.value) return
   lastSubmittedRound.value = roundCount.value
+  lastRunId.value = null
+
+  const digs = buildPracticeDigTimeline(digHistory.value, hiddenGrid.value)
 
   void submitPracticeRun({
     patternSource: patternSource.value,
@@ -279,6 +311,10 @@ watch(isGameOver, done => {
     durationMs: finalElapsedMs.value,
     victory: isVictory.value,
     treasureCount: totalTreasures.value,
+    digs,
+    formations: formationPlacements.value,
+  }).then(data => {
+    if (data?.id) lastRunId.value = data.id
   }).catch(() => {
     /* optional hub save — ignore failures */
   })
@@ -286,6 +322,10 @@ watch(isGameOver, done => {
 
 watch(saveScores, enabled => {
   setPracticeSaveScoresEnabled(enabled)
+})
+
+watch(nickname, val => {
+  setNickname(val)
 })
 
 async function newTodayRound () {
@@ -298,6 +338,7 @@ async function newTodayRound () {
   patternDate.value = getTodayUTC()
 
   try {
+    lastRunId.value = null
     await nextTick()
     await refreshPracticePatterns()
     startGame(practicePatternKeys.value, { exact: true })
@@ -326,6 +367,7 @@ function newRandomRound ({ preserveFailureState = false } = {}) {
     todayRoundErrorMessage.value = ''
     stopTodayRoundCooldown()
   }
+  lastRunId.value = null
   patternSource.value = 'random'
   patternDate.value = getTodayUTC()
   startGame(ALL_FORMATION_KEYS)

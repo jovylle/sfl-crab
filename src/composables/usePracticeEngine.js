@@ -41,10 +41,13 @@ export function usePracticeEngine() {
   const isVictory = ref(false)
   const usedFormationKeys = ref([])
   const roundCount = ref(0)
+  const digHistory = ref([])
+  const formationPlacements = ref([])
 
   function _buildGrid(keys) {
     const occupied = new Set()
     const placements = []
+    const keyedPlacements = []
 
     for (const key of keys) {
       const formation = DIGGING_FORMATIONS[key]
@@ -76,6 +79,7 @@ export function usePracticeEngine() {
             occupied.add(`${t.x},${t.y}`)
             placements.push(t)
           })
+          keyedPlacements.push({ key, tiles: tiles.map(({ x, y }) => ({ x, y })) })
           break
         }
       }
@@ -102,7 +106,7 @@ export function usePracticeEngine() {
       grid[cy * GRID_SIZE + cx] = { type: 'crab' }
     })
 
-    return grid
+    return { grid, keyedPlacements }
   }
 
   function startGame(allKeys, options = {}) {
@@ -113,9 +117,12 @@ export function usePracticeEngine() {
       ? (Array.isArray(allKeys) ? [...allKeys] : [allKeys])
       : pickPracticePatterns(allKeys)
     usedFormationKeys.value = picked
-    hiddenGrid.value = _buildGrid(picked)
+    const { grid, keyedPlacements } = _buildGrid(picked)
+    hiddenGrid.value = grid
+    formationPlacements.value = keyedPlacements
     revealedSet.value = new Set()
     digsMade.value = 0
+    digHistory.value = []
     isGameOver.value = false
     isVictory.value = false
     roundCount.value++
@@ -123,6 +130,7 @@ export function usePracticeEngine() {
 
   function dig(index) {
     if (isGameOver.value || revealedSet.value.has(index)) return
+    digHistory.value = [...digHistory.value, { index, at: Date.now() }]
     revealedSet.value = new Set([...revealedSet.value, index])
     digsMade.value++
 
@@ -177,5 +185,7 @@ export function usePracticeEngine() {
     giveUp,
     finishGame,
     hiddenGrid,
+    digHistory,
+    formationPlacements,
   }
 }
