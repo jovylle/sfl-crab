@@ -73,7 +73,7 @@ Uses api-dev, not shown as a menu section. Ways to use it:
 - **Query flag:** `?testnet` on any page (e.g. `https://d1g.uk/913531074720548/digging?testnet`) — shareable; uses api-dev.
 - **Footer / menu links:** click the plain word `testnet-server` under “SFL Digging Assistant Links” (no underline; looks like body text).
 - **Legacy:** `/test/{landId}/digging` redirects to `/{landId}/digging?testnet`; `?api=test` redirects to `?testnet`.
-- **Testnet land IDs** (13+ digits) require `?testnet`; dig-day is not synced to the hub on testnet.
+- **Testnet land IDs** (13+ digits) require `?testnet`; dig-day syncs to the hub with the land ID hidden on public views.
 - **Example test farm:** `913531074720548` (there is no land ID `1` on api-dev).
 
 ## Testing

@@ -9,6 +9,7 @@ import { useMarkJournal, getMarkEventsSnapshot } from '@/composables/useMarkJour
 import { registerMarkJournalHandlers } from '@/composables/markJournalBridge.js'
 import { isTestApiEnvironment } from '@/config/api.js'
 import { DigDayApiError, fetchDigDay, saveDigDay } from '@/services/digDayApiService.js'
+import { isTestnetLandId } from '@/utils/testnet.js'
 import { resolveHubReplayUrl } from '@/utils/hubReplayUrl.js'
 
 const instances = new Map()
@@ -34,9 +35,13 @@ const noopStore = {
  * @param {string} landId
  * @param {import('vue').Ref | (() => object)} desertSource reactive desert or getter
  */
+function shouldHideLandIdOnHub (landId) {
+  return isTestApiEnvironment() || isTestnetLandId(landId)
+}
+
 export function useDigDayStore (landId, desertSource) {
   const key = String(landId || '')
-  if (!isPersistableLandId(key) || isTestApiEnvironment()) return noopStore
+  if (!isPersistableLandId(key)) return noopStore
 
   if (!instances.has(key)) {
     const journal = useMarkJournal(key)
@@ -78,6 +83,7 @@ export function useDigDayStore (landId, desertSource) {
         v: 1,
         landId: key,
         utcDate: getTodayUTC(),
+        ...(shouldHideLandIdOnHub(key) ? { hideLandId: true } : {}),
         ...(displayName ? { displayName } : {}),
         patterns: [...(digging.patterns || [])],
         digs,
