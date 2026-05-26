@@ -42,15 +42,24 @@
           <li>Live grid state, reset, and refresh tools</li>
         </ul>
       </div>
+
+      <p v-if="buildHash" class="text-[0.6rem] text-base-content/30 text-right font-mono">
+        build {{ buildHash }}
+      </p>
     </div>
   </section>
 </template>
 
 <script setup>
+/* global __APP_VERSION__ */
 defineProps({
   showWhatIsThis: { type: Boolean, default: true },
   showFeatures: { type: Boolean, default: true },
 })
+
+const buildHash = typeof __APP_VERSION__ !== 'undefined' && __APP_VERSION__
+  ? String(__APP_VERSION__).slice(0, 7)
+  : ''
 </script>
 
 <style scoped>
