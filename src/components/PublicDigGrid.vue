@@ -38,12 +38,11 @@
         <span
           v-if="showTreasureOrder && treasureOrderMap[index]"
           class="absolute top-0 right-0
-            w-full h-full
-            transform origin-top-right scale-[0.33333]
+            min-w-[1.1em] h-[1.1em] px-[0.15em]
             flex items-center justify-center
-            bg-base-200 rounded-full shadow
-            text-2xl md:text-3xl p-1 font-bold
-            pointer-events-none overflow-hidden"
+            bg-base-200/90 rounded-sm shadow-sm
+            text-[0.55em] font-bold leading-none
+            pointer-events-none"
         >
           {{ treasureOrderMap[index] }}
         </span>
@@ -147,6 +146,13 @@ function onImgError (e) {
 
 .tile {
   position: relative;
+  font-size: clamp(6px, 2.8vw, 28px);
+}
+
+.tile-img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
 }
 
 .grid {

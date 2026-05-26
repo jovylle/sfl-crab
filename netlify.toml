@@ -47,6 +47,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/practice-run"
+  to = "/.netlify/functions/practice-run"
+  status = 200
+
+[[redirects]]
   from = "/api/admin-blobs"
   to = "/.netlify/functions/admin-blobs"
   status = 200
