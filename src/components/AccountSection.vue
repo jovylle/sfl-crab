@@ -13,7 +13,7 @@
         class="btn btn-primary btn-sm btn-block"
         @click="closeMainDrawer"
       >
-        Sign in
+        Approve login
       </router-link>
       <template v-else>
         <router-link

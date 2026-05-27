@@ -2,7 +2,7 @@
 
 ## Hub auth (`hub-auth`)
 
-Proxies `/api/hub-auth/*` → `{HUB_API_BASE}/v1/auth/*` (passwordless: Google OAuth, email OTP, `/me`, logout).
+Proxies `/api/hub-auth/*` → `{HUB_API_BASE}/v1/auth/*` (passwordless: Google OAuth, email approve-link/login, `/me`, logout).
 
 Forwards `Authorization` when present. Hub backend must implement these routes (no password endpoints).
 
