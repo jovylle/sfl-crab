@@ -67,7 +67,7 @@ export function initChatWidget () {
       links: {
         website: 'https://d1g.uk',
         mirror: 'https://sfl.uft1.com',
-        github: 'https://github.com/JovylleBermudez/sfl-crab',
+        github: 'https://github.com/jovylle/sfl-crab',
       },
       features: {
         chat: false,
