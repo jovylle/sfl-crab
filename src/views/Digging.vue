@@ -23,6 +23,7 @@
         :dig-day-sync-status="digDaySyncStatus"
         :dig-day-updated-at="digDayUpdatedAt"
         :dig-day-sync-error="digDaySyncError"
+        :hub-replay-url="hubReplayUrl"
         :can-replay="canReplay"
         @open-replay="openReplay()"
       />
@@ -109,6 +110,7 @@ const {
   syncStatus: digDaySyncStatus,
   lastUpdatedAt: digDayUpdatedAt,
   syncError: digDaySyncError,
+  hubReplayUrl,
 } = useDigDayStore(landId, desert)
 
 const {

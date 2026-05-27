@@ -11,6 +11,7 @@ import { isTestApiEnvironment } from '@/config/api.js'
 import { DigDayApiError, fetchDigDay, saveDigDay } from '@/services/digDayApiService.js'
 import { isTestnetLandId } from '@/utils/testnet.js'
 import { resolveHubReplayUrl } from '@/utils/hubReplayUrl.js'
+import { getHubDisplayName } from '@/composables/useHubSession.js'
 
 const instances = new Map()
 const SYNC_DEBOUNCE_MS = 400
@@ -74,10 +75,7 @@ export function useDigDayStore (landId, desertSource) {
       const digging = getDesert().digging || {}
       const rawGrid = digging.grid || []
       const digs = buildDigTimeline(rawGrid)
-      const displayName =
-        typeof localStorage !== 'undefined'
-          ? localStorage.getItem('sfl-hub-display-name')?.trim()?.slice(0, 64) || undefined
-          : undefined
+      const displayName = getHubDisplayName()
 
       return {
         v: 1,
@@ -148,6 +146,11 @@ export function useDigDayStore (landId, desertSource) {
         syncStatus.value = 'saved'
       } catch (err) {
         console.warn('dig-day sync failed:', err)
+        if (err instanceof DigDayApiError && err.status === 401) {
+          syncError.value = 'Sign in to save dig day to your account.'
+          syncStatus.value = 'auth_required'
+          return
+        }
         syncError.value =
           err instanceof DigDayApiError
             ? err.message

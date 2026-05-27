@@ -6,9 +6,11 @@ const CORS_ORIGINS = [
   'http://127.0.0.1:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5174',
+  'http://localhost:8888',
+  'http://127.0.0.1:8888',
 ]
 
-const RATE_LIMIT = 30
+const RATE_LIMIT = 40
 const RATE_WINDOW_MS = 60_000
 const rateBuckets = new Map()
 
@@ -54,43 +56,15 @@ function hubBase () {
   return base.replace(/\/$/, '')
 }
 
-async function proxyToHub (event) {
-  const secret = process.env.HUB_WRITE_SECRET
-  const base = hubBase()
-  const qs = event.queryStringParameters
-    ? `?${new URLSearchParams(event.queryStringParameters).toString()}`
-    : ''
-
-  const headers = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  }
-  if (secret && event.httpMethod === 'POST') {
-    headers['X-Hub-Write-Secret'] = secret
-  }
-  const auth = event.headers.authorization || event.headers.Authorization
-  if (auth) headers.Authorization = auth
-
-  const url =
-    event.httpMethod === 'GET'
-      ? `${base}/v1/dig-day${qs}`
-      : `${base}/v1/dig-day`
-
-  const res = await fetch(url, {
-    method: event.httpMethod,
-    headers,
-    body: event.httpMethod === 'POST' ? event.body : undefined,
-  })
-
-  const text = await res.text()
-  let body = text
-  try {
-    body = JSON.parse(text)
-  } catch {
-    /* plain text error */
-  }
-
-  return { status: res.status, body }
+/**
+ * Map /api/hub-auth/... → /v1/auth/...
+ */
+function hubAuthSubpath (event) {
+  const raw = event.path || ''
+  const fromApi = raw.match(/\/api\/hub-auth(\/.*)?$/)
+  const fromFn = raw.match(/\/\.netlify\/functions\/hub-auth(\/.*)?$/)
+  const sub = (fromApi && fromApi[1]) || (fromFn && fromFn[1]) || ''
+  return sub || '/me'
 }
 
 exports.handler = async (event) => {
@@ -98,6 +72,7 @@ exports.handler = async (event) => {
   const headers = {
     'Content-Type': 'application/json',
     ...corsHeaders(origin),
+    'Cache-Control': 'no-store',
   }
 
   if (event.httpMethod === 'OPTIONS') {
@@ -114,28 +89,62 @@ exports.handler = async (event) => {
     }
   }
 
-  if (!process.env.HUB_API_BASE) {
-    console.warn('dig-day: HUB_API_BASE not set, using https://beta.api.d1g.uk')
+  const sub = hubAuthSubpath(event)
+  const base = hubBase()
+  const url = `${base}/v1/auth${sub}`
+
+  const forwardHeaders = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
   }
+  const auth = event.headers.authorization || event.headers.Authorization
+  if (auth) forwardHeaders.Authorization = auth
+
+  const qs = event.queryStringParameters
+    ? `?${new URLSearchParams(event.queryStringParameters).toString()}`
+    : ''
+  const targetUrl = `${url}${qs}`
 
   try {
-    const { status, body } = await proxyToHub(event)
-    const cache =
-      event.httpMethod === 'GET'
-        ? 'public, max-age=30, must-revalidate'
-        : 'no-store'
+    const res = await fetch(targetUrl, {
+      method: event.httpMethod,
+      headers: forwardHeaders,
+      body:
+        event.httpMethod === 'POST' || event.httpMethod === 'PUT'
+          ? event.body
+          : undefined,
+      redirect: 'manual',
+    })
+
+    const location = res.headers.get('location')
+    if (location && res.status >= 300 && res.status < 400) {
+      return {
+        statusCode: res.status,
+        headers: { ...headers, Location: location },
+        body: '',
+      }
+    }
+
+    const text = await res.text()
+    let body = text
+    try {
+      body = JSON.parse(text)
+    } catch {
+      /* plain */
+    }
+
     return {
-      statusCode: status,
-      headers: { ...headers, 'Cache-Control': cache },
+      statusCode: res.status,
+      headers,
       body: typeof body === 'string' ? body : JSON.stringify(body),
     }
   } catch (error) {
-    console.error('dig-day proxy:', error)
+    console.error('hub-auth proxy:', error)
     return {
-      statusCode: 500,
+      statusCode: 502,
       headers,
       body: JSON.stringify({
-        error: error.message || 'Hub proxy failed',
+        error: error.message || 'Hub auth proxy failed',
       }),
     }
   }

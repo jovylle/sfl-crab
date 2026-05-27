@@ -1,6 +1,8 @@
 // API Configuration
 
-const STORAGE_KEY = 'sfl-api-environment'
+import { STORAGE_KEYS } from '@/constants/storageKeys.js'
+
+const STORAGE_KEY = STORAGE_KEYS.API_ENVIRONMENT.key
 
 /** Example land on api-dev (no land ID 1 on test server). */
 export const TEST_SERVER_EXAMPLE_LAND_ID = '913531074720548'

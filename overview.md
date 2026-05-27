@@ -18,7 +18,8 @@
   - Vite (build tool & dev server)
   - TailwindCSS + DaisyUI (styling)
   - Vue Router (navigation)
-  - No backend - purely client-side
+  - Netlify Functions → **SFL Digging Hub API** (dig-day, practice, passwordless auth proxy)
+  - Optional **passwordless sign-in** (Google or email OTP)—guests use Land ID only; see `src/constants/storageKeys.js`
 
 - **Repository:** https://github.com/jovylle/sfl-crab
 

@@ -1,3 +1,5 @@
+import { hubAuthHeaders } from '@/features/hub/hubClient.js'
+
 const API_BASE = '/api/dig-day'
 
 export class DigDayApiError extends Error {
@@ -20,7 +22,7 @@ export async function fetchDigDay (landId, utcDate) {
   const params = new URLSearchParams({ landId: String(landId), utcDate })
   const res = await fetch(`${API_BASE}?${params}`, {
     method: 'GET',
-    headers: { Accept: 'application/json' },
+    headers: hubAuthHeaders(),
   })
 
   const data = await res.json().catch(() => null)
@@ -42,7 +44,7 @@ export async function fetchDigDay (landId, utcDate) {
 export async function saveDigDay (payload) {
   const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: hubAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload),
   })
 

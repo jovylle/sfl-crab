@@ -42,6 +42,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/hub-auth/*"
+  to = "/.netlify/functions/hub-auth/:splat"
+  status = 200
+
+[[redirects]]
   from = "/api/practice-runs"
   to = "/.netlify/functions/practice-runs"
   status = 200
@@ -75,5 +80,5 @@
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, x-admin-password"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, x-admin-password, Accept"
     Access-Control-Allow-Methods = "GET, POST, DELETE, OPTIONS"

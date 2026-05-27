@@ -1,47 +1,50 @@
+import {
+  HUB_ANONYMOUS_ID_KEY,
+  HUB_DISPLAY_NAME_KEY,
+  PRACTICE_NICKNAME_KEY,
+  PRACTICE_SAVE_SCORES_KEY,
+} from '@/constants/storageKeys.js'
+import { hubAuthHeaders } from '@/features/hub/hubClient.js'
+import { getHubDisplayName } from '@/composables/useHubSession.js'
+
 const PRACTICE_RUNS_URL = '/api/practice-runs'
-const ANON_KEY = 'sfl-hub-anonymous-id'
-const SESSION_KEY = 'sfl-hub-session'
-const SAVE_SCORES_KEY = 'sfl-practice-save-scores'
-const NICKNAME_KEY = 'sfl-practice-nickname'
 
 export function isPracticeSaveScoresEnabled () {
   if (typeof localStorage === 'undefined') return true
-  const v = localStorage.getItem(SAVE_SCORES_KEY)
+  const v = localStorage.getItem(PRACTICE_SAVE_SCORES_KEY)
   return v !== '0'
 }
 
 export function setPracticeSaveScoresEnabled (enabled) {
   if (typeof localStorage === 'undefined') return
-  localStorage.setItem(SAVE_SCORES_KEY, enabled ? '1' : '0')
+  localStorage.setItem(PRACTICE_SAVE_SCORES_KEY, enabled ? '1' : '0')
 }
 
 export function getNickname () {
   if (typeof localStorage === 'undefined') return ''
-  return localStorage.getItem(NICKNAME_KEY) || ''
+  const fromHub = getHubDisplayName()
+  if (fromHub) return fromHub.slice(0, 32)
+  return localStorage.getItem(PRACTICE_NICKNAME_KEY) || ''
 }
 
 export function setNickname (name) {
   if (typeof localStorage === 'undefined') return
   const trimmed = String(name || '').trim().slice(0, 32)
   if (trimmed) {
-    localStorage.setItem(NICKNAME_KEY, trimmed)
+    localStorage.setItem(PRACTICE_NICKNAME_KEY, trimmed)
+    localStorage.setItem(HUB_DISPLAY_NAME_KEY, trimmed)
   } else {
-    localStorage.removeItem(NICKNAME_KEY)
+    localStorage.removeItem(PRACTICE_NICKNAME_KEY)
   }
 }
 
 function getAnonymousId () {
-  let id = localStorage.getItem(ANON_KEY)
+  let id = localStorage.getItem(HUB_ANONYMOUS_ID_KEY)
   if (!id) {
     id = crypto.randomUUID()
-    localStorage.setItem(ANON_KEY, id)
+    localStorage.setItem(HUB_ANONYMOUS_ID_KEY, id)
   }
   return id
-}
-
-function authHeaders () {
-  const token = localStorage.getItem(SESSION_KEY)
-  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 /**
@@ -67,7 +70,7 @@ export async function submitPracticeRun (payload) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...authHeaders(),
+      ...hubAuthHeaders(),
     },
     body: JSON.stringify({
       ...payload,

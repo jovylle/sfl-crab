@@ -42,6 +42,8 @@
             </button>
           </li>
         </ul>
+        <div class="divider px-5">Account</div>
+        <AccountSection />
         <div class="divider px-5">Land Sync</div>
         <div>
           <LandControls />
@@ -69,6 +71,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
+import AccountSection from '@/components/AccountSection.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 

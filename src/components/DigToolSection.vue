@@ -2,6 +2,29 @@
   <div class="flex flex-col gap-1.5">
   <p v-if="digDaySyncLabel" class="text-center text-[0.65rem] text-base-content/60 m-0 px-1">
     {{ digDaySyncLabel }}
+    <router-link
+      v-if="digDaySyncStatus === 'auth_required'"
+      to="/login"
+      class="link link-primary ml-1"
+    >
+      Sign in
+    </router-link>
+  </p>
+  <p
+    v-if="signedInLabel"
+    class="text-center text-[0.65rem] text-base-content/50 m-0 px-1"
+  >
+    {{ signedInLabel }}
+  </p>
+  <p v-if="hubReplayUrl" class="text-center text-[0.65rem] m-0 px-1">
+    <a
+      :href="hubReplayUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="link link-secondary"
+    >
+      Open hub replay
+    </a>
   </p>
   <div class="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
     <InputLandIdOrRefresh />
@@ -104,10 +127,12 @@ import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
+import { useHubSession } from '@/composables/useHubSession.js'
 
 const route  = useRoute()
 const router = useRouter()
 const { isTestServer } = useApiEnvironment()
+const { isAuthenticated, accountLabel } = useHubSession()
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
 
@@ -118,7 +143,13 @@ const props = defineProps({
   digDaySyncStatus: { type: String, default: 'idle' },
   digDayUpdatedAt: { type: String, default: null },
   digDaySyncError: { type: String, default: null },
+  hubReplayUrl: { type: String, default: null },
   canReplay: { type: Boolean, default: false },
+})
+
+const signedInLabel = computed(() => {
+  if (!route.params.landId || !isAuthenticated.value) return ''
+  return `Signed in as ${accountLabel.value}`
 })
 
 const marksLinkCopied = ref(false)
@@ -165,6 +196,8 @@ const digDaySyncLabel = computed(() => {
       return props.digDayUpdatedAt
         ? `Dig day saved · ${formatShortTime(props.digDayUpdatedAt)}`
         : 'Dig day saved'
+    case 'auth_required':
+      return props.digDaySyncError || 'Sign in to save dig day to your account.'
     case 'error':
       return (
         props.digDaySyncError ||

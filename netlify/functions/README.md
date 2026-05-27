@@ -1,11 +1,19 @@
 # Netlify Functions
 
+## Hub auth (`hub-auth`)
+
+Proxies `/api/hub-auth/*` → `{HUB_API_BASE}/v1/auth/*` (passwordless: Google OAuth, email OTP, `/me`, logout).
+
+Forwards `Authorization` when present. Hub backend must implement these routes (no password endpoints).
+
 ## Dig day snapshots (`dig-day`)
 
 Proxies to **SFL Digging Hub** (`HUB_API_BASE` + `HUB_WRITE_SECRET` in Netlify env).
 
 - **GET** `/api/dig-day?landId=12345&utcDate=2026-05-18`
 - **POST** `/api/dig-day` with JSON body (`v`, `landId`, `utcDate`, `patterns`, `digs`, `markEvents`, `stats`)
+
+Forwards `Authorization` when present (signed-in attribution). Guests still POST via `X-Hub-Write-Secret`.
 
 Data is public by `landId`. Mark events merge append-only by `seq` (handled on hub).
 
