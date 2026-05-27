@@ -45,7 +45,6 @@ export function withTestnetQuery (query, useTestnet) {
   } else {
     delete next[TESTNET_QUERY]
   }
-  delete next.api
   return next
 }
 
