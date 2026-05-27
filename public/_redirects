@@ -1,6 +1,7 @@
 /api/practice-patterns    /.netlify/functions/practice-patterns   200
 /api/build-daily-pattern  /.netlify/functions/build-daily-pattern 200
 /api/dig-day              /.netlify/functions/dig-day             200
+/api/hub-auth/*           /.netlify/functions/hub-auth/:splat     200
 /api/practice-runs        /.netlify/functions/practice-runs       200
 /api/practice-run         /.netlify/functions/practice-run        200
 /api/admin-blobs          /.netlify/functions/admin-blobs         200

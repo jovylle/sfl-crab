@@ -60,7 +60,14 @@ function hubBase () {
  * Map /api/hub-auth/... → /v1/auth/...
  */
 function hubAuthSubpath (event) {
-  const raw = event.path || ''
+  const params = event.pathParameters || {}
+  const splat = params.splat || params.proxy
+  if (splat) {
+    const segment = String(splat).replace(/^\/+/, '')
+    return segment ? `/${segment}` : '/me'
+  }
+
+  const raw = event.rawPath || event.path || ''
   const fromApi = raw.match(/\/api\/hub-auth(\/.*)?$/)
   const fromFn = raw.match(/\/\.netlify\/functions\/hub-auth(\/.*)?$/)
   const sub = (fromApi && fromApi[1]) || (fromFn && fromFn[1]) || ''

@@ -23,8 +23,12 @@ export async function sendEmailOtp (email) {
     body: JSON.stringify({ email: String(email || '').trim().toLowerCase() }),
   })
   if (!res.ok) {
+    const fallback =
+      res.status === 404
+        ? 'Sign-in is not available on the hub API yet. Try again after the hub auth service is deployed.'
+        : 'Could not send code'
     throw new HubAuthError(
-      data?.error || data?.message || 'Could not send code',
+      data?.error || data?.message || fallback,
       { status: res.status },
     )
   }

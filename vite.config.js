@@ -33,6 +33,11 @@ export default defineConfig(({ mode }) => {
   },
   server: {
     proxy: {
+      // Local Netlify functions (hub-auth not on remote beta site)
+      '/api/hub-auth': {
+        target: env.VITE_NETLIFY_DEV_URL || 'http://localhost:8888',
+        changeOrigin: true,
+      },
       '/api': {
         target: apiProxyTarget,
         changeOrigin: true,
