@@ -50,10 +50,6 @@
               <input v-model="showOrder" type="checkbox" class="checkbox checkbox-sm" />
               <span class="label-text text-sm">Show dig order</span>
             </label>
-            <label class="label cursor-pointer gap-2 py-0">
-              <input v-model="showLabels" type="checkbox" class="checkbox checkbox-sm" />
-              <span class="label-text text-sm">Show item names</span>
-            </label>
             <button class="btn btn-xs btn-outline" @click="copyShareUrl">
               {{ copied ? 'Copied!' : 'Copy share link' }}
             </button>
@@ -64,7 +60,7 @@
             :cell-items="gridView.cellItems"
             :treasure-order-map="gridView.treasureOrderMap"
             :show-treasure-order="showOrder"
-            :show-item-labels="showLabels"
+            :show-item-labels="false"
           />
 
           <div v-if="run.patternKeys?.length" class="space-y-2">
@@ -144,7 +140,6 @@ const loadState = ref('loading')
 const errorMessage = ref('')
 const run = ref({})
 const showOrder = ref(true)
-const showLabels = ref(true)
 const copied = ref(false)
 
 const gridView = computed(() => buildPublicDigView(run.value.digs || []))
