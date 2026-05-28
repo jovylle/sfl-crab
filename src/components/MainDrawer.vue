@@ -2,15 +2,6 @@
   <div class="drawer drawer-end z-50">
     <input id="main-drawer" type="checkbox" class="drawer-toggle" />
 
-    <div class="fixed bottom-4 right-4">
-      <label
-        for="main-drawer"
-        class="btn btn-primary btn-lg btn-circle shadow-xl text-2xl"
-      >
-        <span class="-mt-1 text-white dark:text-black">☰</span>
-      </label>
-    </div>
-
     <div class="drawer-side">
       <label for="main-drawer" class="drawer-overlay"></label>
       <div class="menu p-4 w-60 sm:w-80 min-h-full bg-base-100 text-base-content flex flex-col">

@@ -10,19 +10,29 @@
       <!-- Tabs -->
       <div
         v-if="!hideChrome"
-        class="tabs tabs-lift tabs-sm sm:tabs-md md:tabs-lg "
+        class="flex items-end justify-between gap-2"
       >
-        <!-- Turn each tab into a router-link -->
-        <router-link
-          v-for="tab in tabs"
-          :key="tab.label"
-          :to="tab.to"
-          class="tab flex items-center"
-          active-class="tab-active"
+        <div class="tabs tabs-lift tabs-sm sm:tabs-md md:tabs-lg flex-1">
+          <!-- Turn each tab into a router-link -->
+          <router-link
+            v-for="tab in tabs"
+            :key="tab.label"
+            :to="tab.to"
+            class="tab flex items-center"
+            active-class="tab-active"
+          >
+            <!-- optional: your SVG icon goes here before the text -->
+            <span class="truncate">{{ tab.label }}</span>
+          </router-link>
+        </div>
+        <label
+          for="main-drawer"
+          class="btn btn-primary btn-circle btn-sm sm:btn-md shadow-md mb-1 shrink-0"
+          aria-label="Open menu"
+          title="Open menu"
         >
-          <!-- optional: your SVG icon goes here before the text -->
-          <span class="truncate">{{ tab.label }}</span>
-        </router-link>
+          <span class="-mt-0.5 text-white dark:text-black">☰</span>
+        </label>
       </div>
       <!-- Only the active route’s component mounts here -->
       <main class="block bg-base-100 p-2 lg:p-6 flex-1">
