@@ -1,75 +1,81 @@
 <template>
-  <BaseModal
+  <dialog
     :open="open"
-    size="md"
-    title="Dig replay"
-    :subtitle="stepLabel"
-    close-label="Close replay"
+    class="modal"
+    :class="{ 'modal-open': open }"
     @close="$emit('close')"
+    @click.self="$emit('close')"
   >
-    <template #header>
-      <div class="mb-3 pr-8">
-        <h3 class="font-bold text-lg text-primary m-0">Dig replay</h3>
-        <p class="text-xs text-base-content/70 m-0 mt-1">{{ stepLabel }}</p>
-      </div>
-    </template>
+    <div class="modal-box max-w-lg w-[95vw] p-4 sm:p-5 relative">
+      <button
+        type="button"
+        class="btn btn-sm btn-circle btn-ghost absolute top-3 right-3 z-10"
+        aria-label="Close replay"
+        @click="$emit('close')"
+      >
+        <Icon icon="mdi:close" class="w-4 h-4" />
+      </button>
 
-    <div
-      ref="captureEl"
-      class="replay-export bg-base-100 rounded-lg"
-      :class="{ 'replay-export-capturing': exportingGif }"
-    >
-      <div class="replay-capture bg-base-200/30 rounded-lg p-1">
-        <ReplayGrid
-          :cells="replayCells"
-          :treasure-order-map="replayOrderMap"
-          :show-treasure-order="true"
+      <div
+        ref="captureEl"
+        class="replay-export bg-base-100 rounded-lg pr-8"
+        :class="{ 'replay-export-capturing': exportingGif }"
+      >
+        <div class="mb-3">
+          <h3 class="font-bold text-lg text-primary m-0">Dig replay</h3>
+          <p class="text-xs text-base-content/70 m-0 mt-1">{{ stepLabel }}</p>
+        </div>
+
+        <div class="replay-capture bg-base-200/30 rounded-lg p-1">
+          <ReplayGrid
+            :cells="replayCells"
+            :treasure-order-map="replayOrderMap"
+            :show-treasure-order="true"
+          />
+        </div>
+
+        <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
+          Step 0 = before any dig. Marks show when they were placed. Partial sessions replay fine.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 mt-4">
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          @click="$emit('toggle-play')"
+        >
+          {{ isPlaying ? 'Pause' : 'Play' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline"
+          :disabled="step <= 0"
+          aria-label="Previous step"
+          @click="$emit('prev')"
+        >
+          <Icon icon="mdi:chevron-left" class="w-4 h-4" />
+        </button>
+        <input
+          type="range"
+          class="range range-primary range-xs flex-1 min-w-[100px]"
+          :min="0"
+          :max="maxStep"
+          :value="step"
+          @input="$emit('update:step', Number($event.target.value))"
         />
+        <button
+          type="button"
+          class="btn btn-sm btn-outline"
+          :disabled="step >= maxStep"
+          aria-label="Next step"
+          @click="$emit('next')"
+        >
+          <Icon icon="mdi:chevron-right" class="w-4 h-4" />
+        </button>
       </div>
 
-      <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
-        Step 0 = before any dig. Marks show when they were placed. Partial sessions replay fine.
-      </p>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2 mt-4">
-      <button
-        type="button"
-        class="btn btn-sm btn-primary"
-        @click="$emit('toggle-play')"
-      >
-        {{ isPlaying ? 'Pause' : 'Play' }}
-      </button>
-      <button
-        type="button"
-        class="btn btn-sm btn-outline"
-        :disabled="step <= 0"
-        aria-label="Previous step"
-        @click="$emit('prev')"
-      >
-        <Icon icon="mdi:chevron-left" class="w-4 h-4" />
-      </button>
-      <input
-        type="range"
-        class="range range-primary range-xs flex-1 min-w-[100px]"
-        :min="0"
-        :max="maxStep"
-        :value="step"
-        @input="$emit('update:step', Number($event.target.value))"
-      />
-      <button
-        type="button"
-        class="btn btn-sm btn-outline"
-        :disabled="step >= maxStep"
-        aria-label="Next step"
-        @click="$emit('next')"
-      >
-        <Icon icon="mdi:chevron-right" class="w-4 h-4" />
-      </button>
-    </div>
-
-    <template #actions>
-      <div class="flex flex-wrap justify-center gap-2 w-full">
+      <div class="modal-action flex-wrap justify-center gap-2 mt-2 sm:mt-0">
         <button
           v-if="replayShareUrl"
           type="button"
@@ -87,14 +93,16 @@
           {{ exportingGif ? exportProgressLabel : 'Export GIF' }}
         </button>
       </div>
-    </template>
-  </BaseModal>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button type="submit" @click.prevent="$emit('close')">close</button>
+    </form>
+  </dialog>
 </template>
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseModal from '@/components/BaseModal.vue'
 import ReplayGrid from '@/components/ReplayGrid.vue'
 import { buildReplayShareUrl } from '@/utils/shareLinks.js'
 import { exportReplayGif, downloadGif } from '@/utils/exportReplayGif.js'
