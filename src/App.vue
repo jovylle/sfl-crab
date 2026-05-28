@@ -27,7 +27,7 @@
         </div>
         <label
           for="main-drawer"
-          class="btn btn-primary btn-sm sm:btn-md rounded-t-xl rounded-b-none shadow-none border border-base-300 border-b-0 px-4 shrink-0"
+          class="btn btn-primary btn-sm sm:btn-md rounded-xl mb-2 shadow-none border border-base-300 border-b-0 px-4 shrink-0"
           aria-label="Open menu"
           title="Open menu"
         >
