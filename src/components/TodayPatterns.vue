@@ -21,22 +21,25 @@
         v-for="(key, i) in patternKeys"
         :key="i"
         type="button"
-        :aria-label="patternAriaLabel(key)"
-        :title="patternTitle(key)"
+        :aria-label="patternAriaLabel(key, i)"
+        :title="patternTitle(key, i)"
         @click="toggleMark(i)"
         :class="[
-          'max-w-[100px] pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
+          'max-w-[100px] pattern-thumb cursor-pointer transition-shadow relative group overflow-hidden',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
-          isServerCompleted(key)
-            ? 'tooltip pattern-thumb--completed ring-2 ring-primary shadow-md'
-            : isMarked(i)
+          isServerCompleted(i)
+            ? 'tooltip pattern-thumb--completed'
+            : 'rounded-sm',
+          !isServerCompleted(i) && (
+            isMarked(i)
               ? 'bg-success'
-              : 'bg-base-100 dark:bg-neutral-content',
+              : 'bg-base-100 dark:bg-neutral-content'
+          ),
         ]"
-        :data-tip="isServerCompleted(key) ? serverCompletedTooltip : undefined"
+        :data-tip="isServerCompleted(i) ? serverCompletedTooltip : undefined"
       >
         <span
-          v-if="isServerCompleted(key)"
+          v-if="isServerCompleted(i)"
           class="pattern-thumb-check"
           aria-hidden="true"
         >✓</span>
@@ -75,9 +78,23 @@ const {
   completedPatternKeys,
 } = useLandData()
 
-const completedPatternSet = computed(
-  () => new Set(completedPatternKeys.value),
-)
+/** One completedPatterns entry → one thumb (left-to-right), even if keys repeat. */
+const serverCompletedIndexes = computed(() => {
+  const remaining = new Map<string, number>()
+  for (const key of completedPatternKeys.value) {
+    remaining.set(key, (remaining.get(key) ?? 0) + 1)
+  }
+
+  const indexes = new Set<number>()
+  patternKeys.value.forEach((key, index) => {
+    const left = remaining.get(key) ?? 0
+    if (left > 0) {
+      indexes.add(index)
+      remaining.set(key, left - 1)
+    }
+  })
+  return indexes
+})
 
 const serverCompletedTooltip =
   'Pattern solved — confirmed by the server'
@@ -110,19 +127,19 @@ function patternLabel(key: string) {
     .join(' ')
 }
 
-function isServerCompleted(key: string) {
-  return completedPatternSet.value.has(key)
+function isServerCompleted(index: number) {
+  return serverCompletedIndexes.value.has(index)
 }
 
-function patternTitle(key: string) {
+function patternTitle(key: string, index: number) {
   const label = patternLabel(key)
-  return isServerCompleted(key)
+  return isServerCompleted(index)
     ? `${label} — ${serverCompletedTooltip}`
     : label
 }
 
-function patternAriaLabel(key: string) {
-  return patternTitle(key)
+function patternAriaLabel(key: string, index: number) {
+  return patternTitle(key, index)
 }
 
 function toggleMark(index: number) {
