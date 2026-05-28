@@ -414,6 +414,29 @@ body {
   line-height: 0;
 }
 
+.digging-patterns-col .pattern-thumb--completed {
+  background-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-base-100));
+}
+
+.digging-patterns-col .pattern-thumb-check {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
 .digging-patterns-col .pattern-thumb {
   display: inline-block;
   vertical-align: top;

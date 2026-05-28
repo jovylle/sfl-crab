@@ -21,17 +21,25 @@
         v-for="(key, i) in patternKeys"
         :key="i"
         type="button"
-        :aria-label="patternLabel(key)"
-        :title="patternLabel(key)"
+        :aria-label="patternAriaLabel(key)"
+        :title="patternTitle(key)"
         @click="toggleMark(i)"
         :class="[
           'max-w-[100px] pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
-          isMarked(i)
-            ? 'bg-success'
-            : 'bg-base-100 dark:bg-neutral-content',
+          isServerCompleted(key)
+            ? 'tooltip pattern-thumb--completed ring-2 ring-primary shadow-md'
+            : isMarked(i)
+              ? 'bg-success'
+              : 'bg-base-100 dark:bg-neutral-content',
         ]"
+        :data-tip="isServerCompleted(key) ? serverCompletedTooltip : undefined"
       >
+        <span
+          v-if="isServerCompleted(key)"
+          class="pattern-thumb-check"
+          aria-hidden="true"
+        >✓</span>
         <div
           class="pattern-preview"
         >
@@ -61,7 +69,18 @@ import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
-const { dailyPatternKeys: patternKeys, dailyPatternDate } = useLandData()
+const {
+  dailyPatternKeys: patternKeys,
+  dailyPatternDate,
+  completedPatternKeys,
+} = useLandData()
+
+const completedPatternSet = computed(
+  () => new Set(completedPatternKeys.value),
+)
+
+const serverCompletedTooltip =
+  'Pattern solved — confirmed by the server'
 const marked = ref<Set<number>>(new Set()) // Use index as the identifier
 const now = useNow({ interval: 30000 })
 const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))
@@ -89,6 +108,21 @@ function patternLabel(key: string) {
     .split('_')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ')
+}
+
+function isServerCompleted(key: string) {
+  return completedPatternSet.value.has(key)
+}
+
+function patternTitle(key: string) {
+  const label = patternLabel(key)
+  return isServerCompleted(key)
+    ? `${label} — ${serverCompletedTooltip}`
+    : label
+}
+
+function patternAriaLabel(key: string) {
+  return patternTitle(key)
 }
 
 function toggleMark(index: number) {
