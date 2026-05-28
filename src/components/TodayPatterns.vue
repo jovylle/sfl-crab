@@ -30,11 +30,9 @@
           isServerCompleted(i)
             ? 'tooltip pattern-thumb--completed'
             : 'rounded-sm',
-          !isServerCompleted(i) && (
-            isMarked(i)
-              ? 'bg-success'
-              : 'bg-base-100 dark:bg-neutral-content'
-          ),
+          isMarked(i)
+            ? 'bg-success'
+            : 'bg-base-100 dark:bg-neutral-content',
         ]"
         :data-tip="isServerCompleted(i) ? serverCompletedTooltip : undefined"
       >
