@@ -50,6 +50,10 @@
       :is-playing="replayIsPlaying"
       :replay-cells="replayCells"
       :replay-order-map="replayOrderMap"
+      :pattern-keys="dailyPatternKeys"
+      :pattern-date-label="replayPatternDateLabel"
+      :marked-pattern-indexes="markedPatternIndexList"
+      :completed-pattern-indexes="completedPatternIndexList"
       @close="closeReplay()"
       @prev="stepPrev()"
       @next="stepNext()"
@@ -84,6 +88,8 @@ import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
 import { useDigDayStore } from '@/composables/useDigDayStore.js'
 import { useDigReplay } from '@/composables/useDigReplay.js'
 import { buildTreasureOrderMap } from '@/utils/buildDigTimeline.js'
+import { buildServerCompletedIndexes } from '@/utils/patternPreview.js'
+import { usePatternMarks } from '@/composables/usePatternMarks.js'
 import {
   decodeGridState,
   applySharedMarks,
@@ -103,8 +109,28 @@ const hideLandIdInUrl = useLocalStorage(
 
 const grid = useGridManager(landId)
 const defaults = { visitedFarmState: { inventory: {}, desert: { digging: { grid: [] } } } }
-const { desert, dailyPatternKeys } = useLandData(defaults)
+const {
+  desert,
+  dailyPatternKeys,
+  dailyPatternDate,
+  completedPatternKeys,
+} = useLandData(defaults)
 const hasDailyPatterns = computed(() => dailyPatternKeys.value.length > 0)
+
+const { markedIndexes: markedPatternIndexes } = usePatternMarks(landId)
+const markedPatternIndexList = computed(() => [...markedPatternIndexes.value])
+const completedPatternIndexList = computed(() => [
+  ...buildServerCompletedIndexes(
+    dailyPatternKeys.value,
+    completedPatternKeys.value,
+  ),
+])
+const replayPatternDateLabel = computed(() => {
+  const raw = dailyPatternDate.value
+  if (!raw) return ''
+  const [year, month, day] = raw.split('-')
+  return `${Number(month)}/${Number(day)}/${year}`
+})
 
 const {
   syncStatus: digDaySyncStatus,

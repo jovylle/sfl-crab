@@ -34,6 +34,25 @@
           />
         </div>
 
+        <div
+          v-if="patternKeys.length"
+          class="digging-patterns replay-patterns mt-3"
+        >
+          <p class="text-xs font-semibold text-center m-0 mb-2">
+            Today&apos;s patterns
+            <span
+              v-if="patternDateLabel"
+              class="font-normal text-base-content/70"
+            >({{ patternDateLabel }})</span>
+          </p>
+          <PatternStrip
+            :pattern-keys="patternKeys"
+            :marked-indexes="markedPatternIndexes"
+            :completed-indexes="completedPatternIndexes"
+            readonly
+          />
+        </div>
+
         <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
           Step 0 = before any dig. Marks show when they were placed. Partial sessions replay fine.
         </p>
@@ -104,6 +123,7 @@
 import { ref, computed, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
 import ReplayGrid from '@/components/ReplayGrid.vue'
+import PatternStrip from '@/components/PatternStrip.vue'
 import { buildReplayShareUrl } from '@/utils/shareLinks.js'
 import { exportReplayGif, downloadGif } from '@/utils/exportReplayGif.js'
 import { copyToClipboard } from '@/utils/gridStateCodec.js'
@@ -117,6 +137,10 @@ const props = defineProps({
   isPlaying: { type: Boolean, default: false },
   replayCells: { type: Array, default: () => [] },
   replayOrderMap: { type: Array, default: () => [] },
+  patternKeys: { type: Array, default: () => [] },
+  patternDateLabel: { type: String, default: '' },
+  markedPatternIndexes: { type: Array, default: () => [] },
+  completedPatternIndexes: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits([

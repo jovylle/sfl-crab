@@ -16,87 +16,42 @@
       </span>
     </h2>
 
-    <div class="pattern-strip">
-      <button
-        v-for="(key, i) in patternKeys"
-        :key="i"
-        type="button"
-        :aria-label="patternAriaLabel(key, i)"
-        :title="patternTitle(key, i)"
-        @click="toggleMark(i)"
-        :class="[
-          'max-w-[100px] pattern-thumb cursor-pointer transition-shadow relative group overflow-hidden',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
-          isServerCompleted(i)
-            ? 'tooltip pattern-thumb--completed'
-            : 'rounded-sm',
-          isMarked(i)
-            ? 'bg-success'
-            : 'bg-base-100 dark:bg-neutral-content',
-        ]"
-        :data-tip="isServerCompleted(i) ? serverCompletedTooltip : undefined"
-      >
-        <span
-          v-if="isServerCompleted(i)"
-          class="pattern-thumb-check"
-          aria-hidden="true"
-        >✓</span>
-        <div
-          class="pattern-preview"
-        >
-          <div
-            v-for="cell in 16"
-            :key="cell"
-            class="pattern-cell"
-          >
-            <img
-              v-if="getPlotAt(key, cell)"
-              :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name)).value"
-              :alt="getPlotAt(key, cell).name"
-              class="w-full max-w-full max-h-full object-contain"
-            />
-          </div>
-        </div>
-      </button>
-    </div>
+    <PatternStrip
+      :pattern-keys="patternKeys"
+      :marked-indexes="markedIndexList"
+      :completed-indexes="completedIndexList"
+      @toggle-mark="toggleMark"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useNow } from '@vueuse/core'
 import { useLandData } from '../composables/useLandData'
-import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
-import { useReliableAssets } from '@/composables/useReliableAssets.js'
-// Use reliable assets composable
-const { getImageSrc } = useReliableAssets()
+import { usePatternMarks } from '@/composables/usePatternMarks.js'
+import { buildServerCompletedIndexes } from '@/utils/patternPreview.js'
+import PatternStrip from '@/components/PatternStrip.vue'
+
+const route = useRoute()
+const landId = String(route.params.landId || '')
+
 const {
   dailyPatternKeys: patternKeys,
   dailyPatternDate,
   completedPatternKeys,
 } = useLandData()
 
-/** One completedPatterns entry → one thumb (left-to-right), even if keys repeat. */
-const serverCompletedIndexes = computed(() => {
-  const remaining = new Map<string, number>()
-  for (const key of completedPatternKeys.value) {
-    remaining.set(key, (remaining.get(key) ?? 0) + 1)
-  }
+const { markedIndexes, toggleMark } = usePatternMarks(landId)
 
-  const indexes = new Set<number>()
-  patternKeys.value.forEach((key, index) => {
-    const left = remaining.get(key) ?? 0
-    if (left > 0) {
-      indexes.add(index)
-      remaining.set(key, left - 1)
-    }
-  })
-  return indexes
-})
+const serverCompletedIndexes = computed(() =>
+  buildServerCompletedIndexes(patternKeys.value, completedPatternKeys.value),
+)
 
-const serverCompletedTooltip =
-  'Pattern solved — confirmed by the server'
-const marked = ref<Set<number>>(new Set()) // Use index as the identifier
+const markedIndexList = computed(() => [...markedIndexes.value])
+const completedIndexList = computed(() => [...serverCompletedIndexes.value])
+
 const now = useNow({ interval: 30000 })
 const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))
 const displayedPatternDate = computed(() => dailyPatternDate.value || currentUtcDate.value)
@@ -114,90 +69,4 @@ const patternDateTooltip = computed(() => (
     ? `Showing stale patterns from UTC date ${displayedPatternDate.value}. Current UTC date is ${currentUtcDate.value}. Reload to fetch latest patterns.`
     : `Patterns are generated for UTC date ${displayedPatternDate.value}.`
 ))
-
-const GRID_SIZE = 4
-
-function patternLabel(key: string) {
-  return key
-    .toLowerCase()
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
-}
-
-function isServerCompleted(index: number) {
-  return serverCompletedIndexes.value.has(index)
-}
-
-function patternTitle(key: string, index: number) {
-  const label = patternLabel(key)
-  return isServerCompleted(index)
-    ? `${label} — ${serverCompletedTooltip}`
-    : label
-}
-
-function patternAriaLabel(key: string, index: number) {
-  return patternTitle(key, index)
-}
-
-function toggleMark(index: number) {
-  marked.value.has(index)
-    ? marked.value.delete(index)
-    : marked.value.add(index)
-}
-
-function isMarked(index: number) {
-  return marked.value.has(index)
-}
-
-function getFormationBounds(formation: Array<{ x: number, y: number }>) {
-  if (!formation.length) {
-    return {
-      minX: 0,
-      minY: 0,
-      width: 0,
-      height: 0,
-    }
-  }
-
-  const xs = formation.map(plot => plot.x)
-  const ys = formation.map(plot => plot.y)
-  const minX = Math.min(...xs)
-  const maxX = Math.max(...xs)
-  const minY = Math.min(...ys)
-  const maxY = Math.max(...ys)
-
-  return {
-    minX,
-    minY,
-    width: maxX - minX + 1,
-    height: maxY - minY + 1,
-  }
-}
-
-function getPreviewOffset(formation: Array<{ x: number, y: number }>) {
-  const { minX, minY, width, height } = getFormationBounds(formation)
-
-  return {
-    x: Math.floor((GRID_SIZE - width) / 2) - minX,
-    y: Math.floor((GRID_SIZE - height) / 2) - minY,
-  }
-}
-
-function getPlotAt(key: string, cellIndex: number) {
-  const formation = DIGGING_FORMATIONS[key as keyof typeof DIGGING_FORMATIONS] || []
-  const idx = cellIndex - 1
-  const col = idx % GRID_SIZE            // 0..3
-  const row = Math.floor(idx / GRID_SIZE) // 0..3
-
-  const offset = getPreviewOffset(formation)
-  const x = col - offset.x
-  const y = row - offset.y
-
-  return formation.find(plot => plot.x === x && plot.y === y) || null
-}
-
-function getImageUrl(name: string) {
-  return `/world/${name.toLowerCase().replace(/\s+/g, '_')}.webp`
-}
 </script>
