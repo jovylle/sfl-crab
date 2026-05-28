@@ -27,7 +27,7 @@
         </div>
         <label
           for="main-drawer"
-          class="btn btn-primary btn-sm sm:btn-md rounded-xl mb-2 shadow-none border border-base-300 border-b-0 px-4 shrink-0"
+          class="btn btn-primary btn-sm sm:btn-md rounded-xl mb-1 shadow-none border border-base-300 border-b-0 px-4 shrink-0"
           aria-label="Open menu"
           title="Open menu"
         >
@@ -36,7 +36,7 @@
             class="h-5 w-5 text-white dark:text-black"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.5"
+            stroke-width="2.5"
             stroke-linecap="round"
             stroke-linejoin="round"
             aria-hidden="true"
