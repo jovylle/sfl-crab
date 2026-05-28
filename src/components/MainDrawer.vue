@@ -6,40 +6,12 @@
       <label for="main-drawer" class="drawer-overlay"></label>
       <div class="menu p-4 w-60 sm:w-80 min-h-full bg-base-100 text-base-content flex flex-col">
         <h2 class="text-xl font-bold mb-4">Menu</h2>
-        <div class="divider px-5">Pages</div>
-        <ul class="space-y-2 my-4">
-          <li>
-            <button
-              class="btn btn-large py-6 btn-block"
-              @click="goToDetails"
-            >
-              Land Raw Details
-            </button>
-          </li>
-          <li>
-            <button
-              class="btn btn-large py-6 btn-block"
-              @click="goToDigging"
-            >
-              Digging
-            </button>
-          </li>
-          <li>
-            <button
-              class="btn btn-large py-6 btn-block"
-              @click="goToChecklist"
-            >
-              Today’s Checklist
-            </button>
-          </li>
-        </ul>
         <div class="divider px-5">Account</div>
         <AccountSection />
         <div class="divider px-5">Land Sync</div>
         <div>
           <LandControls />
         </div>
-        <div class="divider px-5">Links</div>
         <div class="divider px-5 mt-auto">Theme</div>
         <div class="mb-8">
           <ThemeToggle />

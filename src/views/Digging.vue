@@ -135,6 +135,12 @@ const marksGuideBanner = ref(null)
 let marksFromLinkApplied = false
 let replayFromLinkOpened = false
 
+function extractMarksFromLegacyMalformedLink () {
+  const fullPath = String(route.fullPath || '')
+  const match = fullPath.match(/[?&]testnet\?marks=([^&#]+)/)
+  return match?.[1] || null
+}
+
 function stripShareQuery () {
   const q = { ...route.query }
   delete q.replay
@@ -145,7 +151,7 @@ function stripShareQuery () {
 
 function tryApplyMarksFromLink () {
   if (marksFromLinkApplied) return
-  const encoded = route.query.marks || route.query.grid
+  const encoded = route.query.marks || route.query.grid || extractMarksFromLegacyMalformedLink()
   if (!encoded || typeof encoded !== 'string') return
   if (!isValidEncodedState(encoded)) return
   if (!grid.tiles.value.length) return

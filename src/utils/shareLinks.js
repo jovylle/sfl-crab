@@ -8,6 +8,15 @@ function shareOrigin (baseUrl) {
   return 'https://d1g.uk'
 }
 
+function buildShareUrl (base, path, searchParams = {}) {
+  const url = new URL(path, `${base}/`)
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value === null || value === undefined || value === '') continue
+    url.searchParams.set(key, String(value))
+  }
+  return url.toString()
+}
+
 /**
  * Opens dig replay modal on d1g.uk (uses saved dig-day + local marks).
  * @param {string} landId
@@ -18,8 +27,7 @@ export function buildReplayShareUrl (landId, baseUrl, { test = isTestApiEnvironm
   if (!id || id === 'guest' || id === '0') return null
   const base = shareOrigin(baseUrl)
   const path = landDiggingPath(id, { test })
-  const sep = path.includes('?') ? '&' : '?'
-  return `${base}${path}${sep}replay=1`
+  return buildShareUrl(base, path, { replay: '1' })
 }
 
 /**
@@ -51,8 +59,8 @@ export function buildGuideMarksUrl (
   const encoded = encodeMarksPayload(gridManager)
   if (!encoded) return null
   const base = shareOrigin(baseUrl)
-  const param = encodeURIComponent(encoded)
-  return `${base}${landDiggingPath(to, { test })}?marks=${param}`
+  const path = landDiggingPath(to, { test })
+  return buildShareUrl(base, path, { marks: encoded })
 }
 
 /** @deprecated Use buildGuideMarksUrl */
