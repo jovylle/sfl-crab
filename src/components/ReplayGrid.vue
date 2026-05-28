@@ -101,18 +101,20 @@ function getTileLabelMark (tile) {
 </script>
 
 <style scoped>
+/* Inset axis labels so GIF export (html-to-image) does not clip overflow. */
 .contain-please {
   position: relative;
-  --label-size: 10%;
-  padding-top: 0;
-  padding-left: 0;
+  --label-size: 1.25rem;
+  padding-top: var(--label-size);
+  padding-left: var(--label-size);
+  box-sizing: border-box;
 }
 
 .overlay-cols {
   position: absolute;
-  top: calc(var(--label-size) * -1 + 1px);
-  left: 0;
-  width: 100%;
+  top: 0;
+  left: var(--label-size);
+  right: 0;
   height: var(--label-size);
   display: grid;
   grid-template-columns: repeat(10, 1fr);
@@ -121,10 +123,10 @@ function getTileLabelMark (tile) {
 
 .overlay-rows {
   position: absolute;
-  top: 0;
-  left: calc(var(--label-size) * -1 - 2px);
+  top: var(--label-size);
+  left: 0;
   width: var(--label-size);
-  height: 100%;
+  bottom: 0;
   display: grid;
   grid-template-rows: repeat(10, 1fr);
   pointer-events: none;

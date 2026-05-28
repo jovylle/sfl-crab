@@ -6,10 +6,7 @@
     @close="$emit('close')"
     @click.self="$emit('close')"
   >
-    <div
-      class="modal-box w-auto max-w-[95vw] p-4 sm:p-5 relative"
-      :class="patternKeys.length ? '' : 'max-w-lg'"
-    >
+    <div class="modal-box max-w-lg w-[95vw] p-4 sm:p-5 relative">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute top-3 right-3 z-10"
@@ -21,46 +18,39 @@
 
       <div
         ref="captureEl"
-        class="replay-export bg-base-100 rounded-lg"
-        :class="[
-          patternKeys.length ? 'pr-6' : 'pr-8',
-          { 'replay-export-capturing': exportingGif },
-        ]"
+        class="replay-export bg-base-100 rounded-lg pr-8"
+        :class="{ 'replay-export-capturing': exportingGif }"
       >
         <div class="mb-3">
           <h3 class="font-bold text-lg text-primary m-0">Dig replay</h3>
           <p class="text-xs text-base-content/70 m-0 mt-1">{{ stepLabel }}</p>
         </div>
 
-        <div class="replay-workspace">
-          <div class="replay-grid-col">
-            <div class="replay-capture bg-base-200/30 rounded-lg p-1">
-              <ReplayGrid
-                :cells="replayCells"
-                :treasure-order-map="replayOrderMap"
-                :show-treasure-order="true"
-              />
-            </div>
-          </div>
+        <div class="replay-capture bg-base-200/30 rounded-lg p-1">
+          <ReplayGrid
+            :cells="replayCells"
+            :treasure-order-map="replayOrderMap"
+            :show-treasure-order="true"
+          />
+        </div>
 
-          <aside
-            v-if="patternKeys.length"
-            class="replay-patterns-col digging-patterns replay-patterns"
-          >
-            <p class="text-xs font-semibold text-center m-0 mb-1 leading-tight">
-              Today&apos;s patterns
-              <span
-                v-if="patternDateLabel"
-                class="block font-normal text-base-content/70 text-[0.65rem]"
-              >{{ patternDateLabel }}</span>
-            </p>
-            <PatternStrip
-              :pattern-keys="patternKeys"
-              :marked-indexes="markedPatternIndexes"
-              :completed-indexes="completedPatternIndexes"
-              readonly
-            />
-          </aside>
+        <div
+          v-if="patternKeys.length"
+          class="digging-patterns replay-patterns mt-3"
+        >
+          <p class="text-xs font-semibold text-center m-0 mb-2">
+            Today&apos;s patterns
+            <span
+              v-if="patternDateLabel"
+              class="font-normal text-base-content/70"
+            >({{ patternDateLabel }})</span>
+          </p>
+          <PatternStrip
+            :pattern-keys="patternKeys"
+            :marked-indexes="markedPatternIndexes"
+            :completed-indexes="completedPatternIndexes"
+            readonly
+          />
         </div>
 
         <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
@@ -218,28 +208,20 @@ async function exportGif () {
 </script>
 
 <style scoped>
-.replay-workspace {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 0.5rem;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.replay-grid-col {
-  flex: 0 0 auto;
-  width: min(100%, 420px);
-}
-
-.replay-patterns-col {
-  flex: 0 0 auto;
-  width: 5.75rem;
-  align-self: center;
-}
-
 /* GIF capture must not catch .tile background-color mid-transition (style.css 0.1s). */
 .replay-export-capturing :deep(.tile) {
   transition: none !important;
+}
+
+.replay-export-capturing {
+  overflow: visible;
+}
+
+.replay-export-capturing .replay-capture {
+  overflow: visible;
+}
+
+.replay-export-capturing :deep(.contain-please) {
+  overflow: visible;
 }
 </style>

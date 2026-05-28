@@ -501,15 +501,11 @@ body {
   }
 }
 
-/* Replay modal: compact pattern column beside grid (GIF capture) */
+/* Replay modal: patterns below grid (GIF capture) */
 .replay-patterns .pattern-strip {
-  --pattern-cols: 2;
-  --pattern-gap: 0.25rem;
-  margin-inline: 0;
-}
-
-.replay-patterns .pattern-cell {
-  padding: 0;
+  --pattern-cols: 4;
+  max-width: 20rem;
+  margin-inline: auto;
 }
 
 .replay-patterns .pattern-thumb--readonly {
