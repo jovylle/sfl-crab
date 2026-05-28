@@ -31,7 +31,18 @@
           aria-label="Open menu"
           title="Open menu"
         >
-          <span class="-mt-0.5 text-white dark:text-black">☰</span>
+          <svg
+            viewBox="0 0 24 24"
+            class="h-5 w-5 text-white dark:text-black"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
         </label>
       </div>
       <!-- Only the active route’s component mounts here -->
