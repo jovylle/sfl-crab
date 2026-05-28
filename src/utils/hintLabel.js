@@ -1,12 +1,10 @@
-/** Custom mark: short text label (1–2 chars) for dig priority / notes. */
+/** Custom mark: number label (0–9) for dig order / notes — picker keys 1–0. */
 export const HINT_LABEL_PREFIX = 'hint-label:'
-export const HINT_LABEL_ACTION = 'action:hint-label'
 
 export function toHintLabelClass (text) {
-  const trimmed = String(text ?? '').trim()
-  if (!trimmed) return null
-  const safe = trimmed.slice(0, 2)
-  return `${HINT_LABEL_PREFIX}${safe}`
+  const digit = String(text ?? '').trim()
+  if (!/^[0-9]$/.test(digit)) return null
+  return `${HINT_LABEL_PREFIX}${digit}`
 }
 
 export function fromHintLabelClass (cls) {

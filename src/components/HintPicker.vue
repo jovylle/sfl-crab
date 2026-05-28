@@ -63,41 +63,9 @@
         </li>
       </ul>
 
-      <!-- Text label mark — bottom center -->
-      <div class="mt-1 pt-1 border-t border-base-300/80 w-full">
-        <div class="flex justify-center">
-          <div
-            v-if="!labelInputOpen"
-            class="aspect-square w-[28%] min-w-[2.25rem] max-w-[2.75rem] flex items-center justify-center m-0.5 border border-base-300 rounded cursor-pointer hover:bg-base-200/60 tooltip"
-            data-tip="1–2 characters (e.g. dig order)"
-            @click="openLabelInput"
-          >
-            <span class="text-sm sm:text-base font-bold text-primary/80 tracking-tight">12</span>
-          </div>
-          <div
-            v-else
-            class="flex items-center gap-1 py-0.5"
-            @click.stop
-          >
-            <input
-              ref="labelInputRef"
-              v-model="labelDraft"
-              type="text"
-              maxlength="2"
-              class="input input-xs input-bordered w-11 sm:w-12 text-center font-bold uppercase"
-              placeholder="1"
-              @keydown.enter.prevent="submitLabel"
-              @keydown.escape.prevent="cancelLabel"
-            />
-            <button type="button" class="btn btn-xs btn-primary min-h-0 h-7" @click="submitLabel">
-              OK
-            </button>
-          </div>
-        </div>
-        <p class="text-[0.5rem] sm:text-[0.55rem] text-center text-base-content/55 mt-0.5 px-1 leading-tight">
-          Text mark · 1–2 chars
-        </p>
-      </div>
+      <p class="text-[0.5rem] sm:text-[0.55rem] text-center text-base-content/55 mt-1 pt-1 border-t border-base-300/80 px-2 leading-tight">
+        Press <span class="font-semibold text-base-content/70">1</span>–<span class="font-semibold text-base-content/70">0</span> to place a number mark (e.g. dig order)
+      </p>
     </div>
   </div>
 </template>
@@ -120,9 +88,6 @@ const props = defineProps({
 const emit = defineEmits(['pick'])
 const dropdownContent = ref(null)
 const visible = ref(true)
-const labelInputOpen = ref(false)
-const labelDraft = ref('')
-const labelInputRef = ref(null)
 const keyMap = {
   'q': 'hint-red-dot',
   'w': 'hint-potential-treasure',
@@ -169,32 +134,23 @@ function selectHint(idx) {
   visible.value = false
 }
 
+function pickLabelDigit (digit) {
+  const hint = toHintLabelClass(digit)
+  if (!hint) return
+  emit('pick', { tileIndex: props.tileIndex, hint })
+  visible.value = false
+}
+
 function handleKeydown (e) {
-  if (labelInputOpen.value) return
+  if (/^[0-9]$/.test(e.key)) {
+    pickLabelDigit(e.key)
+    return
+  }
   const hint = keyMap[e.key.toLowerCase()]
   if (hint) {
     emit('pick', { tileIndex: props.tileIndex, hint })
     visible.value = false
   }
-}
-
-function openLabelInput () {
-  labelInputOpen.value = true
-  labelDraft.value = ''
-  nextTick(() => labelInputRef.value?.focus())
-}
-
-function cancelLabel () {
-  labelInputOpen.value = false
-  labelDraft.value = ''
-}
-
-function submitLabel () {
-  const hint = toHintLabelClass(labelDraft.value)
-  if (!hint) return
-  emit('pick', { tileIndex: props.tileIndex, hint })
-  visible.value = false
-  cancelLabel()
 }
 
 function selectSuggestedHint(hintClass) {
