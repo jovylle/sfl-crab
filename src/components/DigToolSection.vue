@@ -30,11 +30,12 @@
     <InputLandIdOrRefresh />
     <button
       type="button"
-      class="btn text-base-100 btn-info btn-sm sm:btn-md"
-      @click="goToPractice"
-      title="Go to Practice"
+      class="btn btn-primary btn-sm sm:btn-md"
+      :disabled="!canReplay"
+      @click="$emit('open-replay')"
+      title="Replay today's digs"
     >
-      Practice
+      Replay
     </button>
     <div class="dropdown">
       <div tabindex="0" role="button" class="btn m-1 btn-accent btn-sm sm:btn-md">
@@ -59,12 +60,11 @@
             <!-- Controlled checkbox -->
             <button
               type="button"
-              class="btn btn-primary btn-sm w-full tooltip"
-              data-tip="Play today's digs and marks in a modal"
-              :disabled="!canReplay"
-              @click="$emit('open-replay')"
+              class="btn text-base-100 btn-info btn-sm w-full"
+              @click="goToPractice"
+              title="Go to Practice"
             >
-              Replay
+              Practice
             </button>
 
             <button
