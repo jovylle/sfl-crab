@@ -496,11 +496,10 @@ body {
   }
 }
 
-/* Replay modal: single row of thumbs inside GIF capture */
+/* Replay modal: pattern column beside grid (GIF capture) */
 .replay-patterns .pattern-strip {
-  --pattern-cols: 4;
-  max-width: 20rem;
-  margin-inline: auto;
+  --pattern-cols: 2;
+  margin-inline: 0;
 }
 
 .replay-patterns .pattern-thumb--readonly {

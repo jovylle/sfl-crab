@@ -6,7 +6,10 @@
     @close="$emit('close')"
     @click.self="$emit('close')"
   >
-    <div class="modal-box max-w-lg w-[95vw] p-4 sm:p-5 relative">
+    <div
+      class="modal-box w-[95vw] p-4 sm:p-5 relative"
+      :class="patternKeys.length ? 'max-w-3xl' : 'max-w-lg'"
+    >
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute top-3 right-3 z-10"
@@ -26,31 +29,35 @@
           <p class="text-xs text-base-content/70 m-0 mt-1">{{ stepLabel }}</p>
         </div>
 
-        <div class="replay-capture bg-base-200/30 rounded-lg p-1">
-          <ReplayGrid
-            :cells="replayCells"
-            :treasure-order-map="replayOrderMap"
-            :show-treasure-order="true"
-          />
-        </div>
+        <div class="replay-workspace">
+          <div class="replay-grid-col">
+            <div class="replay-capture bg-base-200/30 rounded-lg p-1">
+              <ReplayGrid
+                :cells="replayCells"
+                :treasure-order-map="replayOrderMap"
+                :show-treasure-order="true"
+              />
+            </div>
+          </div>
 
-        <div
-          v-if="patternKeys.length"
-          class="digging-patterns replay-patterns mt-3"
-        >
-          <p class="text-xs font-semibold text-center m-0 mb-2">
-            Today&apos;s patterns
-            <span
-              v-if="patternDateLabel"
-              class="font-normal text-base-content/70"
-            >({{ patternDateLabel }})</span>
-          </p>
-          <PatternStrip
-            :pattern-keys="patternKeys"
-            :marked-indexes="markedPatternIndexes"
-            :completed-indexes="completedPatternIndexes"
-            readonly
-          />
+          <aside
+            v-if="patternKeys.length"
+            class="replay-patterns-col digging-patterns replay-patterns"
+          >
+            <p class="text-xs font-semibold text-center m-0 mb-2 leading-tight">
+              Today&apos;s patterns
+              <span
+                v-if="patternDateLabel"
+                class="block font-normal text-base-content/70 text-[0.65rem]"
+              >{{ patternDateLabel }}</span>
+            </p>
+            <PatternStrip
+              :pattern-keys="patternKeys"
+              :marked-indexes="markedPatternIndexes"
+              :completed-indexes="completedPatternIndexes"
+              readonly
+            />
+          </aside>
         </div>
 
         <p class="text-[0.65rem] text-base-content/60 m-0 mt-3 text-center">
@@ -208,6 +215,24 @@ async function exportGif () {
 </script>
 
 <style scoped>
+.replay-workspace {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.replay-grid-col {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.replay-patterns-col {
+  flex: 0 0 auto;
+  width: min(100%, 7.5rem);
+  align-self: center;
+}
+
 /* GIF capture must not catch .tile background-color mid-transition (style.css 0.1s). */
 .replay-export-capturing :deep(.tile) {
   transition: none !important;
