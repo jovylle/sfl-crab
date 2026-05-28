@@ -37,6 +37,13 @@
         />
 
         <span
+          v-if="getTileLabelMark(tile)"
+          class="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none font-bold text-error text-base sm:text-xl leading-none"
+        >
+          {{ getTileLabelMark(tile) }}
+        </span>
+
+        <span
           v-if="showTreasureOrder && treasureOrderMap[index]"
           class="absolute top-0 right-0
             w-full h-full
@@ -56,6 +63,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { getLabelFromTile } from '@/utils/hintLabel.js'
 
 defineProps({
   cells: { type: Array, default: () => [] },
@@ -85,6 +93,10 @@ function getTileImage (tile) {
 function normalizeTile (tile) {
   if (Array.isArray(tile)) return tile
   return String(tile).split(' ')
+}
+
+function getTileLabelMark (tile) {
+  return getLabelFromTile(normalizeTile(tile))
 }
 </script>
 

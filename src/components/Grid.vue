@@ -41,6 +41,15 @@
           class="tile-img"
         />
 
+        <!-- custom text label (1–2 chars) -->
+        <span
+          v-if="getTileLabelMark(tile)"
+          class="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none font-bold text-error text-base sm:text-xl leading-none"
+          :title="`Note: ${getTileLabelMark(tile)}`"
+        >
+          {{ getTileLabelMark(tile) }}
+        </span>
+
         <!-- treasure order badge -->
         <span
           v-if="showTreasureOrder && treasureOrderMap[index]"
@@ -95,6 +104,7 @@ import BottomGridInfo from './BottomGridInfo.vue'
 
 import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { getLabelFromTile } from '@/utils/hintLabel.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
@@ -158,6 +168,10 @@ function getTileImage(tile) {
 function normalizeTile(tile) {
   if (Array.isArray(tile)) return tile;
   return String(tile).split(" ");
+}
+
+function getTileLabelMark (tile) {
+  return getLabelFromTile(normalizeTile(tile))
 }
 
 </script>

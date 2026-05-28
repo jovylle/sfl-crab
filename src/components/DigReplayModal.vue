@@ -7,8 +7,8 @@
     @click.self="$emit('close')"
   >
     <div
-      class="modal-box w-[95vw] p-4 sm:p-5 relative"
-      :class="patternKeys.length ? 'max-w-3xl' : 'max-w-lg'"
+      class="modal-box w-auto max-w-[95vw] p-4 sm:p-5 relative"
+      :class="patternKeys.length ? '' : 'max-w-lg'"
     >
       <button
         type="button"
@@ -21,8 +21,11 @@
 
       <div
         ref="captureEl"
-        class="replay-export bg-base-100 rounded-lg pr-8"
-        :class="{ 'replay-export-capturing': exportingGif }"
+        class="replay-export bg-base-100 rounded-lg"
+        :class="[
+          patternKeys.length ? 'pr-6' : 'pr-8',
+          { 'replay-export-capturing': exportingGif },
+        ]"
       >
         <div class="mb-3">
           <h3 class="font-bold text-lg text-primary m-0">Dig replay</h3>
@@ -44,7 +47,7 @@
             v-if="patternKeys.length"
             class="replay-patterns-col digging-patterns replay-patterns"
           >
-            <p class="text-xs font-semibold text-center m-0 mb-2 leading-tight">
+            <p class="text-xs font-semibold text-center m-0 mb-1 leading-tight">
               Today&apos;s patterns
               <span
                 v-if="patternDateLabel"
@@ -219,17 +222,19 @@ async function exportGif () {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .replay-grid-col {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: min(100%, 420px);
 }
 
 .replay-patterns-col {
   flex: 0 0 auto;
-  width: min(100%, 7.5rem);
+  width: 5.75rem;
   align-self: center;
 }
 
