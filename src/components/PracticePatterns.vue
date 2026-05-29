@@ -1,46 +1,45 @@
 <template>
-  <div v-if="patternKeys?.length" class="card grow max-w-[400px] basis-[265px] mx-auto md:mx-0">
-    <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
-      <h2
-        class="card-title w-full flex-nowrap whitespace-nowrap text-center text-sm sm:text-lg"
-        title="Practice Patterns"
+  <div class="digging-patterns">
+    <h2
+      class="text-center text-xs sm:text-sm font-semibold m-0 leading-tight shrink-0"
+      title="Patterns for this practice round"
+    >
+      Round Patterns
+    </h2>
+
+    <div class="pattern-strip">
+      <button
+        v-for="(key, i) in patternKeys"
+        :key="i"
+        type="button"
+        :aria-label="formatKey(key)"
+        :title="formatKey(key)"
+        @click="toggleMark(i)"
+        :class="[
+          'max-w-[100px] pattern-thumb cursor-pointer transition-shadow relative group rounded-sm overflow-hidden',
+          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
+          isMarked(i)
+            ? 'bg-success'
+            : 'bg-base-100 dark:bg-neutral-content',
+        ]"
       >
-        Practice Patterns
-      </h2>
-      <div class="flex flex-wrap gap-2 sm:gap-4">
         <div
-          v-for="(key, i) in patternKeys"
-          :key="i"
-          :class="[
-            'cursor-pointer transition-shadow relative group',
-            isMarked(i)
-              ? 'bg-success'
-              : 'bg-base-100 dark:bg-neutral-content',
-            'md:grow basis-[80px] md:basis-[90px] lg:basis-[120px] max-w-[130px]',
-          ]"
-          @click="toggleMark(i)"
+          class="pattern-preview"
         >
-          <span
-            class="absolute opacity-0 group-hover:opacity-100 transition-opacity left-1/2 transform -translate-x-1/2 -bottom-3 mt-1 text-[0.75rem] bg-base-100 whitespace-nowrap z-10"
+          <div
+            v-for="cell in 16"
+            :key="cell"
+            class="pattern-cell"
           >
-            {{ formatKey(key) }}
-          </span>
-          <div class="grid grid-cols-4 mx-auto border border-base-300 dark:border-slate-500">
-            <div
-              v-for="cell in 16"
-              :key="cell"
-              class="border border-base-300 flex items-center justify-center aspect-square p-0.5"
-            >
-              <img
-                v-if="getPlotAt(key, cell)"
-                :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name)).value"
-                :alt="getPlotAt(key, cell).name"
-                class="max-w-full max-h-full object-contain w-full"
-              />
-            </div>
+            <img
+              v-if="getPlotAt(key, cell)"
+              :src="getImageSrc(getImageUrl(getPlotAt(key, cell).name)).value"
+              :alt="getPlotAt(key, cell).name"
+              class="w-full max-w-full max-h-full object-contain"
+            />
           </div>
         </div>
-      </div>
+      </button>
     </div>
   </div>
 </template>
@@ -52,7 +51,7 @@ import { useReliableAssets } from '@/composables/useReliableAssets.js'
 
 const { getImageSrc } = useReliableAssets()
 
-const props = defineProps({
+defineProps({
   patternKeys: { type: Array, default: () => [] },
 })
 

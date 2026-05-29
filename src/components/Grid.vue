@@ -1,5 +1,5 @@
 <template>
-  <div class="contain-please relative mt-1 sm:mt-4 mx-auto">
+  <div class="contain-please relative mt-0 sm:mt-1 mx-auto">
     <!-- COL LABELS OVERLAY -->
     <div class="overlay-cols text-[0.45rem] sm:text-[0.5rem] lg:text-xs">
       <div
@@ -40,6 +40,15 @@
           alt="treasure"
           class="tile-img"
         />
+
+        <!-- number label mark (keys 1–0) -->
+        <span
+          v-if="getTileLabelMark(tile)"
+          class="hint-label-digit"
+          :title="`Dig order: ${getTileLabelMark(tile)}`"
+        >
+          {{ getTileLabelMark(tile) }}
+        </span>
 
         <!-- treasure order badge -->
         <span
@@ -87,7 +96,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
@@ -95,6 +104,7 @@ import BottomGridInfo from './BottomGridInfo.vue'
 
 import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { getLabelFromTile } from '@/utils/hintLabel.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
@@ -128,7 +138,7 @@ const rowLabels = computed(() =>
 )
 
 // click handler
-function onTileClick(event, index) {
+function onTileClick (event, index) {
   const container   = event.currentTarget.closest('.contain-please')
   const containerR  = container.getBoundingClientRect()
   const tileR       = event.currentTarget.getBoundingClientRect()
@@ -158,6 +168,10 @@ function getTileImage(tile) {
 function normalizeTile(tile) {
   if (Array.isArray(tile)) return tile;
   return String(tile).split(" ");
+}
+
+function getTileLabelMark (tile) {
+  return getLabelFromTile(normalizeTile(tile))
 }
 
 </script>

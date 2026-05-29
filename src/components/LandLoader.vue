@@ -2,7 +2,7 @@
   <div class="flex flex-row space-x-4 items-center">
     <input
       v-model="inputLandId"
-      placeholder="Enter Land ID"
+      :placeholder="landIdPlaceholder"
       class="input input-bordered"
       @input="filterInput"
     />
@@ -21,9 +21,20 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLandSync } from '@/composables/useLandSync'
+import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
+import { getLandDataStorageKey } from '@/config/api.js'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
 
 const route  = useRoute()
 const router = useRouter()
+
+const { isTestServer, testExampleLandId } = useApiEnvironment()
+
+const landIdPlaceholder = computed(() =>
+  isTestServer.value
+    ? `e.g. ${testExampleLandId}`
+    : 'Enter Land ID',
+)
 
 const inputLandId = ref('')
 
@@ -41,15 +52,16 @@ function goToLand() {
   const id = inputLandId.value.trim()
   if (!id) return
 
-  const raw = JSON.parse(localStorage.getItem(`landData_${id}`) || '{}')
+  const raw = JSON.parse(localStorage.getItem(getLandDataStorageKey(id)) || '{}')
   const today = new Date().toISOString().slice(0, 10)
   const isStale = raw?.date !== today
   const isMissingState = !raw?.visitedFarmState
 
-  if (route.name === 'GuestDigging') {
-    router.push({ name: 'Digging', params: { landId: id } })
+  const test = isTestServer.value
+  if (route.name === 'GuestDigging' || route.name === 'TestGuestDigging') {
+    router.push(resolveLandRoute('digging', { landId: id, test }))
   } else {
-    router.push({ name: 'LandDetailsWithId', params: { landId: id } })
+    router.push(resolveLandRoute('details', { landId: id, test }))
   }
 
   if (isMissingState || isStale) {

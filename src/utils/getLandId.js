@@ -1,6 +1,8 @@
 // src/utils/getLandId.js
-export function getLandIdFromUrl () {
-  // e.g. “/3909011227428687” → “3909011227428687”
-  const raw = window.location.pathname.replace(/^\/+|\/+$/g, '')
-  return /^\d+$/.test(raw) ? raw : ''
+export function getLandIdFromUrl (pathname = window.location.pathname) {
+  const segments = pathname.replace(/^\/+|\/+$/g, '').split('/')
+  if (segments[0] === 'test') {
+    return /^\d+$/.test(segments[1]) ? segments[1] : ''
+  }
+  return /^\d+$/.test(segments[0]) ? segments[0] : ''
 }

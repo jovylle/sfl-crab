@@ -1,71 +1,90 @@
 <template>
-  <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
-    <div
-      class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0"
-    >
-      <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
+  <DiggingPageLayout>
+    <template #toolbar>
+      <p class="text-[0.65rem] text-base-content/60 text-center m-0">
+        Unofficial training simulator — no in-game rewards. No data pulled from the live game.
+      </p>
 
-        <!-- Header row -->
-        <div class="flex items-center justify-between gap-2 flex-wrap">
-          <h2 class="card-title text-sm sm:text-base">
+      <div class="flex flex-col gap-2 mt-1.5">
+        <div class="flex items-center justify-center gap-2 flex-wrap">
+          <h2 class="text-sm sm:text-base font-semibold m-0">
             Practice Mode
             <span class="badge badge-secondary badge-sm">Round {{ roundCount }}</span>
+            <span v-if="isReplayMode" class="badge badge-accent badge-sm">Shared Grid</span>
           </h2>
-          <div class="flex gap-2 flex-wrap">
-            <button
-              v-if="!isGameOver"
-              class="btn btn-sm btn-warning"
-              @click="giveUp"
-            >
-              Give Up
-            </button>
-            <button
-              class="btn btn-sm btn-outline"
-              :class="showTimer ? 'btn-success' : ''"
-              @click="showTimer = !showTimer"
-            >
-              {{ showTimer ? 'Hide Timer' : 'Show Timer' }}
-            </button>
-            <button
-              class="btn btn-sm btn-primary"
-              :disabled="isLoading || isStartingTodayRound || todayRoundCooldownActive"
-              @click="newTodayRound"
-            >
-              <span v-if="isStartingTodayRound" class="loading loading-spinner loading-xs"></span>
-              <span v-else-if="todayRoundCooldownActive">
-                Retry later
-              </span>
-              <span v-else>
-                New Today's Pattern Round ↺
-              </span>
-            </button>
-            <button class="btn btn-sm btn-secondary" @click="newRandomRound">
-              New Random Pattern Round
-            </button>
-          </div>
         </div>
 
-        <div class="flex items-center justify-between gap-2 text-xs text-base-content/60">
-          <!-- <span>
-            Today's shared patterns
-            <span v-if="isCachedForToday" class="badge badge-outline badge-xs ml-1">cached</span>
-          </span> -->
-          <span v-if="isLoading || isStartingTodayRound" class="loading loading-dots loading-xs"></span>
+        <div class="flex flex-wrap gap-2 justify-center items-center">
+          <button
+            v-if="!isGameOver"
+            class="btn btn-sm btn-warning"
+            @click="giveUp"
+          >
+            Give Up
+          </button>
+          <button
+            class="btn btn-sm btn-outline"
+            :class="showTimer ? 'btn-success' : ''"
+            @click="showTimer = !showTimer"
+          >
+            {{ showTimer ? 'Hide Timer' : 'Show Timer' }}
+          </button>
+          <label class="label cursor-pointer gap-1 py-0">
+            <input v-model="saveScores" type="checkbox" class="checkbox checkbox-xs" />
+            <span class="label-text text-xs">Save score</span>
+          </label>
+          <button
+            class="btn btn-sm btn-primary"
+            :disabled="isLoading || isStartingTodayRound || todayRoundCooldownActive"
+            @click="newTodayRound"
+          >
+            <span v-if="isStartingTodayRound" class="loading loading-spinner loading-xs"></span>
+            <span v-else-if="todayRoundCooldownActive">
+              Retry later
+            </span>
+            <span v-else>
+              Today&apos;s Patterns ↺
+            </span>
+          </button>
+          <button class="btn btn-sm btn-secondary" @click="newRandomRound">
+            Random Round
+          </button>
+        </div>
+
+        <div class="flex flex-wrap gap-2 justify-center items-center">
+          <input
+            v-model="nickname"
+            type="text"
+            maxlength="32"
+            placeholder="Nickname (optional)"
+            class="input input-bordered input-xs w-36"
+          />
+          <span class="text-xs text-base-content/40">shown on the hub</span>
+        </div>
+      </div>
+    </template>
+
+    <template #grid>
+      <div class="flex flex-col gap-2">
+        <div
+          v-if="isLoading || isStartingTodayRound"
+          class="flex justify-center text-xs text-base-content/60"
+        >
+          <span class="loading loading-dots loading-xs"></span>
         </div>
 
         <div v-if="todayRoundErrorMessage || error" class="alert alert-warning py-2 text-xs">
           <span v-if="todayRoundErrorMessage">{{ todayRoundErrorMessage }}</span>
           <span v-else>{{ error }}</span>
           <span class="block">
-            Use <strong>New Random Pattern Round</strong> for now.
+            Use <strong>Random Round</strong> for now.
           </span>
           <span v-if="todayRoundCooldownActive" class="block">
             Retry available in <strong>5s</strong>.
           </span>
         </div>
 
-        <!-- Live stats -->
-        <div class="flex items-center gap-4 text-sm">
+        <div class="flex items-center justify-center gap-3 sm:gap-4 text-sm flex-wrap">
           <span>
             Digs: <strong class="text-lg">{{ digsMade }}</strong>
           </span>
@@ -80,28 +99,39 @@
           <span class="text-base-content/50 text-xs">lower digs = better</span>
         </div>
 
-        <!-- Game over / victory banner -->
         <div v-if="isGameOver" class="alert py-2 text-sm gap-2" :class="bannerClass">
-          <span v-if="isVictory">
-            🎉 Found all {{ totalTreasures }} treasure{{ totalTreasures !== 1 ? 's' : '' }} in
-            <strong>{{ digsMade }} dig{{ digsMade !== 1 ? 's' : '' }}</strong>!
-            <span v-if="showTimer" class="ml-1">
-              Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+          <div class="flex flex-col gap-1 w-full">
+            <span v-if="isVictory">
+              🎉 Found all {{ totalTreasures }} treasure{{ totalTreasures !== 1 ? 's' : '' }} in
+              <strong>{{ digsMade }} dig{{ digsMade !== 1 ? 's' : '' }}</strong>!
+              <span v-if="showTimer" class="ml-1">
+                Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+              </span>
+              <span v-if="digsMade <= totalTreasures + 2"> Impressive!</span>
             </span>
-            <span v-if="digsMade <= totalTreasures + 2"> Impressive!</span>
-          </span>
-          <span v-else>
-            Round over — found
-            <strong>{{ treasuresFound }}</strong> / {{ totalTreasures }} in
-            <strong>{{ digsMade }}</strong> digs.
-            <span v-if="showTimer" class="ml-1">
-              Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+            <span v-else>
+              Round over — found
+              <strong>{{ treasuresFound }}</strong> / {{ totalTreasures }} in
+              <strong>{{ digsMade }}</strong> digs.
+              <span v-if="showTimer" class="ml-1">
+                Time: <strong class="font-mono">{{ finalTimerText }}</strong>.
+              </span>
+              Ghosted tiles show what was hidden.
             </span>
-            Ghosted tiles show what was hidden.
-          </span>
+            <div v-if="saveScores" class="flex items-center gap-2 mt-0.5">
+              <router-link
+                v-if="lastRunId"
+                :to="{ name: 'PublicPracticeRun', params: { id: lastRunId } }"
+                class="btn btn-xs btn-ghost underline"
+                target="_blank"
+              >
+                View &amp; share run
+              </router-link>
+              <span v-else class="text-xs opacity-60 italic">Saving to hub…</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Practice grid — keyed by round so it fully remounts each game -->
         <PracticeGrid
           :key="`round-${roundCount}`"
           :tiles="displayTiles"
@@ -112,8 +142,7 @@
           @dig="dig"
         />
 
-        <!-- Legend + controls hint -->
-        <div class="flex gap-3 text-[0.65rem] text-base-content/50 mt-1 flex-wrap justify-center">
+        <div class="flex gap-3 text-[0.65rem] text-base-content/50 flex-wrap justify-center">
           <span class="flex items-center gap-1">
             <Icon icon="noto:shovel" class="w-3.5 h-3.5" /> Click to dig
           </span>
@@ -132,22 +161,22 @@
             Right-click to mark
           </span>
         </div>
-
       </div>
-    </div>
+    </template>
 
-    <!-- Right: pattern reference for this round -->
-    <PracticePatterns :pattern-keys="usedFormationKeys" />
-  </div>
+    <template #patterns>
+      <PracticePatterns :pattern-keys="usedFormationKeys" />
+    </template>
 
-  <div>
     <InfoFooter :show-what-is-this="false" :show-features="false" />
-  </div>
+  </DiggingPageLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import DiggingPageLayout from '@/components/DiggingPageLayout.vue'
 import { usePracticeEngine } from '@/composables/usePracticeEngine.js'
 import { usePracticePatterns } from '@/composables/usePracticePatterns.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
@@ -155,8 +184,14 @@ import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import PracticeGrid from '@/components/PracticeGrid.vue'
 import PracticePatterns from '@/components/PracticePatterns.vue'
 import InfoFooter from '@/components/InfoFooter.vue'
+import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled, getNickname, setNickname } from '@/services/practiceHubService.js'
+import { fetchPracticeRun } from '@/services/practiceRunApiService.js'
+import { getTodayUTC } from '@/utils/buildDigTimeline.js'
+import { buildPracticeDigTimeline } from '@/utils/buildPracticeDigTimeline.js'
 
 const ALL_FORMATION_KEYS = Object.keys(DIGGING_FORMATIONS)
+
+const route = useRoute()
 
 const {
   displayTiles,
@@ -165,10 +200,13 @@ const {
   isVictory,
   usedFormationKeys,
   hiddenGrid,
+  digHistory,
+  formationPlacements,
   roundCount,
   treasuresFound,
   totalTreasures,
   startGame,
+  startGameFromPlacements,
   dig,
   giveUp,
   finishGame,
@@ -177,7 +215,6 @@ const {
 const { getImageSrc } = useReliableAssets()
 const {
   error,
-  isCachedForToday,
   isLoading,
   patternKeys,
   refreshPracticePatterns,
@@ -189,9 +226,17 @@ const TODAY_ROUND_ERROR_COOLDOWN_MS = 5000
 const todayRoundCooldownActive = ref(false)
 const todayRoundErrorMessage = ref('')
 const showTimer = ref(true)
+const saveScores = ref(isPracticeSaveScoresEnabled())
+const nickname = ref(getNickname())
+const lastRunId = ref(null)
 const elapsedMs = ref(0)
 const finalElapsedMs = ref(0)
 const roundStartedAt = ref(Date.now())
+const patternSource = ref('daily')
+const patternDate = ref(getTodayUTC())
+const lastSubmittedRound = ref(0)
+const replayRunId = ref(null)
+const isReplayMode = ref(false)
 let timerId = null
 
 const practicePatternKeys = computed(() => {
@@ -259,6 +304,38 @@ watch(isGameOver, done => {
   finalElapsedMs.value = Date.now() - roundStartedAt.value
   elapsedMs.value = finalElapsedMs.value
   stopTimer()
+
+  if (roundCount.value === lastSubmittedRound.value) return
+  lastSubmittedRound.value = roundCount.value
+  lastRunId.value = null
+
+  const digs = buildPracticeDigTimeline(digHistory.value, hiddenGrid.value)
+
+  const submittedSource = patternSource.value === 'replay' ? 'random' : patternSource.value
+
+  void submitPracticeRun({
+    patternSource: submittedSource,
+    patternDate: submittedSource === 'daily' ? patternDate.value : null,
+    patternKeys: [...usedFormationKeys.value],
+    digCount: digsMade.value,
+    durationMs: finalElapsedMs.value,
+    victory: isVictory.value,
+    treasureCount: totalTreasures.value,
+    digs,
+    formations: formationPlacements.value,
+  }).then(data => {
+    if (data?.id) lastRunId.value = data.id
+  }).catch(() => {
+    /* optional hub save — ignore failures */
+  })
+})
+
+watch(saveScores, enabled => {
+  setPracticeSaveScoresEnabled(enabled)
+})
+
+watch(nickname, val => {
+  setNickname(val)
 })
 
 async function newTodayRound () {
@@ -267,14 +344,16 @@ async function newTodayRound () {
   isStartingTodayRound.value = true
   const startedAt = Date.now()
   todayRoundErrorMessage.value = ''
+  patternSource.value = 'daily'
+  patternDate.value = getTodayUTC()
 
   try {
+    lastRunId.value = null
     await nextTick()
     await refreshPracticePatterns()
     startGame(practicePatternKeys.value, { exact: true })
     resetRoundTimer()
   } catch {
-    // If the network is unavailable and no cache exists yet, use the local fallback set.
     todayRoundErrorMessage.value = "Today's pattern round failed to load."
     stopTodayRoundCooldown()
     todayRoundCooldownActive.value = true
@@ -298,8 +377,43 @@ function newRandomRound ({ preserveFailureState = false } = {}) {
     todayRoundErrorMessage.value = ''
     stopTodayRoundCooldown()
   }
+  lastRunId.value = null
+  isReplayMode.value = false
+  replayRunId.value = null
+  patternSource.value = 'random'
+  patternDate.value = getTodayUTC()
   startGame(ALL_FORMATION_KEYS)
   resetRoundTimer()
+}
+
+async function startReplayRound (runId) {
+  isStartingTodayRound.value = true
+  todayRoundErrorMessage.value = ''
+  lastRunId.value = null
+
+  try {
+    const run = await fetchPracticeRun(runId)
+    if (!run?.formations?.length) {
+      throw new Error('This run has no formation data to replay.')
+    }
+    isReplayMode.value = true
+    replayRunId.value = runId
+    patternSource.value = 'replay'
+    patternDate.value = null
+    startGameFromPlacements(run.formations)
+    resetRoundTimer()
+  } catch (err) {
+    todayRoundErrorMessage.value = err?.message || 'Failed to load the replay grid.'
+    stopTodayRoundCooldown()
+    todayRoundCooldownActive.value = true
+    todayRoundCooldownTimerId = setTimeout(() => {
+      todayRoundCooldownActive.value = false
+      todayRoundCooldownTimerId = null
+    }, TODAY_ROUND_ERROR_COOLDOWN_MS)
+    newRandomRound({ preserveFailureState: true })
+  } finally {
+    isStartingTodayRound.value = false
+  }
 }
 
 const bannerClass = computed(() => {
@@ -309,7 +423,12 @@ const bannerClass = computed(() => {
 })
 
 onMounted(() => {
-  void newTodayRound()
+  const runId = String(route.query.run || '').trim()
+  if (runId) {
+    void startReplayRound(runId)
+  } else {
+    void newTodayRound()
+  }
 })
 
 onUnmounted(() => {

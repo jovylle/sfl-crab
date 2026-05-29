@@ -1,6 +1,47 @@
 // src/utils/chatWidgetLoader.js
 // Waits for landData, then boots ProjectMate embed.js without floating launcher.
 
+import { getLandDataStorageKey } from '@/config/api.js'
+
+const PROJECT_CHANGELOG = [
+  {
+    version: '2026.05',
+    date: '2026-05-27',
+    bullets: [
+      'Added public practice-run sharing with stable replay links.',
+      'Enabled exact-grid replay for saved runs.',
+      'Improved auth flow with guest-first passwordless Hub sign-in.',
+    ],
+  },
+  {
+    version: '2026.04',
+    date: '2026-04-29',
+    bullets: [
+      'Synced testnet dig-day saves with hidden land ID routing.',
+      'Fixed /api/practice-run redirects and practice-run proxy headers.',
+      'Cleaned replay submission mapping to avoid unsupported formations.',
+    ],
+  },
+  {
+    version: '2026.03',
+    date: '2026-03-18',
+    bullets: [
+      'Submitted practice scores to the Hub with optional dig-day display names.',
+      'Added secure /admin page backed by Netlify Blobs.',
+      'Updated hub replay links to use /dig/ paths.',
+    ],
+  },
+  {
+    version: '2026.02',
+    date: '2026-02-06',
+    bullets: [
+      'Moved testnet routing to query-flag mode for shareable URLs.',
+      'Simplified test API controls in the main menu.',
+      'Fixed bare ?testnet handling when query params are omitted by router.',
+    ],
+  },
+]
+
 export function initChatWidget () {
   let hasInitialized = false
   const EMBED_SRC = 'https://projectmate.uft1.com/embed.js'
@@ -14,20 +55,19 @@ export function initChatWidget () {
     )
   }
 
-  function buildProjectMateConfig ({ desertDigging, username }) {
-    const patterns = Array.isArray(desertDigging?.patterns) ? desertDigging.patterns : []
-    const grid = Array.isArray(desertDigging?.grid) ? desertDigging.grid : []
-    const safeUsername = typeof username === 'string' && username.trim() ? username.trim() : 'player'
-
-    const patternText = patterns.length ? patterns.join(', ') : 'none available'
-    const gridCount = grid.length
-
+  function buildProjectMateConfig () {
     return {
       projectId: 'sfl-crab',
       appUrl: APP_URL,
       about: {
-        title: 'SFL Digging Assistant',
-        description: `Hi ${safeUsername}. Patterns: ${patternText}. Dug tiles: ${gridCount}.`,
+        title: 'SFL Crab (d1g.uk)',
+        description: 'SFL Crab is a Sunflower Land Desert Digging Assistant that helps players track dug tiles, detect hints, preview daily treasure patterns, and practice optimal digging routes with shareable runs.',
+      },
+      changelog: PROJECT_CHANGELOG,
+      links: {
+        website: 'https://d1g.uk',
+        mirror: 'https://sfl.uft1.com',
+        github: 'https://github.com/jovylle/sfl-crab',
       },
       features: {
         chat: false,
@@ -44,22 +84,21 @@ export function initChatWidget () {
     }
   }
 
-  function bootProjectMate (data) {
+  function bootProjectMate () {
     if (!window.ProjectMate || typeof window.ProjectMate.init !== 'function') {
       setProjectMateReady(false)
       return
     }
 
-    window.ProjectMate.init(buildProjectMateConfig(data))
+    window.ProjectMate.init(buildProjectMateConfig())
     setProjectMateReady(typeof window.ProjectMate.open === 'function')
   }
 
-  function onDataReady ({ desertDigging, username }) {
+  function onDataReady () {
     if (hasInitialized) return
-    const data = { desertDigging, username }
 
     if (window.ProjectMate && typeof window.ProjectMate.init === 'function') {
-      bootProjectMate(data)
+      bootProjectMate()
       hasInitialized = true
       return
     }
@@ -74,7 +113,7 @@ export function initChatWidget () {
     s.src = EMBED_SRC
     s.defer = true
     s.dataset.projectmateEmbed = 'true'
-    s.addEventListener('load', () => bootProjectMate(data))
+    s.addEventListener('load', () => bootProjectMate())
     s.addEventListener('error', () => setProjectMateReady(false))
     document.body.appendChild(s)
     hasInitialized = true
@@ -82,11 +121,12 @@ export function initChatWidget () {
 
   // Listen for your event
   window.addEventListener('landDataReady', e => onDataReady(e.detail))
+
   // Option B: fallback polling if we don’t emit the event
-  (function pollStorage () {
+  ;(function pollStorage () {
     // derive the same key your app uses
     const landId = window.SFL_LAND_ID || 1
-    const key = `landData_${landId}`
+    const key = getLandDataStorageKey(landId)
     const raw = localStorage.getItem(key)
 
     if (raw) {

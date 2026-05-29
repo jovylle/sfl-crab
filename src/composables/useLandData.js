@@ -7,14 +7,14 @@ import {
   PRACTICE_PATTERN_CACHE_VERSION,
   usePracticePatterns,
 } from '@/composables/usePracticePatterns.js'
+import { getLandDataStorageKey } from '@/config/api.js'
 
 export function useLandData (defaults = {}) {
   const route = useRoute()
   const landId = route.params.landId
-  const storageKey = `landData_${landId}`
+  const storageKey = computed(() => getLandDataStorageKey(landId))
   const todayUTC = new Date().toISOString().slice(0, 10)
 
-  // reactive + persisted ref
   const landData = useStorage(storageKey, {
     date: todayUTC,
     ...defaults
@@ -39,6 +39,9 @@ export function useLandData (defaults = {}) {
   const inventory = computed(() => landData.value.visitedFarmState?.inventory || {})
   const desert = computed(() => landData.value.visitedFarmState?.desert || {})
   const patternKeys = computed(() => desert.value.digging?.patterns || [])
+  const completedPatternKeys = computed(
+    () => desert.value.digging?.completedPatterns || [],
+  )
   const dailyPatternKeys = computed(() => {
     const cached = practicePatternCache.value
     return cached?.version === PRACTICE_PATTERN_CACHE_VERSION
@@ -74,5 +77,13 @@ export function useLandData (defaults = {}) {
     })()
   }
 
-  return { landData, inventory, desert, patternKeys, dailyPatternKeys, dailyPatternDate }
+  return {
+    landData,
+    inventory,
+    desert,
+    patternKeys,
+    completedPatternKeys,
+    dailyPatternKeys,
+    dailyPatternDate,
+  }
 }

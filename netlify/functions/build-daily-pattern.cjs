@@ -3,7 +3,7 @@ const {
   parseUTCDate,
   initBlobContext,
   createAndStoreDailySnapshot,
-} = require('./_practiceDailyStore')
+} = require('./_practiceDailyStore.cjs')
 
 function getHeader (headers, key) {
   if (!headers) return ''

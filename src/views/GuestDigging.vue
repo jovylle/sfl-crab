@@ -1,27 +1,27 @@
 <!-- src/views/GuestDigging.vue -->
 <template>
-  <div class="flex [@media(max-width:639px)]:flex-col lg:gap-4 justify-center">
-    <!-- Manual Marks clear & Grid -->
-    <div class="card w-full min-w-[260px] sm:min-w-[300px] flex-1 max-w-md md:max-w-xl sm:basis-[410px] mx-auto sm:mx-0">
-      <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
-        <DigToolSection />
+  <DiggingPageLayout>
+    <template #toolbar>
+      <DigToolSection />
+    </template>
 
-        <!-- Grid.vue will pull from our grid manager internally -->
-        <Grid />
-      </div>
-    </div>
-    
-    <TodayPatterns :patterns="patternKeys" />
-  </div>
-  <div>
+    <template #grid>
+      <Grid />
+    </template>
+
+    <template v-if="hasDailyPatterns" #patterns>
+      <TodayPatterns />
+    </template>
+
     <InfoFooter />
-  </div>
+  </DiggingPageLayout>
 </template>
 
 <script setup>
-import { watch }            from 'vue'
+import { watch, computed }  from 'vue'
 import { useRoute }         from 'vue-router'
 
+import DiggingPageLayout    from '@/components/DiggingPageLayout.vue'
 import Grid                 from '@/components/Grid.vue'
 import TodayPatterns        from '@/components/TodayPatterns.vue'
 import InfoFooter           from '@/components/InfoFooter.vue'
@@ -36,10 +36,11 @@ const landId = route.params.landId || '0'
 
 // 2) Get the reactive land‐blob slices (grid, username, patterns)
 const {
-  username,
-  patternKeys,
-  grid: landGrid
+  grid: landGrid,
+  dailyPatternKeys,
 } = useLandData()    // <— no parameters here!
+
+const hasDailyPatterns = computed(() => dailyPatternKeys.value.length > 0)
 
 // 3) Create (or reuse) the grid manager under "0"
 const grid = useGridManager(landId)
@@ -55,7 +56,3 @@ watch(
   { immediate: true }
 )
 </script>
-
-<style scoped>
-/* your existing styles */
-</style>

@@ -82,6 +82,7 @@ const displayUrl = computed(() => {
     path = path.replace(/\/digging\/?$/, '')
 
     if (!props.showLandIdInUrl) {
+      path = path.replace(/^\/test\/\d+(?=\/|$)/, '/test')
       path = path.replace(/^\/\d+(?=\/|$)/, '') || '/'
     }
 

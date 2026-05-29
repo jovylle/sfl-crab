@@ -41,10 +41,57 @@ export function usePracticeEngine() {
   const isVictory = ref(false)
   const usedFormationKeys = ref([])
   const roundCount = ref(0)
+  const digHistory = ref([])
+  const formationPlacements = ref([])
+
+  function _buildGridFromPlacements(placements) {
+    const occupied = new Set()
+    const keyedPlacements = []
+    const allTiles = []
+
+    for (const { key, tiles } of placements) {
+      const formation = DIGGING_FORMATIONS[key]
+      if (!formation?.length || !tiles?.length) continue
+
+      // tiles[] and formation[] are in the same order — match by index for names
+      const namedTiles = tiles.map((t, i) => ({
+        x: t.x,
+        y: t.y,
+        name: formation[i]?.name ?? formation[0].name,
+      }))
+
+      namedTiles.forEach(t => occupied.add(`${t.x},${t.y}`))
+      allTiles.push(...namedTiles)
+      keyedPlacements.push({ key, tiles: tiles.map(({ x, y }) => ({ x, y })) })
+    }
+
+    const DIRS = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }]
+    const crabSet = new Set()
+    allTiles.forEach(({ x, y }) => {
+      DIRS.forEach(({ dx, dy }) => {
+        const nx = x + dx, ny = y + dy
+        if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && !occupied.has(`${nx},${ny}`)) {
+          crabSet.add(`${nx},${ny}`)
+        }
+      })
+    })
+
+    const grid = Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ type: 'sand' }))
+    allTiles.forEach(({ x, y, name }) => {
+      grid[y * GRID_SIZE + x] = { type: 'treasure', name }
+    })
+    crabSet.forEach(k => {
+      const [cx, cy] = k.split(',').map(Number)
+      grid[cy * GRID_SIZE + cx] = { type: 'crab' }
+    })
+
+    return { grid, keyedPlacements }
+  }
 
   function _buildGrid(keys) {
     const occupied = new Set()
     const placements = []
+    const keyedPlacements = []
 
     for (const key of keys) {
       const formation = DIGGING_FORMATIONS[key]
@@ -76,6 +123,7 @@ export function usePracticeEngine() {
             occupied.add(`${t.x},${t.y}`)
             placements.push(t)
           })
+          keyedPlacements.push({ key, tiles: tiles.map(({ x, y }) => ({ x, y })) })
           break
         }
       }
@@ -102,7 +150,7 @@ export function usePracticeEngine() {
       grid[cy * GRID_SIZE + cx] = { type: 'crab' }
     })
 
-    return grid
+    return { grid, keyedPlacements }
   }
 
   function startGame(allKeys, options = {}) {
@@ -113,9 +161,25 @@ export function usePracticeEngine() {
       ? (Array.isArray(allKeys) ? [...allKeys] : [allKeys])
       : pickPracticePatterns(allKeys)
     usedFormationKeys.value = picked
-    hiddenGrid.value = _buildGrid(picked)
+    const { grid, keyedPlacements } = _buildGrid(picked)
+    hiddenGrid.value = grid
+    formationPlacements.value = keyedPlacements
     revealedSet.value = new Set()
     digsMade.value = 0
+    digHistory.value = []
+    isGameOver.value = false
+    isVictory.value = false
+    roundCount.value++
+  }
+
+  function startGameFromPlacements(placements) {
+    usedFormationKeys.value = placements.map(p => p.key)
+    const { grid, keyedPlacements } = _buildGridFromPlacements(placements)
+    hiddenGrid.value = grid
+    formationPlacements.value = keyedPlacements
+    revealedSet.value = new Set()
+    digsMade.value = 0
+    digHistory.value = []
     isGameOver.value = false
     isVictory.value = false
     roundCount.value++
@@ -123,6 +187,7 @@ export function usePracticeEngine() {
 
   function dig(index) {
     if (isGameOver.value || revealedSet.value.has(index)) return
+    digHistory.value = [...digHistory.value, { index, at: Date.now() }]
     revealedSet.value = new Set([...revealedSet.value, index])
     digsMade.value++
 
@@ -173,9 +238,12 @@ export function usePracticeEngine() {
     treasuresFound,
     totalTreasures,
     startGame,
+    startGameFromPlacements,
     dig,
     giveUp,
     finishGame,
     hiddenGrid,
+    digHistory,
+    formationPlacements,
   }
 }

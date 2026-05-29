@@ -4,10 +4,11 @@ import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useLandData } from "@/composables/useLandData";
 
 export function useTodayTreasureNames () {
-  const { landData } = useLandData();
+  const { landData, dailyPatternKeys } = useLandData();
 
   return computed(() => {
-    const keys = landData.value?.visitedFarmState?.desert?.digging?.patterns || [];
+    const landKeys = landData.value?.visitedFarmState?.desert?.digging?.patterns || [];
+    const keys = landKeys.length ? landKeys : dailyPatternKeys.value;
     const set = new Set();
 
     console.log("useTodayTreasureNames → pattern keys:", keys);

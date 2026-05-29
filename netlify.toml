@@ -8,6 +8,18 @@
   # Functions directory
   functions = "netlify/functions"
 
+# Local dev: Netlify on :8888 (functions + redirects) → Vite on :5173
+[dev]
+  command = "npx vite"
+  targetPort = 5173
+  port = 8888
+  publish = "dist"
+  autoLaunch = false
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
+
 [build.environment]
   # Node.js version
   NODE_VERSION = "18"
@@ -22,6 +34,31 @@
 [[redirects]]
   from = "/api/build-daily-pattern"
   to = "/.netlify/functions/build-daily-pattern"
+  status = 200
+
+[[redirects]]
+  from = "/api/dig-day"
+  to = "/.netlify/functions/dig-day"
+  status = 200
+
+[[redirects]]
+  from = "/api/hub-auth/*"
+  to = "/.netlify/functions/hub-auth/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/practice-runs"
+  to = "/.netlify/functions/practice-runs"
+  status = 200
+
+[[redirects]]
+  from = "/api/practice-run"
+  to = "/.netlify/functions/practice-run"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin-blobs"
+  to = "/.netlify/functions/admin-blobs"
   status = 200
 
 [[redirects]]
@@ -43,5 +80,5 @@
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, x-admin-password, Accept"
+    Access-Control-Allow-Methods = "GET, POST, DELETE, OPTIONS"

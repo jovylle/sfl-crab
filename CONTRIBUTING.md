@@ -36,6 +36,12 @@ Then open `http://localhost:5173` in your browser.
 
 ---
 
+## Dig day blob storage
+
+Per-land dig snapshots (patterns, dig timeline, mark events) are stored in **Netlify Blobs** via `/api/dig-day`. See [netlify/functions/README.md](netlify/functions/README.md) for GET/POST usage and how to retrieve data from the dashboard or CLI.
+
+---
+
 ## 🧠 Tech Stack
 
 * Vue 3 (Composition API)

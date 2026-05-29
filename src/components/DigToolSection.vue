@@ -1,13 +1,15 @@
 <template>
-  <div class="flex gap-4 mb-1 justify-center items-center">
+  <div class="flex flex-col gap-1.5">
+  <div class="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
     <InputLandIdOrRefresh />
     <button
       type="button"
-      class="btn text-base-100 btn-info btn-sm sm:btn-md"
-      @click="goToPractice"
-      title="Go to Practice"
+      class="btn btn-primary btn-sm sm:btn-md"
+      :disabled="!canReplay"
+      @click="$emit('open-replay')"
+      title="Replay today's digs"
     >
-      Practice
+      Replay
     </button>
     <div class="dropdown">
       <div tabindex="0" role="button" class="btn m-1 btn-accent btn-sm sm:btn-md">
@@ -30,6 +32,25 @@
 
 
             <!-- Controlled checkbox -->
+            <button
+              type="button"
+              class="btn text-base-100 btn-info btn-sm w-full"
+              @click="goToPractice"
+              title="Go to Practice"
+            >
+              Practice
+            </button>
+
+            <button
+              v-if="route.params.landId"
+              type="button"
+              class="btn btn-secondary btn-sm w-full tooltip"
+              data-tip="Copy a link to this land’s dig page with your custom marks (same daily desert in-game)"
+              @click="copyMarksLink($event)"
+            >
+              {{ marksLinkCopied ? 'Dig link copied' : 'Copy link with marks' }}
+            </button>
+
             <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Show Treasure Order">
               <input
                 type="checkbox"
@@ -67,44 +88,88 @@
       </div>
     </div>
   </div>
+  </div>
 
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { buildGuideMarksUrl } from '@/utils/shareLinks.js'
+import { copyToClipboard } from '@/utils/gridStateCodec.js'
 import { useGridManager } from '@/composables/useGridManager'
 import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
+import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 
 const route  = useRoute()
 const router = useRouter()
-// grid.clear() still lives here
+const { isTestServer } = useApiEnvironment()
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
 
-// Define the incoming prop and the event you'll emit
+// Public dig-day snapshots: data is keyed by landId + UTC date (no ownership in v1).
 defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   hideLandIdInUrl: { type: Boolean, default: false },
+  digDaySyncStatus: { type: String, default: 'idle' },
+  digDayUpdatedAt: { type: String, default: null },
+  digDaySyncError: { type: String, default: null },
+  hubReplayUrl: { type: String, default: null },
+  canReplay: { type: Boolean, default: false },
 })
+
+const marksLinkCopied = ref(false)
+let marksLinkCopiedTimer = null
+
+async function copyMarksLink (event) {
+  let recipientId = route.params.landId
+  if (!recipientId) return
+
+  // Shift+click: share same marks to a different land ID (optional).
+  if (event?.shiftKey) {
+    const entered = window.prompt(
+      "Their land ID (URL will be /theirId/digging?marks=…):",
+      String(recipientId)
+    )
+    if (!entered || !/^\d+$/.test(String(entered).trim())) return
+    recipientId = String(entered).trim()
+  }
+
+  const url = buildGuideMarksUrl(recipientId, grid)
+  if (!url) {
+    window.alert(
+      'Place marks on the grid first (click cells), then copy the dig link with your marks.'
+    )
+    return
+  }
+  const ok = await copyToClipboard(url)
+  if (!ok) return
+  marksLinkCopied.value = true
+  if (marksLinkCopiedTimer) clearTimeout(marksLinkCopiedTimer)
+  marksLinkCopiedTimer = setTimeout(() => {
+    marksLinkCopied.value = false
+  }, 2000)
+}
+
 // we'll emit update:showTreasureOrder via @change above
-defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl'])
+defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'open-replay'])
 
 function clearLandId () {
-  if (route.name === 'Digging') {
-    // we're on /:landId/digging → go to /digging
-    router.push({ name: 'GuestDigging' })
-  } else {
-    // default to details no-id
-    router.push({ name: 'LandDetailsNoId' })
-  }
+  const test = isTestServer.value
+  const onDigging =
+    route.name === 'Digging'
+  router.push(
+    resolveLandRoute(onDigging ? 'guestDigging' : 'detailsNoId', { test }),
+  )
 }
 
 function goToPractice () {
-  if (route.params.landId) {
-    router.push({ name: 'PracticeWithId', params: { landId: route.params.landId } })
-  } else {
-    router.push({ name: 'Practice' })
-  }
+  const test = isTestServer.value
+  const id = route.params.landId
+  router.push(
+    resolveLandRoute(id ? 'practice' : 'practiceNoId', { landId: id, test }),
+  )
 }
 
 </script>

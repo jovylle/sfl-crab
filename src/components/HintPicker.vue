@@ -62,6 +62,10 @@
           ></div>
         </li>
       </ul>
+
+      <p class="text-[0.5rem] sm:text-[0.55rem] text-center text-base-content/55 mt-1 pt-1 border-t border-base-300/80 px-2 leading-tight">
+        Press <span class="font-semibold text-base-content/70">1</span>–<span class="font-semibold text-base-content/70">0</span> to place a number mark (e.g. dig order)
+      </p>
     </div>
   </div>
 </template>
@@ -69,6 +73,7 @@
 <script setup>
 import { ref, computed, watchEffect, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { Icon } from '@iconify/vue'
+import { toHintLabelClass } from '@/utils/hintLabel.js'
 
 // 1️⃣ Define your props
 const props = defineProps({
@@ -129,7 +134,18 @@ function selectHint(idx) {
   visible.value = false
 }
 
-function handleKeydown(e) {
+function pickLabelDigit (digit) {
+  const hint = toHintLabelClass(digit)
+  if (!hint) return
+  emit('pick', { tileIndex: props.tileIndex, hint })
+  visible.value = false
+}
+
+function handleKeydown (e) {
+  if (/^[0-9]$/.test(e.key)) {
+    pickLabelDigit(e.key)
+    return
+  }
   const hint = keyMap[e.key.toLowerCase()]
   if (hint) {
     emit('pick', { tileIndex: props.tileIndex, hint })

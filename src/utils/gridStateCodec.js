@@ -1,7 +1,29 @@
 // src/utils/gridStateCodec.js
 // Utility for encoding/decoding grid state for sharing
 
+import { landDiggingPath } from '@/utils/landRoutes.js'
+
 const VERSION = 1
+
+/** Count user-placed marks (excludes auto near-/actual- hints). */
+export function countCustomMarks (gridManager) {
+  if (!gridManager?.tiles?.value) return 0
+  let count = 0
+  for (const tileClasses of gridManager.tiles.value) {
+    if (!tileClasses?.length) continue
+    if (
+      tileClasses.some(
+        cls =>
+          cls.startsWith('hint-') &&
+          !cls.includes('near-') &&
+          !cls.includes('actual-')
+      )
+    ) {
+      count += 1
+    }
+  }
+  return count
+}
 
 /**
  * Encode grid state to a compressed string for sharing
@@ -75,30 +97,30 @@ export function decodeGridState(encodedState) {
 }
 
 /**
- * Import marks from decoded state into grid manager
+ * Overlay shared marks on the current grid (keeps digs / sand state).
  * @param {Object} state - Decoded state object
  * @param {Object} gridManager - The grid manager instance
- * @returns {boolean} - Success status
+ * @returns {number} - Count of marks applied
  */
-export function importMarksToGrid(state, gridManager) {
+export function applySharedMarks (state, gridManager) {
+  if (!gridManager?.pick || !state?.marks) return 0
+
+  let count = 0
+  for (const [indexStr, classes] of Object.entries(state.marks)) {
+    const index = parseInt(indexStr, 10)
+    if (Number.isNaN(index) || !Array.isArray(classes) || !classes.length) continue
+    gridManager.pick(index, classes[0])
+    count += 1
+  }
+  return count
+}
+
+/** @deprecated Use applySharedMarks — clears grid first */
+export function importMarksToGrid (state, gridManager) {
   try {
-    if (!gridManager || !gridManager.pick) {
-      throw new Error('Invalid grid manager')
-    }
-
-    // Clear existing custom marks first
+    if (!gridManager?.pick) throw new Error('Invalid grid manager')
     gridManager.clear()
-
-    // Apply imported marks
-    Object.entries(state.marks).forEach(([indexStr, classes]) => {
-      const index = parseInt(indexStr, 10)
-      if (!isNaN(index) && Array.isArray(classes) && classes.length > 0) {
-        // Apply the first class (grid manager expects single class)
-        gridManager.pick(index, classes[0])
-      }
-    })
-
-    return true
+    return applySharedMarks(state, gridManager) > 0
   } catch (error) {
     console.error('Failed to import marks:', error)
     return false
@@ -111,10 +133,11 @@ export function importMarksToGrid(state, gridManager) {
  * @param {string} baseUrl - Base URL (defaults to current origin)
  * @returns {string} - Shareable URL
  */
-export function generateShareableUrl(encodedState, baseUrl = window.location.origin) {
-  const url = new URL(baseUrl)
-  url.pathname = '/digging'
-  url.searchParams.set('grid', encodedState)
+export function generateShareableUrl (encodedState, landId, baseUrl = window.location.origin) {
+  const id = String(landId || 'guest')
+  const rel = landDiggingPath(id !== 'guest' ? id : null)
+  const url = new URL(rel, baseUrl)
+  url.searchParams.set('marks', encodedState)
   return url.toString()
 }
 
@@ -123,10 +146,10 @@ export function generateShareableUrl(encodedState, baseUrl = window.location.ori
  * @param {string} url - URL to extract from (defaults to current URL)
  * @returns {string|null} - Encoded state or null if not found
  */
-export function extractStateFromUrl(url = window.location.href) {
+export function extractStateFromUrl (url = window.location.href) {
   try {
     const urlObj = new URL(url)
-    return urlObj.searchParams.get('grid')
+    return urlObj.searchParams.get('marks') || urlObj.searchParams.get('grid')
   } catch (error) {
     console.error('Failed to extract state from URL:', error)
     return null

@@ -20,6 +20,7 @@ The API key is now handled securely using a **Netlify serverless function** that
 
 ```bash
 SFL_API_KEY=sfl.YOUR_ACTUAL_API_KEY_HERE
+SFL_API_KEY_DEV=sfl.YOUR_TEST_API_KEY_HERE
 ```
 
 3. Copy from `env.example` if needed:
@@ -61,8 +62,19 @@ For Netlify deployment, add your environment variable in the Netlify dashboard:
 1. Go to your site settings in Netlify
 2. Navigate to "Environment variables"
 3. Add: `SFL_API_KEY` = `sfl.YOUR_ACTUAL_API_KEY`
+4. Add: `SFL_API_KEY_DEV` = your test-server key (for `api-dev.sunflower-land.com`)
 
-The serverless function will automatically use this environment variable.
+The serverless function uses `SFL_API_KEY_DEV` when the browser sends `x-sfl-api-env: test` (test API mode).
+
+### Test server (testnet)
+
+Uses api-dev, not shown as a menu section. Ways to use it:
+
+- **Query flag:** `?testnet` on any page (e.g. `https://d1g.uk/913531074720548/digging?testnet`) — shareable; uses api-dev.
+- **Footer / menu links:** click the plain word `testnet-server` under “SFL Digging Assistant Links” (no underline; looks like body text).
+- **Legacy:** `/test/{landId}/digging` redirects to `/{landId}/digging?testnet`.
+- **Testnet land IDs** (13+ digits) should use `?testnet` to load api-dev; URLs are no longer auto-redirected.
+- **Example test farm:** `913531074720548` (there is no land ID `1` on api-dev).
 
 ## Testing
 

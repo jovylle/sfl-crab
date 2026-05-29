@@ -6,6 +6,9 @@ import { createHead } from '@vueuse/head'
 import './styles/style.css'
 import { initChatWidget } from './utils/chatWidgetLoader';
 import { useReliableAssets } from './composables/useReliableAssets.js'
+import { initHubSession } from './composables/useHubSession.js'
+
+initHubSession()
 
 const app = createApp(App)
 const head = createHead()

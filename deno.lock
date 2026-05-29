@@ -1,0 +1,37 @@
+{
+  "version": "5",
+  "remote": {
+    "https://edge.netlify.com/": "fd941d61d88673d5f28aab283fb86fcc50f08a3bc80ee5470498fcfa88c65cfb",
+    "https://edge.netlify.com/bootstrap/config.ts": "6a2ce0e544e15e8f8883a5c18da5948e37fd0f2619f68cb31f3af53c51817025",
+    "https://edge.netlify.com/bootstrap/context.ts": "e97240232121e2f369f6546ce961490f34d961ea1ea54be3ff09633e3f08373f",
+    "https://edge.netlify.com/bootstrap/cookie.ts": "8b0baae708989ca183c6f3b4ab3d029e6abcbc2e43f93edeb0ff447b3bbc3a05",
+    "https://edge.netlify.com/bootstrap/edge_function.ts": "b8253e86aa83c67341f5cfedeba5049d77fbf84dcab7eceff7566b7728ae9b39",
+    "https://edge.netlify.com/bootstrap/globals/types.ts": "eaa6148ded3121d8dee62dd91c86e7fe76601df0f3ca8d7962243a30f4c8935f"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@iconify/vue@5",
+        "npm:@netlify/blobs@^10.7.4",
+        "npm:@tailwindcss/vite@^4.1.4",
+        "npm:@vitejs/plugin-vue@^5.2.2",
+        "npm:@vueuse/core@^13.2.0",
+        "npm:@vueuse/head@2",
+        "npm:daisyui@^5.0.28",
+        "npm:decimal.js-light@^2.5.1",
+        "npm:gifenc@^1.0.3",
+        "npm:html-to-image@^1.11.13",
+        "npm:i18next@^25.3.2",
+        "npm:node-fetch@^3.3.2",
+        "npm:prettier@^3.5.3",
+        "npm:puppeteer@^24.8.2",
+        "npm:react-i18next@^15.6.1",
+        "npm:tailwindcss@^4.1.4",
+        "npm:ts-morph@^25.0.1",
+        "npm:vite@^6.3.1",
+        "npm:vue-router@^4.5.1",
+        "npm:vue@^3.5.13"
+      ]
+    }
+  }
+}

@@ -4,7 +4,7 @@ const {
   initBlobContext,
   getExistingDailySnapshot,
   createAndStoreDailySnapshot,
-} = require('./_practiceDailyStore')
+} = require('./_practiceDailyStore.cjs')
 
 function secondsUntilUTCMidnightForDate (utcDate) {
   const now = new Date()

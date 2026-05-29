@@ -1,6 +1,7 @@
 <!-- src/views/LandDetails.vue -->
 <template>
   <div class="p-6 space-y-6">
+    <TestnetLandBanner />
     <h1 class="text-3xl font-bold">Land Raw Details</h1>
 
     <!-- Dropdown with checkboxes -->
@@ -69,7 +70,9 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 import KeyValueList from '@/components/KeyValueList.vue'
+import TestnetLandBanner from '@/components/TestnetLandBanner.vue'
 import { openMainDrawer as openDrawer } from '@/utils/drawerToggle'
+import { getLandDataStorageKey } from '@/config/api.js'
 
 const route        = useRoute()
 const landId       = ref(route.params.landId || '')
@@ -85,7 +88,7 @@ function loadState() {
     hasData.value  = false
     return
   }
-  const raw = localStorage.getItem(`landData_${landId.value}`)
+  const raw = localStorage.getItem(getLandDataStorageKey(landId.value))
   if (!raw) {
     rawData.value = null
     hasData.value  = false
