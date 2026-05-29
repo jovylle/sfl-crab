@@ -299,9 +299,31 @@ body {
   border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
 
-/* Short text label mark (hint-label:1, hint-label:2a, …) */
+/* Number label mark (hint-label:0 … hint-label:9) — matches custom mark dashed border */
 .tile[class*="hint-label:"] {
-  @apply ring-2 ring-inset ring-primary/45 bg-primary/5;
+  position: relative;
+  @apply bg-base-100;
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-primary));
+}
+
+.tile[class*="hint-label:"] .hint-label-digit {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 35%;
+  height: 35%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  line-height: 1;
+  font-size: clamp(0.55rem, 3.5vw, 0.95rem);
+  @apply text-primary bg-base-100 outline-2 outline-base-100;
+  border-radius: 50%;
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-primary));
+  pointer-events: none;
 }
 
 .tile.near-hint-sand:not(.near-sand):not(.treasure):not(.crab):not(.hint-crab):not(

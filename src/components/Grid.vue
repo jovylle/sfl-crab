@@ -41,11 +41,11 @@
           class="tile-img"
         />
 
-        <!-- custom text label (1–2 chars) -->
+        <!-- number label mark (keys 1–0) -->
         <span
           v-if="getTileLabelMark(tile)"
-          class="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none font-bold text-error text-base sm:text-xl leading-none"
-          :title="`Note: ${getTileLabelMark(tile)}`"
+          class="hint-label-digit"
+          :title="`Dig order: ${getTileLabelMark(tile)}`"
         >
           {{ getTileLabelMark(tile) }}
         </span>

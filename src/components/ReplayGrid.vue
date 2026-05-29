@@ -38,7 +38,7 @@
 
         <span
           v-if="getTileLabelMark(tile)"
-          class="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none font-bold text-error text-base sm:text-xl leading-none"
+          class="hint-label-digit"
         >
           {{ getTileLabelMark(tile) }}
         </span>
