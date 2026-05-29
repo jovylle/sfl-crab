@@ -308,22 +308,24 @@ body {
 
 .tile[class*="hint-label:"] .hint-label-digit {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   top: 50%;
   left: 50%;
-  width: 35%;
-  height: 35%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translate(-50%, -50%);
-  font-weight: 700;
+  min-width: 55%;
+  min-height: 55%;
+  font-weight: 800;
   line-height: 1;
-  font-size: clamp(0.55rem, 3.5vw, 0.95rem);
-  @apply text-primary bg-base-100 outline-2 outline-base-100;
-  border-radius: 50%;
-  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-primary));
+  font-size: clamp(1rem, 7vw, 1.65rem);
+  @apply text-primary;
   pointer-events: none;
+  text-shadow:
+    0 0 3px var(--color-base-100),
+    0 0 6px var(--color-base-100),
+    0 1px 0 var(--color-base-100);
 }
 
 .tile.near-hint-sand:not(.near-sand):not(.treasure):not(.crab):not(.hint-crab):not(
