@@ -25,7 +25,7 @@
         </router-link>
         <button
           type="button"
-          class="btn btn-outline btn-sm btn-block"
+          class="btn btn-ghost btn-sm btn-block justify-start text-error hover:bg-error/10"
           @click="signOut"
         >
           Sign out

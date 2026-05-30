@@ -14,10 +14,10 @@
         </div>
         <div class="divider px-5">More Pages</div>
         <div class="flex flex-col gap-2">
-          <button class="btn btn-outline btn-sm justify-start" @click="goToDetails">
+          <button class="btn btn-ghost btn-sm btn-block justify-start" @click="goToDetails">
             Details
           </button>
-          <button class="btn btn-outline btn-sm justify-start" @click="goToChecklist">
+          <button class="btn btn-ghost btn-sm btn-block justify-start" @click="goToChecklist">
             Focused Checklist
           </button>
         </div>
