@@ -67,6 +67,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/projectmate/issues"
+  to = "/.netlify/functions/projectmate-feedback"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
