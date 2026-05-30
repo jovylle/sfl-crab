@@ -110,6 +110,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useHubSession } from '@/composables/useHubSession.js'
 import { isTestApiEnvironment } from '@/config/api.js'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
+import { isTestnetLandId } from '@/utils/testnet.js'
 import {
   fetchProfile,
   fetchSavedLands,
@@ -139,7 +140,6 @@ const profileEmail = ref('')
 const savedLands = ref([])
 const newLandId = ref('')
 const SAVED_LANDS_CACHE_KEY = 'sfl-hub-saved-lands-cache'
-const TESTNET_LAND_SECRET_SUFFIX = '~tn'
 const TESTNET_INPUT_SUFFIX = '?testnet'
 
 function parseLandInput (rawLandId) {
@@ -154,7 +154,7 @@ function parseLandInput (rawLandId) {
     const digits = testnetMatch[1]
     return {
       valid: true,
-      storageLandId: `${digits}${TESTNET_LAND_SECRET_SUFFIX}`,
+      storageLandId: digits,
       displayLandId: digits,
       isTestnet: true,
     }
@@ -181,15 +181,16 @@ function decodeStoredLandId (storageLandId) {
     return { storageLandId: raw, landId: '', isTestnet: false }
   }
 
-  if (raw.endsWith(TESTNET_LAND_SECRET_SUFFIX)) {
-    const landId = raw.slice(0, -TESTNET_LAND_SECRET_SUFFIX.length)
-    return { storageLandId: raw, landId, isTestnet: /^\d+$/.test(landId) }
+  const legacyHiddenMatch = raw.match(/^(\d+)~tn$/i)
+  if (legacyHiddenMatch) {
+    const landId = legacyHiddenMatch[1]
+    return { storageLandId: landId, landId, isTestnet: true }
   }
 
   const legacyMatch = raw.match(/^(\d+)\?testnet$/i)
   if (legacyMatch) {
     return {
-      storageLandId: raw,
+      storageLandId: legacyMatch[1],
       landId: legacyMatch[1],
       isTestnet: true,
     }
@@ -205,6 +206,7 @@ const displayLands = computed(() => (
       return {
         ...item,
         ...decoded,
+        isTestnet: decoded.isTestnet || isTestnetLandId(decoded.landId),
       }
     })
     .filter((item) => item.landId)
