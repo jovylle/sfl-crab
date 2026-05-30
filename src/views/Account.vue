@@ -41,7 +41,17 @@
 
       <div class="card bg-base-200">
         <div class="card-body gap-3">
-          <h2 class="card-title text-base">Saved Land IDs</h2>
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="card-title text-base">Saved Land IDs</h2>
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs btn-circle tooltip tooltip-left"
+              :data-tip="`Add testnet IDs as 12345${TESTNET_INPUT_SUFFIX}`"
+              aria-label="How to add testnet land IDs"
+            >
+              i
+            </button>
+          </div>
 
           <form class="flex gap-2" @submit.prevent="onAddLand">
             <input
@@ -63,25 +73,25 @@
             <span class="loading loading-spinner loading-xs"></span>
             Updating saved lands...
           </p>
-          <p v-if="!loading && savedLands.length === 0" class="text-sm text-base-content/70">
+          <p v-if="!loading && displayLands.length === 0" class="text-sm text-base-content/70">
             No saved Land IDs yet.
           </p>
 
-          <ul v-if="savedLands.length > 0" class="space-y-2">
+          <ul v-if="displayLands.length > 0" class="space-y-2">
             <li
-              v-for="land in savedLands"
-              :key="land.landId"
+              v-for="land in displayLands"
+              :key="land.storageLandId"
               class="bg-base-100 rounded-box px-3 py-2 flex items-center justify-between gap-2"
             >
               <span class="font-medium">Land #{{ land.landId }}</span>
               <div class="flex items-center gap-2">
-                <button class="btn btn-outline btn-sm" @click="goToDigging(land.landId)">
+                <button class="btn btn-outline btn-sm" @click="goToDigging(land)">
                   Go Digging
                 </button>
                 <button
                   class="btn btn-outline btn-error btn-sm"
-                  :disabled="removingLandId === land.landId"
-                  @click="onRemoveLand(land.landId)"
+                  :disabled="removingLandId === land.storageLandId"
+                  @click="onRemoveLand(land.storageLandId)"
                 >
                   Remove
                 </button>
@@ -129,6 +139,76 @@ const profileEmail = ref('')
 const savedLands = ref([])
 const newLandId = ref('')
 const SAVED_LANDS_CACHE_KEY = 'sfl-hub-saved-lands-cache'
+const TESTNET_LAND_SECRET_SUFFIX = '~tn'
+const TESTNET_INPUT_SUFFIX = '?testnet'
+
+function parseLandInput (rawLandId) {
+  const raw = String(rawLandId || '').trim()
+  if (!raw) {
+    return { valid: false, message: 'Land ID is required' }
+  }
+
+  const testnetPattern = new RegExp(`^(\\d+)\\${TESTNET_INPUT_SUFFIX}$`, 'i')
+  const testnetMatch = raw.match(testnetPattern)
+  if (testnetMatch) {
+    const digits = testnetMatch[1]
+    return {
+      valid: true,
+      storageLandId: `${digits}${TESTNET_LAND_SECRET_SUFFIX}`,
+      displayLandId: digits,
+      isTestnet: true,
+    }
+  }
+
+  if (/^\d+$/.test(raw)) {
+    return {
+      valid: true,
+      storageLandId: raw,
+      displayLandId: raw,
+      isTestnet: false,
+    }
+  }
+
+  return {
+    valid: false,
+    message: `Land ID must be numbers only. Use 12345${TESTNET_INPUT_SUFFIX} for hidden testnet mode.`,
+  }
+}
+
+function decodeStoredLandId (storageLandId) {
+  const raw = String(storageLandId || '').trim()
+  if (!raw) {
+    return { storageLandId: raw, landId: '', isTestnet: false }
+  }
+
+  if (raw.endsWith(TESTNET_LAND_SECRET_SUFFIX)) {
+    const landId = raw.slice(0, -TESTNET_LAND_SECRET_SUFFIX.length)
+    return { storageLandId: raw, landId, isTestnet: /^\d+$/.test(landId) }
+  }
+
+  const legacyMatch = raw.match(/^(\d+)\?testnet$/i)
+  if (legacyMatch) {
+    return {
+      storageLandId: raw,
+      landId: legacyMatch[1],
+      isTestnet: true,
+    }
+  }
+
+  return { storageLandId: raw, landId: raw, isTestnet: false }
+}
+
+const displayLands = computed(() => (
+  savedLands.value
+    .map((item) => {
+      const decoded = decodeStoredLandId(item?.landId)
+      return {
+        ...item,
+        ...decoded,
+      }
+    })
+    .filter((item) => item.landId)
+))
 
 function readCachedSavedLands () {
   if (typeof localStorage === 'undefined') return []
@@ -168,15 +248,15 @@ async function loadAccountData () {
   }
 }
 
-function goToDigging (landId) {
-  const test = isTestApiEnvironment()
-  router.push(resolveLandRoute('digging', { landId, test }))
+function goToDigging (land) {
+  const test = Boolean(land?.isTestnet)
+  router.push(resolveLandRoute('digging', { landId: land.landId, test }))
 }
 
 async function onAddLand () {
-  const landId = newLandId.value.trim()
-  if (!landId) {
-    error.value = 'Land ID is required'
+  const parsed = parseLandInput(newLandId.value)
+  if (!parsed.valid) {
+    error.value = parsed.message
     notice.value = ''
     return
   }
@@ -184,10 +264,10 @@ async function onAddLand () {
   error.value = ''
   notice.value = ''
   try {
-    await saveLandId(landId)
+    await saveLandId(parsed.storageLandId)
     newLandId.value = ''
     await loadAccountData()
-    notice.value = `Saved Land ID ${landId}`
+    notice.value = `Saved Land ID ${parsed.displayLandId}`
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Could not save Land ID'
   } finally {
@@ -201,9 +281,9 @@ async function onRemoveLand (landId) {
   notice.value = ''
   try {
     await removeLandId(landId)
-    savedLands.value = savedLands.value.filter(item => item.landId !== landId)
+    savedLands.value = savedLands.value.filter(item => String(item.landId) !== String(landId))
     writeCachedSavedLands(savedLands.value)
-    notice.value = `Removed Land ID ${landId}`
+    notice.value = 'Removed Land ID'
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Could not remove Land ID'
   } finally {
