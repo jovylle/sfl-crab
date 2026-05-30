@@ -6,4 +6,5 @@
 /api/practice-runs        /.netlify/functions/practice-runs       200
 /api/practice-run         /.netlify/functions/practice-run        200
 /api/admin-blobs          /.netlify/functions/admin-blobs         200
+/api/projectmate/issues   /.netlify/functions/projectmate-feedback 200
 /*                    /index.html               200
