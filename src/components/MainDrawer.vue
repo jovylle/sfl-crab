@@ -25,17 +25,28 @@
         <div class="mb-8">
           <ThemeToggle />
         </div>
-        <div v-if="isProjectMateReady" class="divider px-5">Support</div>
-        <button
-          v-if="isProjectMateReady"
-          class="btn btn-primary btn-block"
-          @click="openProjectMate"
-        >
-          Open Help
-        </button>
+        <div v-if="isProjectMateReady || hasFeedbackForm" class="divider px-5">Support</div>
+        <div v-if="isProjectMateReady || hasFeedbackForm" class="flex flex-col gap-2">
+          <button
+            v-if="isProjectMateReady"
+            class="btn btn-primary btn-block"
+            @click="openProjectMate"
+          >
+            Open Help
+          </button>
+          <button
+            v-if="hasFeedbackForm"
+            class="btn btn-outline btn-block"
+            @click="openFeedback"
+          >
+            Send feedback
+          </button>
+        </div>
       </div>
     </div>
   </div>
+
+  <FeedbackModal :open="feedbackOpen" @close="feedbackOpen = false" />
 </template>
 
 <script setup>
@@ -44,6 +55,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
 import AccountSection from '@/components/AccountSection.vue'
+import FeedbackModal from '@/components/FeedbackModal.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 
@@ -51,6 +63,8 @@ const route = useRoute()
 const router = useRouter()
 const { isTestServer } = useApiEnvironment()
 const isProjectMateReady = ref(false)
+const feedbackOpen = ref(false)
+const hasFeedbackForm = Boolean(import.meta.env.VITE_PROJECTMATE_WEB3FORMS_KEY)
 
 function syncProjectMateReady () {
   isProjectMateReady.value = Boolean(
@@ -66,6 +80,12 @@ function openProjectMate () {
   if (window.ProjectMate && typeof window.ProjectMate.open === 'function') {
     window.ProjectMate.open()
   }
+  closeDrawer()
+}
+
+function openFeedback () {
+  feedbackOpen.value = true
+  closeDrawer()
 }
 
 onMounted(() => {

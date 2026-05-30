@@ -51,11 +51,6 @@ export function initChatWidget () {
   const PROJECT_ID =
     import.meta.env?.VITE_PROJECTMATE_PROJECT_ID || 'sfl-crab'
   const ISSUES_ENDPOINT = import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT
-  const FEEDBACK_ENDPOINT =
-    import.meta.env?.VITE_PROJECTMATE_FEEDBACK_ENDPOINT ||
-    (typeof window !== 'undefined'
-      ? `${window.location.origin}/api/projectmate`
-      : '')
 
   function setProjectMateReady (ready) {
     window.dispatchEvent(
@@ -81,7 +76,8 @@ export function initChatWidget () {
       },
       features: {
         chat: false,
-        feedback: true,
+        // Feedback uses FeedbackModal + Web3Forms in the browser (free plan blocks server proxy).
+        feedback: false,
         updates: true,
         issues: false,
         about: true,
@@ -93,12 +89,8 @@ export function initChatWidget () {
       },
     }
 
-    // ProjectMate overlay only enables feedback when issuesEndpoint or
-    // feedbackEndpoint is set (web3forms in init is not used by the overlay).
-    // POST {endpoint}/issues is handled by netlify/functions/projectmate-feedback.
-    const endpoint = ISSUES_ENDPOINT || FEEDBACK_ENDPOINT
-    if (endpoint) {
-      config.feedbackEndpoint = endpoint
+    if (ISSUES_ENDPOINT) {
+      config.issuesEndpoint = ISSUES_ENDPOINT
     }
 
     return config
