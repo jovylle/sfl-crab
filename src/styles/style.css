@@ -403,7 +403,7 @@ body {
 @media (max-width: 400px) {
   .site-main .contain-please .grid,
   .digging-grid-col .contain-please .grid {
-    gap: 0px;
+    gap: 1px;
   }
 }
 

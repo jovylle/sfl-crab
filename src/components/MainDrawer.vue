@@ -12,6 +12,15 @@
         <div>
           <LandControls />
         </div>
+        <div class="divider px-5">More Pages</div>
+        <div class="flex flex-col gap-2">
+          <button class="btn btn-outline btn-sm justify-start" @click="goToDetails">
+            Details
+          </button>
+          <button class="btn btn-outline btn-sm justify-start" @click="goToChecklist">
+            Focused Checklist
+          </button>
+        </div>
         <div class="divider px-5 mt-auto">Theme</div>
         <div class="mb-8">
           <ThemeToggle />
@@ -74,6 +83,7 @@ function goToDetails() {
   router.push(
     resolveLandRoute(id ? 'details' : 'detailsNoId', { landId: id, test }),
   )
+  closeDrawer()
 }
 
 function goToDigging() {
@@ -90,5 +100,13 @@ function goToChecklist() {
   router.push(
     resolveLandRoute(id ? 'checklist' : 'checklistNoId', { landId: id, test }),
   )
+  closeDrawer()
+}
+
+function closeDrawer () {
+  const checkbox = document.getElementById('main-drawer')
+  if (checkbox instanceof HTMLInputElement) {
+    checkbox.checked = false
+  }
 }
 </script>
