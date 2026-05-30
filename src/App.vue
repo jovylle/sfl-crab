@@ -81,14 +81,6 @@ const tabs = computed(() => {
       to: resolveLandRoute(landId ? 'digging' : 'guestDigging', { landId, test }),
     },
     {
-      label: 'Details',
-      to: resolveLandRoute(landId ? 'details' : 'detailsNoId', { landId, test }),
-    },
-    {
-      label: 'Focused Checklist',
-      to: resolveLandRoute(landId ? 'checklist' : 'checklistNoId', { landId, test }),
-    },
-    {
       label: 'Practice',
       to: resolveLandRoute(landId ? 'practice' : 'practiceNoId', { landId, test }),
     },

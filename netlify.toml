@@ -47,6 +47,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/hub-profile/*"
+  to = "/.netlify/functions/hub-profile/:splat"
+  status = 200
+
+[[redirects]]
   from = "/api/practice-runs"
   to = "/.netlify/functions/practice-runs"
   status = 200

@@ -17,15 +17,15 @@
       </router-link>
       <template v-else>
         <router-link
-          to="/login"
-          class="btn btn-ghost btn-sm btn-block"
+          to="/account"
+          class="btn btn-outline btn-sm btn-block justify-start"
           @click="closeMainDrawer"
         >
           Account
         </router-link>
         <button
           type="button"
-          class="btn btn-outline btn-sm btn-block"
+          class="btn btn-outline btn-error btn-sm btn-block justify-start"
           @click="signOut"
         >
           Sign out
