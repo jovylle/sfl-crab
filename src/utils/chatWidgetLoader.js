@@ -45,7 +45,12 @@ const PROJECT_CHANGELOG = [
 export function initChatWidget () {
   let hasInitialized = false
   const EMBED_SRC = 'https://projectmate.uft1.com/embed.js'
-  const APP_URL = 'https://projectmate.uft1.com/overlay/'
+  const APP_URL =
+    import.meta.env?.VITE_PROJECTMATE_APP_URL ||
+    'https://projectmate.uft1.com/overlay/'
+  const PROJECT_ID =
+    import.meta.env?.VITE_PROJECTMATE_PROJECT_ID || 'sfl-crab'
+  const ISSUES_ENDPOINT = import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT
 
   function setProjectMateReady (ready) {
     window.dispatchEvent(
@@ -56,8 +61,8 @@ export function initChatWidget () {
   }
 
   function buildProjectMateConfig () {
-    return {
-      projectId: 'sfl-crab',
+    const config = {
+      projectId: PROJECT_ID,
       appUrl: APP_URL,
       about: {
         title: 'SFL Crab (d1g.uk)',
@@ -82,6 +87,13 @@ export function initChatWidget () {
         hidden: true,
       },
     }
+
+    // Only send issuesEndpoint when explicitly configured.
+    if (ISSUES_ENDPOINT) {
+      config.issuesEndpoint = ISSUES_ENDPOINT
+    }
+
+    return config
   }
 
   function bootProjectMate () {
