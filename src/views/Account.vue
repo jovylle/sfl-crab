@@ -59,12 +59,15 @@
           <p v-if="error" class="text-error text-sm">{{ error }}</p>
           <p v-else-if="notice" class="text-success text-sm">{{ notice }}</p>
 
-          <p v-if="loading" class="text-sm text-base-content/70">Loading saved lands...</p>
-          <p v-else-if="savedLands.length === 0" class="text-sm text-base-content/70">
+          <p v-if="loading" class="text-sm text-base-content/70 inline-flex items-center gap-2">
+            <span class="loading loading-spinner loading-xs"></span>
+            Updating saved lands...
+          </p>
+          <p v-if="!loading && savedLands.length === 0" class="text-sm text-base-content/70">
             No saved Land IDs yet.
           </p>
 
-          <ul v-else class="space-y-2">
+          <ul v-if="savedLands.length > 0" class="space-y-2">
             <li
               v-for="land in savedLands"
               :key="land.landId"
@@ -125,9 +128,29 @@ const notice = ref('')
 const profileEmail = ref('')
 const savedLands = ref([])
 const newLandId = ref('')
+const SAVED_LANDS_CACHE_KEY = 'sfl-hub-saved-lands-cache'
+
+function readCachedSavedLands () {
+  if (typeof localStorage === 'undefined') return []
+  const raw = localStorage.getItem(SAVED_LANDS_CACHE_KEY)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(item => item && typeof item.landId === 'string')
+  } catch {
+    return []
+  }
+}
+
+function writeCachedSavedLands (lands) {
+  if (typeof localStorage === 'undefined') return
+  localStorage.setItem(SAVED_LANDS_CACHE_KEY, JSON.stringify(lands))
+}
 
 async function loadAccountData () {
   if (!isAuthenticated.value) return
+  savedLands.value = readCachedSavedLands()
   loading.value = true
   error.value = ''
   try {
@@ -137,6 +160,7 @@ async function loadAccountData () {
     ])
     profileEmail.value = profile?.email || ''
     savedLands.value = Array.isArray(lands?.lands) ? lands.lands : []
+    writeCachedSavedLands(savedLands.value)
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Could not load account data'
   } finally {
@@ -178,6 +202,7 @@ async function onRemoveLand (landId) {
   try {
     await removeLandId(landId)
     savedLands.value = savedLands.value.filter(item => item.landId !== landId)
+    writeCachedSavedLands(savedLands.value)
     notice.value = `Removed Land ID ${landId}`
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Could not remove Land ID'
