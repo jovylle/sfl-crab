@@ -2,6 +2,7 @@ import FeedbackGallery from '@/views/FeedbackGallery.vue'
 import PublicPracticeRun from '@/views/PublicPracticeRun.vue'
 import PublicDigDay from '@/views/PublicDigDay.vue'
 import Admin from '@/views/Admin.vue'
+import Account from '@/views/Account.vue'
 import { legacyTestPathRedirect } from '@/utils/testnet.js'
 
 /** @type {import('vue-router').RouteRecordRaw[]} */
@@ -17,6 +18,12 @@ export const publicRoutes = [
     name: 'Admin',
     component: Admin,
     meta: { hideChrome: true, public: true },
+  },
+  {
+    path: '/account',
+    name: 'Account',
+    component: Account,
+    meta: { public: true },
   },
   {
     path: '/practice/run/:id',

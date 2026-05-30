@@ -17,7 +17,7 @@
       </router-link>
       <template v-else>
         <router-link
-          to="/login"
+          to="/account"
           class="btn btn-outline btn-sm btn-block justify-start"
           @click="closeMainDrawer"
         >
