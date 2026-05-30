@@ -51,6 +51,7 @@ export function initChatWidget () {
   const PROJECT_ID =
     import.meta.env?.VITE_PROJECTMATE_PROJECT_ID || 'sfl-crab'
   const ISSUES_ENDPOINT = import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT
+  const WEB3FORMS_ACCESS_KEY = import.meta.env?.VITE_PROJECTMATE_WEB3FORMS_KEY
 
   function setProjectMateReady (ready) {
     window.dispatchEvent(
@@ -88,9 +89,16 @@ export function initChatWidget () {
       },
     }
 
-    // Only send issuesEndpoint when explicitly configured.
     if (ISSUES_ENDPOINT) {
       config.issuesEndpoint = ISSUES_ENDPOINT
+    }
+
+    if (WEB3FORMS_ACCESS_KEY) {
+      config.web3forms = {
+        accessKey: WEB3FORMS_ACCESS_KEY,
+        subject: 'SFL Crab feedback',
+        fromName: 'd1g.uk',
+      }
     }
 
     return config
