@@ -70,14 +70,25 @@ exports.handler = async (event, context) => {
       }
     })
 
-    // Get the response data
-    const data = await response.json()
+    const text = await response.text()
+    let data = null
+    if (text) {
+      try {
+        data = JSON.parse(text)
+      } catch (parseError) {
+        console.error('API JSON parse error:', parseError.message, 'status:', response.status)
+        return {
+          statusCode: 502,
+          headers: corsHeaders,
+          body: JSON.stringify({ error: 'Invalid JSON from Sunflower Land API' }),
+        }
+      }
+    }
 
-    // Return the data with proper CORS headers
     return {
       statusCode: response.status,
       headers: corsHeaders,
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     }
   } catch (error) {
     console.error('API Error:', error)
