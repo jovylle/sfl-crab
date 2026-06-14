@@ -14,7 +14,8 @@ import { resolveHubReplayUrl } from '@/utils/hubReplayUrl.js'
 import { getHubDisplayName } from '@/composables/useHubSession.js'
 
 const instances = new Map()
-const SYNC_DEBOUNCE_MS = 400
+/** Batch dig/mark edits before POST — longer window cuts Hub writes sharply. */
+const SYNC_DEBOUNCE_MS = 30_000
 
 function isPersistableLandId (landId) {
   const id = String(landId || '')
@@ -51,7 +52,8 @@ export function useDigDayStore (landId, desertSource) {
     const syncError = ref(null)
     const hubReplayUrl = ref(null)
     let syncTimer = null
-    let lastPayloadJson = ''
+    let lastSyncFingerprint = ''
+    let hydrated = false
 
     function applyRemote (remote) {
       if (!remote) return
@@ -71,7 +73,7 @@ export function useDigDayStore (landId, desertSource) {
       return src?.value ?? src ?? {}
     }
 
-    function buildPayload () {
+    function buildSyncCore () {
       const digging = getDesert().digging || {}
       const rawGrid = digging.grid || []
       const digs = buildDigTimeline(rawGrid)
@@ -86,9 +88,27 @@ export function useDigDayStore (landId, desertSource) {
         patterns: [...(digging.patterns || [])],
         digs,
         markEvents: getMarkEventsSnapshot(key),
-        stats: buildDigStats(digs),
+      }
+    }
+
+    function buildSyncFingerprint () {
+      return JSON.stringify(buildSyncCore())
+    }
+
+    function buildPayload () {
+      const core = buildSyncCore()
+      return {
+        ...core,
+        stats: buildDigStats(core.digs),
         updatedAt: new Date().toISOString(),
       }
+    }
+
+    function getGridSyncSignal () {
+      const grid = getDesert().digging?.grid || []
+      const timeline = buildDigTimeline(grid)
+      const lastDugAt = timeline.length ? timeline[timeline.length - 1].dugAt : 0
+      return `${timeline.length}:${lastDugAt}`
     }
 
     function getAfterDigOrder () {
@@ -116,6 +136,10 @@ export function useDigDayStore (landId, desertSource) {
       },
     })
 
+    function seedFingerprint () {
+      lastSyncFingerprint = buildSyncFingerprint()
+    }
+
     async function loadFromServer () {
       syncStatus.value = 'loading'
       syncError.value = null
@@ -128,19 +152,22 @@ export function useDigDayStore (landId, desertSource) {
         syncError.value =
           err instanceof Error ? err.message : 'Failed to load dig day'
         syncStatus.value = 'error'
+      } finally {
+        hydrated = true
+        seedFingerprint()
       }
     }
 
     async function syncToServer () {
-      const payload = buildPayload()
-      const json = JSON.stringify(payload)
-      if (json === lastPayloadJson) return
+      const fingerprint = buildSyncFingerprint()
+      if (fingerprint === lastSyncFingerprint) return
 
+      const payload = buildPayload()
       syncStatus.value = 'syncing'
       syncError.value = null
       try {
         const saved = await saveDigDay(payload)
-        lastPayloadJson = json
+        lastSyncFingerprint = fingerprint
         applyRemote(saved)
         lastUpdatedAt.value = saved?.updatedAt || payload.updatedAt
         syncStatus.value = 'saved'
@@ -162,6 +189,7 @@ export function useDigDayStore (landId, desertSource) {
     }
 
     function scheduleSync () {
+      if (!hydrated) return
       if (syncTimer) clearTimeout(syncTimer)
       syncTimer = setTimeout(() => {
         syncTimer = null
@@ -169,19 +197,33 @@ export function useDigDayStore (landId, desertSource) {
       }, SYNC_DEBOUNCE_MS)
     }
 
+    function flushSyncIfDirty () {
+      if (!hydrated) return
+      if (syncTimer) {
+        clearTimeout(syncTimer)
+        syncTimer = null
+      }
+      const fingerprint = buildSyncFingerprint()
+      if (fingerprint !== lastSyncFingerprint) {
+        syncToServer()
+      }
+    }
+
+    function onVisibilityChange () {
+      if (document.visibilityState === 'hidden') {
+        flushSyncIfDirty()
+      }
+    }
+
     function upsertFromApi () {
       scheduleSync()
     }
 
-    watch(
-      () => getDesert().digging?.grid,
-      () => scheduleSync(),
-      { deep: true, immediate: true }
-    )
+    watch(() => getGridSyncSignal(), () => scheduleSync())
 
     watch(
       () => journal.events.value.length,
-      () => scheduleSync()
+      () => scheduleSync(),
     )
 
     const store = {
@@ -194,6 +236,8 @@ export function useDigDayStore (landId, desertSource) {
       upsertFromApi,
       _cleanup () {
         if (syncTimer) clearTimeout(syncTimer)
+        document.removeEventListener('visibilitychange', onVisibilityChange)
+        window.removeEventListener('beforeunload', flushSyncIfDirty)
         registerMarkJournalHandlers(key, null)
       },
     }
@@ -201,10 +245,13 @@ export function useDigDayStore (landId, desertSource) {
     instances.set(key, store)
 
     onMounted(() => {
+      document.addEventListener('visibilitychange', onVisibilityChange)
+      window.addEventListener('beforeunload', flushSyncIfDirty)
       loadFromServer()
     })
 
     onBeforeUnmount(() => {
+      flushSyncIfDirty()
       store._cleanup()
       instances.delete(key)
     })
