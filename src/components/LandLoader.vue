@@ -22,7 +22,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLandSync } from '@/composables/useLandSync'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
-import { getLandDataStorageKey } from '@/config/api.js'
+import { readLandCacheMeta } from '@/utils/landCache.js'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 
 const route  = useRoute()
@@ -52,10 +52,7 @@ function goToLand() {
   const id = inputLandId.value.trim()
   if (!id) return
 
-  const raw = JSON.parse(localStorage.getItem(getLandDataStorageKey(id)) || '{}')
-  const today = new Date().toISOString().slice(0, 10)
-  const isStale = raw?.date !== today
-  const isMissingState = !raw?.visitedFarmState
+  const { shouldAutoFetch } = readLandCacheMeta(id)
 
   const test = isTestServer.value
   if (route.name === 'GuestDigging' || route.name === 'TestGuestDigging') {
@@ -64,7 +61,7 @@ function goToLand() {
     router.push(resolveLandRoute('details', { landId: id, test }))
   }
 
-  if (isMissingState || isStale) {
+  if (shouldAutoFetch) {
     setTimeout(() => {
       const { reloadFromServer } = useLandSync({ landId: id })
       reloadFromServer({ landId: id })

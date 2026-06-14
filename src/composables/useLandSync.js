@@ -1,16 +1,18 @@
 // src/composables/useLandSync.js
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLandData } from '@/composables/useLandData'
 import { fetchLandData } from '@/services/landSyncService'
 import { getLandCooldownStorageKey } from '@/config/api.js'
 
 const instances = new Map()
+const SUCCESS_COOLDOWN_MS = 15_000
+const FAILURE_COOLDOWN_MS = 30_000
 
 export function useLandSync (opts = {}) {
-  let landId 
+  let landId
   if (opts.landId) {
-     landId = opts.landId || null
+    landId = opts.landId || null
   } else {
     const route = useRoute()
     landId = route.params.landId
@@ -18,16 +20,14 @@ export function useLandSync (opts = {}) {
   const cooldownKey = getLandCooldownStorageKey(landId)
 
   if (!instances.has(landId)) {
-    // 1️⃣ grab the landData ref once, at composable init:
     const { landData } = useLandData()
 
-    // 2️⃣ shared reactive state
     const isLoading = ref(false)
     const isCooldown = ref(false)
     const remaining = ref(0)
     let intervalId
+    let lastFetchFailed = false
 
-    // helper to clear cooldown
     function clearCooldown () {
       isCooldown.value = false
       remaining.value = 0
@@ -35,10 +35,8 @@ export function useLandSync (opts = {}) {
       clearInterval(intervalId)
     }
 
-    // start countdown from an absolute endTime (ms)
     function startCountdown (endTime) {
       isCooldown.value = true
-      // tick down remaining
       intervalId = setInterval(() => {
         const msLeft = endTime - Date.now()
         if (msLeft <= 0) {
@@ -49,7 +47,6 @@ export function useLandSync (opts = {}) {
       }, 250)
     }
 
-    // on init, restore any in-flight cooldown from localStorage
     const stored = Number(localStorage.getItem(cooldownKey))
     if (stored > Date.now()) {
       startCountdown(stored)
@@ -57,7 +54,6 @@ export function useLandSync (opts = {}) {
 
     onBeforeUnmount(() => clearInterval(intervalId))
 
-    // 3️⃣ reload logic (never re-calls useLandData/useRoute)
     async function reloadFromServer (opts = {}) {
       const { force = false, landId: overrideLandId } = opts
       const targetLandId = overrideLandId || landId
@@ -67,33 +63,35 @@ export function useLandSync (opts = {}) {
 
       try {
         const fresh = await fetchLandData(targetLandId)
+        lastFetchFailed = false
         landData.value = {
           date: new Date().toISOString().slice(0, 10),
-          ...fresh
+          fetchedAt: Date.now(),
+          ...fresh,
         }
-        
+
         const desertDigging = fresh.visitedFarmState.desert.digging
-        const username     = fresh.visitedFarmState.username  // ← pull from visitedFarmState.username
+        const username = fresh.visitedFarmState.username
 
         window.dispatchEvent(
           new CustomEvent('landDataReady', {
-            detail: { desertDigging, username }
-          })
+            detail: { desertDigging, username },
+          }),
         )
       } catch (err) {
-        // 👇 Show a friendly alert for the 429 error or anything else
+        lastFetchFailed = true
         alert(err.message || 'An unexpected error occurred while loading land data.')
       } finally {
         isLoading.value = false
 
         if (!force && !isCooldown.value) {
-          const endTime = Date.now() + 15_000
+          const cooldownMs = lastFetchFailed ? FAILURE_COOLDOWN_MS : SUCCESS_COOLDOWN_MS
+          const endTime = Date.now() + cooldownMs
           localStorage.setItem(cooldownKey, String(endTime))
           startCountdown(endTime)
         }
       }
     }
-    
 
     instances.set(landId, { isLoading, isCooldown, remaining, reloadFromServer })
   }

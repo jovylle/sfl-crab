@@ -1,3 +1,5 @@
+const { hubBase } = require('./_hubBase.cjs')
+
 const CORS_ORIGINS = [
   'https://d1g.uk',
   'https://beta.d1g.uk',
@@ -49,11 +51,6 @@ function checkRateLimit (ip) {
     err.statusCode = 429
     throw err
   }
-}
-
-function hubBase () {
-  const base = process.env.HUB_API_BASE || 'https://beta.api.d1g.uk'
-  return base.replace(/\/$/, '')
 }
 
 exports.handler = async (event) => {

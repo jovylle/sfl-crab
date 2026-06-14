@@ -1,3 +1,5 @@
+const { hubBase } = require('./_hubBase.cjs')
+
 const CORS_ORIGINS = [
   'https://d1g.uk',
   'https://beta.d1g.uk',
@@ -20,8 +22,9 @@ function corsHeaders (origin) {
 
   return {
     'Access-Control-Allow-Origin': allowed ? origin || CORS_ORIGINS[0] : CORS_ORIGINS[0],
-    'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization, If-None-Match',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Expose-Headers': 'ETag',
   }
 }
 
@@ -49,9 +52,16 @@ function checkRateLimit (ip) {
   }
 }
 
-function hubBase () {
-  const base = process.env.HUB_API_BASE || 'https://beta.api.d1g.uk'
-  return base.replace(/\/$/, '')
+function digDayLandId (event) {
+  if (event.httpMethod === 'GET') {
+    return event.queryStringParameters?.landId || 'unknown'
+  }
+  try {
+    const body = JSON.parse(event.body || '{}')
+    return body.landId || 'unknown'
+  } catch {
+    return 'unknown'
+  }
 }
 
 async function proxyToHub (event) {
@@ -70,6 +80,9 @@ async function proxyToHub (event) {
   }
   const auth = event.headers.authorization || event.headers.Authorization
   if (auth) headers.Authorization = auth
+  const ifNoneMatch =
+    event.headers['if-none-match'] || event.headers['If-None-Match']
+  if (ifNoneMatch) headers['If-None-Match'] = ifNoneMatch
 
   const url =
     event.httpMethod === 'GET'
@@ -90,7 +103,11 @@ async function proxyToHub (event) {
     /* plain text error */
   }
 
-  return { status: res.status, body }
+  return {
+    status: res.status,
+    body,
+    etag: res.headers.get('etag'),
+  }
 }
 
 exports.handler = async (event) => {
@@ -107,6 +124,12 @@ exports.handler = async (event) => {
   try {
     checkRateLimit(getClientIp(event))
   } catch (err) {
+    console.log('dig-day', {
+      method: event.httpMethod,
+      landId: digDayLandId(event),
+      status: err.statusCode || 429,
+      reason: 'rate_limit',
+    })
     return {
       statusCode: err.statusCode || 429,
       headers,
@@ -119,17 +142,32 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { status, body } = await proxyToHub(event)
+    const { status, body, etag } = await proxyToHub(event)
     const cache =
       event.httpMethod === 'GET'
-        ? 'public, max-age=30, must-revalidate'
+        ? 'public, max-age=120, must-revalidate'
         : 'no-store'
+    const responseHeaders = { ...headers, 'Cache-Control': cache }
+    if (etag) responseHeaders.ETag = etag
+
+    console.log('dig-day', {
+      method: event.httpMethod,
+      landId: digDayLandId(event),
+      status,
+    })
+
     return {
       statusCode: status,
-      headers: { ...headers, 'Cache-Control': cache },
+      headers: responseHeaders,
       body: typeof body === 'string' ? body : JSON.stringify(body),
     }
   } catch (error) {
+    console.log('dig-day', {
+      method: event.httpMethod,
+      landId: digDayLandId(event),
+      status: 500,
+      reason: 'proxy_error',
+    })
     console.error('dig-day proxy:', error)
     return {
       statusCode: 500,

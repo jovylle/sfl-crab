@@ -17,6 +17,8 @@ Forwards `Authorization` when present (signed-in attribution). Guests still POST
 
 Data is public by `landId`. Mark events merge append-only by `seq` (handled on hub).
 
+GET responses use `Cache-Control: public, max-age=120`. The proxy forwards `If-None-Match` and exposes Hub `ETag` when present. See [`docs/HUB_CONSUMPTION_SPEC.md`](../../docs/HUB_CONSUMPTION_SPEC.md) for Hub-side idempotency and conditional GET work.
+
 ### Legacy blobs (migration only)
 
 Old data may still be in Netlify Blobs `dig-day-snapshots`. Import with `sfl-digging-hub/scripts/import-blobs-to-hub.mjs`.
