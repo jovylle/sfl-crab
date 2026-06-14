@@ -1,64 +1,74 @@
-import { API_CONFIG, getApiHeaders } from '@/config/api.js'
+import { API_CONFIG, getApiHeaders, isTestApiEnvironment } from '@/config/api.js'
 
 // Normalize response format to match primary API structure
-function normalizeApiResponse(data, apiType = 'backup') {
+function normalizeApiResponse (data, apiType = 'backup') {
   if (apiType === 'primary') {
     // Primary API: {visitedFarmState: {gameObject}}
-    return data;
-  } else if (apiType === 'backup') {
+    return data
+  }
+  if (apiType === 'backup') {
     // Backup API: {farm: {gameObject}} -> normalize to {visitedFarmState: {gameObject}}
     if (data.farm) {
       return {
-        visitedFarmState: data.farm
-      };
+        visitedFarmState: data.farm,
+      }
     }
   }
-  return data;
+  return data
+}
+
+function landNotFoundError () {
+  return new Error(
+    isTestApiEnvironment()
+      ? 'Land not found on test server. Check the land ID or switch to production API.'
+      : 'Land not found. If this is a testnet farm, enable test server mode or add ?testnet to the URL.',
+  )
 }
 
 export async function fetchLandDataFromServer (landId) {
-  if (!landId) throw new Error('landId is required');
+  if (!landId) throw new Error('landId is required')
 
   try {
-    // Try primary API first // UPDATE PRIMARY NO WORK EMOURE
-    const response = await fetch(`${API_CONFIG.ENDPOINTS.backup}${landId}`, {
-      headers: getApiHeaders()
-    });
-    
+    const response = await fetch(`${API_CONFIG.ENDPOINTS.primary}${landId}`, {
+      headers: getApiHeaders(),
+    })
+
     if (response.ok) {
-      const data = await response.json();
-      return normalizeApiResponse(data, 'backup');
+      const data = await response.json()
+      return normalizeApiResponse(data, 'primary')
     }
-    
-    // If primary API returns 404, try backup API
+
     if (response.status === 404) {
-      console.warn('Primary API returned 404, trying backup API...');
-      
       const backupResponse = await fetch(`${API_CONFIG.ENDPOINTS.backup}${landId}`, {
-        headers: getApiHeaders()
-      });
-      
+        headers: getApiHeaders(),
+      })
+
       if (backupResponse.ok) {
-        const data = await backupResponse.json();
-        return normalizeApiResponse(data, 'backup');
+        const data = await backupResponse.json()
+        return normalizeApiResponse(data, 'backup')
       }
-      
+
       if (backupResponse.status === 404) {
-        throw new Error('Land not found on both primary and backup APIs.');
+        throw landNotFoundError()
       }
+
+      if (backupResponse.status === 429) {
+        throw new Error('You are sending requests too quickly. Please wait a moment before trying again.')
+      }
+
+      throw new Error('Failed to fetch land data from backup API.')
     }
-    
-    // Handle rate limiting
+
     if (response.status === 429) {
-      throw new Error('You are sending requests too quickly. Please wait a moment before trying again.');
+      throw new Error('You are sending requests too quickly. Please wait a moment before trying again.')
     }
-    
-    throw new Error('Failed to fetch land data from both APIs.');
-    
+
+    throw new Error('Failed to fetch land data.')
+
   } catch (error) {
     if (error.message.includes('fetch')) {
-      throw new Error('Network error. Please check your connection and try again.');
+      throw new Error('Network error. Please check your connection and try again.')
     }
-    throw error;
+    throw error
   }
 }

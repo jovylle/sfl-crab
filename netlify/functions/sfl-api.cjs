@@ -6,6 +6,9 @@ const API_ORIGINS = {
   test: 'https://api-dev.sunflower-land.com',
 }
 
+const CACHE_TTL_MS = 60_000
+const responseCache = new Map()
+
 function resolveApiTarget (event) {
   const headers = event.headers || {}
   const header =
@@ -29,45 +32,71 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 
-exports.handler = async (event, context) => {
+function getCachedResponse (cacheKey) {
+  const entry = responseCache.get(cacheKey)
+  if (!entry) return null
+  if (Date.now() - entry.storedAt > CACHE_TTL_MS) {
+    responseCache.delete(cacheKey)
+    return null
+  }
+  return entry
+}
+
+function setCachedResponse (cacheKey, statusCode, body) {
+  responseCache.set(cacheKey, {
+    storedAt: Date.now(),
+    statusCode,
+    body,
+  })
+}
+
+exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' }
   }
 
-  // Only allow GET requests
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      body: JSON.stringify({ error: 'Method not allowed' }),
     }
   }
 
   const { env, apiKey, origin } = resolveApiTarget(event)
+  const { path } = event
+  const apiPath = path.replace('/.netlify/functions/sfl-api', '')
+  const cacheKey = `${env}:${apiPath}`
+
   if (!apiKey) {
     const keyName = env === 'test' ? 'SFL_API_KEY_DEV' : 'SFL_API_KEY'
+    console.log('sfl-api', { env, path: apiPath, status: 500, reason: 'missing_api_key' })
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ error: `${keyName} not configured` })
+      body: JSON.stringify({ error: `${keyName} not configured` }),
     }
   }
 
-  // Extract the path from the request
-  const { path } = event
-  const apiPath = path.replace('/.netlify/functions/sfl-api', '')
-  
-  // Build the full API URL
+  const cached = getCachedResponse(cacheKey)
+  if (cached) {
+    console.log('sfl-api', { env, path: apiPath, status: cached.statusCode, cache: 'hit' })
+    return {
+      statusCode: cached.statusCode,
+      headers: corsHeaders,
+      body: cached.body,
+    }
+  }
+
   const apiUrl = `${origin}${apiPath}`
-  
+
   try {
-    // Make the request to Sunflower Land API with the API key
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey
-      }
+        'x-api-key': apiKey,
+      },
     })
 
     const text = await response.text()
@@ -76,6 +105,7 @@ exports.handler = async (event, context) => {
       try {
         data = JSON.parse(text)
       } catch (parseError) {
+        console.log('sfl-api', { env, path: apiPath, status: 502, reason: 'invalid_json' })
         console.error('API JSON parse error:', parseError.message, 'status:', response.status)
         return {
           statusCode: 502,
@@ -85,17 +115,25 @@ exports.handler = async (event, context) => {
       }
     }
 
+    const body = JSON.stringify(data)
+    if (response.status === 200) {
+      setCachedResponse(cacheKey, response.status, body)
+    }
+
+    console.log('sfl-api', { env, path: apiPath, status: response.status, cache: 'miss' })
+
     return {
       statusCode: response.status,
       headers: corsHeaders,
-      body: JSON.stringify(data),
+      body,
     }
   } catch (error) {
+    console.log('sfl-api', { env, path: apiPath, status: 500, reason: 'fetch_error' })
     console.error('API Error:', error)
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Failed to fetch data from Sunflower Land API' })
+      body: JSON.stringify({ error: 'Failed to fetch data from Sunflower Land API' }),
     }
   }
 }

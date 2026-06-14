@@ -4,7 +4,10 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
-/** Where /api/* is proxied when using `npm run dev:vite` (not `netlify dev`). */
+/**
+ * Where /api/* is proxied when using `npm run dev:vite` (not `netlify dev`).
+ * Set VITE_API_PROXY_TARGET=http://localhost:8888 to avoid hitting production functions.
+ */
 const defaultApiProxy = 'https://beta.d1g.uk'
 
 export default defineConfig(({ mode }) => {
