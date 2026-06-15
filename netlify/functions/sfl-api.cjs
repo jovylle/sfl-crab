@@ -73,7 +73,11 @@ exports.handler = async (event) => {
 
   const { env, apiKey, origin } = resolveApiTarget(event)
   const { path } = event
-  const apiPath = path.replace('/.netlify/functions/sfl-api', '')
+  let apiPath = path.replace('/.netlify/functions/sfl-api', '')
+  const legacyVisit = apiPath.startsWith('/visit/')
+  if (legacyVisit) {
+    apiPath = apiPath.replace(/^\/visit\//, '/community/farms/')
+  }
   const landId = landIdFromPath(apiPath)
   const cacheKey = `${env}:${apiPath}`
 
@@ -129,7 +133,14 @@ exports.handler = async (event) => {
       setCachedResponse(cacheKey, response.status, body)
     }
 
-    logSflApi({ env, path: apiPath, landId, status: response.status, cache: 'miss' })
+    logSflApi({
+      env,
+      path: apiPath,
+      landId,
+      status: response.status,
+      cache: 'miss',
+      ...(legacyVisit ? { legacyVisit: true } : {}),
+    })
 
     return {
       statusCode: response.status,
