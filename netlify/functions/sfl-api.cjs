@@ -32,6 +32,14 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 
+function landIdFromPath (apiPath) {
+  return apiPath.match(/\/(\d+)\/?$/)?.[1] || null
+}
+
+function logSflApi (fields) {
+  console.log('sfl-api', fields)
+}
+
 function getCachedResponse (cacheKey) {
   const entry = responseCache.get(cacheKey)
   if (!entry) return null
@@ -65,12 +73,17 @@ exports.handler = async (event) => {
 
   const { env, apiKey, origin } = resolveApiTarget(event)
   const { path } = event
-  const apiPath = path.replace('/.netlify/functions/sfl-api', '')
+  let apiPath = path.replace('/.netlify/functions/sfl-api', '')
+  const legacyVisit = apiPath.startsWith('/visit/')
+  if (legacyVisit) {
+    apiPath = apiPath.replace(/^\/visit\//, '/community/farms/')
+  }
+  const landId = landIdFromPath(apiPath)
   const cacheKey = `${env}:${apiPath}`
 
   if (!apiKey) {
     const keyName = env === 'test' ? 'SFL_API_KEY_DEV' : 'SFL_API_KEY'
-    console.log('sfl-api', { env, path: apiPath, status: 500, reason: 'missing_api_key' })
+    logSflApi({ env, path: apiPath, landId, status: 500, reason: 'missing_api_key' })
     return {
       statusCode: 500,
       headers: corsHeaders,
@@ -80,7 +93,7 @@ exports.handler = async (event) => {
 
   const cached = getCachedResponse(cacheKey)
   if (cached) {
-    console.log('sfl-api', { env, path: apiPath, status: cached.statusCode, cache: 'hit' })
+    logSflApi({ env, path: apiPath, landId, status: cached.statusCode, cache: 'hit' })
     return {
       statusCode: cached.statusCode,
       headers: corsHeaders,
@@ -105,7 +118,7 @@ exports.handler = async (event) => {
       try {
         data = JSON.parse(text)
       } catch (parseError) {
-        console.log('sfl-api', { env, path: apiPath, status: 502, reason: 'invalid_json' })
+        logSflApi({ env, path: apiPath, landId, status: 502, reason: 'invalid_json' })
         console.error('API JSON parse error:', parseError.message, 'status:', response.status)
         return {
           statusCode: 502,
@@ -120,7 +133,14 @@ exports.handler = async (event) => {
       setCachedResponse(cacheKey, response.status, body)
     }
 
-    console.log('sfl-api', { env, path: apiPath, status: response.status, cache: 'miss' })
+    logSflApi({
+      env,
+      path: apiPath,
+      landId,
+      status: response.status,
+      cache: 'miss',
+      ...(legacyVisit ? { legacyVisit: true } : {}),
+    })
 
     return {
       statusCode: response.status,
@@ -128,7 +148,7 @@ exports.handler = async (event) => {
       body,
     }
   } catch (error) {
-    console.log('sfl-api', { env, path: apiPath, status: 500, reason: 'fetch_error' })
+    logSflApi({ env, path: apiPath, landId, status: 500, reason: 'fetch_error' })
     console.error('API Error:', error)
     return {
       statusCode: 500,

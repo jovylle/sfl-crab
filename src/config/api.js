@@ -20,8 +20,10 @@ export const API_ENVIRONMENTS = {
 
 export const API_CONFIG = {
   ENDPOINTS: {
-    primary: '/.netlify/functions/sfl-api/visit/',
-    backup: '/.netlify/functions/sfl-api/community/farms/',
+    /** Public community snapshot — preferred for third-party tools. */
+    primary: '/.netlify/functions/sfl-api/community/farms/',
+    /** Visit endpoint — often 401 for non-owner farms; kept as fallback only. */
+    backup: '/.netlify/functions/sfl-api/visit/',
   },
 }
 
