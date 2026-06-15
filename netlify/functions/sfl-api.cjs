@@ -28,8 +28,21 @@ function resolveApiTarget (event) {
 const corsHeaders = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, x-sfl-api-env',
+  'Access-Control-Allow-Headers': 'Content-Type, x-sfl-api-env, x-sfl-bypass-cache',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
+}
+
+function shouldBypassCache (event) {
+  const headers = event.headers || {}
+  const header =
+    headers['x-sfl-bypass-cache'] ||
+    headers['X-Sfl-Bypass-Cache'] ||
+    Object.entries(headers).find(
+      ([k]) => k.toLowerCase() === 'x-sfl-bypass-cache',
+    )?.[1] ||
+    ''
+  const query = event.queryStringParameters?.bypassCache || ''
+  return header === '1' || query === '1'
 }
 
 function landIdFromPath (apiPath) {
@@ -91,7 +104,9 @@ exports.handler = async (event) => {
     }
   }
 
-  const cached = getCachedResponse(cacheKey)
+  const bypassCache = shouldBypassCache(event)
+
+  const cached = !bypassCache && getCachedResponse(cacheKey)
   if (cached) {
     logSflApi({ env, path: apiPath, landId, status: cached.statusCode, cache: 'hit' })
     return {
@@ -138,7 +153,7 @@ exports.handler = async (event) => {
       path: apiPath,
       landId,
       status: response.status,
-      cache: 'miss',
+      cache: bypassCache ? 'bypass' : 'miss',
       ...(legacyVisit ? { legacyVisit: true } : {}),
     })
 

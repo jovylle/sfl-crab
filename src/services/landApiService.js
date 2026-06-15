@@ -26,13 +26,15 @@ function landNotFoundError () {
   )
 }
 
-async function fetchCommunityFarm (landId, env) {
-  return fetch(`${API_CONFIG.ENDPOINTS.primary}${landId}`, {
-    headers: apiHeadersForEnv(env),
-  })
+async function fetchCommunityFarm (landId, env, { bypassCache = false } = {}) {
+  const headers = apiHeadersForEnv(env)
+  if (bypassCache) {
+    headers['x-sfl-bypass-cache'] = '1'
+  }
+  return fetch(`${API_CONFIG.ENDPOINTS.primary}${landId}`, { headers })
 }
 
-export async function fetchLandDataFromServer (landId) {
+export async function fetchLandDataFromServer (landId, { bypassCache = false } = {}) {
   if (!landId) throw new Error('landId is required')
 
   const preferred = isTestApiEnvironment() ? 'test' : 'production'
@@ -40,7 +42,7 @@ export async function fetchLandDataFromServer (landId) {
 
   try {
     for (const env of envs) {
-      const response = await fetchCommunityFarm(landId, env)
+      const response = await fetchCommunityFarm(landId, env, { bypassCache })
 
       if (response.ok) {
         const data = await response.json()
