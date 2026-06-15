@@ -35,7 +35,7 @@ Structured logs go to **Netlify function logs** (Site → Functions → sfl-api 
 
 `sfl-api { env, path, landId, status, cache: 'hit' | 'miss' }`
 
-Only HTTP 200 responses are cached in-memory for 60s. `/visit/*` often returns 401 for third-party tools — the app uses `/community/farms/*` instead.
+Only HTTP 200 responses are cached in-memory for 60s. Send `x-sfl-bypass-cache: 1` (or `?bypassCache=1`) to skip the cache — the app does this on every land sync / Refresh Data click. `/visit/*` often returns 401 for third-party tools — the app uses `/community/farms/*` instead.
 
 ## Admin UI (`/admin`)
 

@@ -62,7 +62,7 @@ export function useLandSync (opts = {}) {
       isLoading.value = true
 
       try {
-        const fresh = await fetchLandData(targetLandId)
+        const fresh = await fetchLandData(targetLandId, { bypassCache: true })
         lastFetchFailed = false
         landData.value = {
           date: new Date().toISOString().slice(0, 10),
