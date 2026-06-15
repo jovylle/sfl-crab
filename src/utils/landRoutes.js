@@ -3,7 +3,11 @@ import {
   isTestApiEnvironment,
   setApiEnvironment,
 } from '@/config/api.js'
-import { hasTestnetQuery, TESTNET_QUERY, withTestnetQuery } from '@/utils/testnet.js'
+import {
+  hasTestnetQuery,
+  TESTNET_QUERY,
+  withTestnetQuery,
+} from '@/utils/testnet.js'
 
 export { TESTNET_QUERY, hasTestnetQuery, withTestnetQuery }
 

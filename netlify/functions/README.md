@@ -27,6 +27,16 @@ Old data may still be in Netlify Blobs `dig-day-snapshots`. Import with `sfl-dig
 
 Daily pattern cache in store `practice-daily-patterns`. See `_practiceDailyStore.cjs`.
 
+## Sunflower Land proxy (`sfl-api`)
+
+Proxies `/.netlify/functions/sfl-api/*` → `api.sunflower-land.com` (or `api-dev` when the client sends `x-sfl-api-env: test`).
+
+Structured logs go to **Netlify function logs** (Site → Functions → sfl-api → Logs). Each line looks like:
+
+`sfl-api { env, path, landId, status, cache: 'hit' | 'miss' }`
+
+Only HTTP 200 responses are cached in-memory for 60s. `/visit/*` often returns 401 for third-party tools — the app uses `/community/farms/*` instead.
+
 ## Admin UI (`/admin`)
 
 Password-protected blob browser. Set `ADMIN_PASSWORD` in Netlify env (or `.env` for `netlify dev`), then open `/admin` on the site.

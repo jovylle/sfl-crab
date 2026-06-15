@@ -1,70 +1,62 @@
-import { API_CONFIG, getApiHeaders, isTestApiEnvironment } from '@/config/api.js'
+import { API_CONFIG, isTestApiEnvironment } from '@/config/api.js'
 
-// Normalize response format to match primary API structure
-function normalizeApiResponse (data, apiType = 'backup') {
-  if (apiType === 'primary') {
-    // Primary API: {visitedFarmState: {gameObject}}
+function normalizeApiResponse (data) {
+  if (data.farm) {
+    return { visitedFarmState: data.farm }
+  }
+  if (data.visitedFarmState) {
     return data
   }
-  if (apiType === 'backup') {
-    // Backup API: {farm: {gameObject}} -> normalize to {visitedFarmState: {gameObject}}
-    if (data.farm) {
-      return {
-        visitedFarmState: data.farm,
-      }
-    }
-  }
   return data
+}
+
+function apiHeadersForEnv (env) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (env === 'test') {
+    headers['x-sfl-api-env'] = 'test'
+  }
+  return headers
 }
 
 function landNotFoundError () {
   return new Error(
     isTestApiEnvironment()
       ? 'Land not found on test server. Check the land ID or switch to production API.'
-      : 'Land not found. If this is a testnet farm, enable test server mode or add ?testnet to the URL.',
+      : 'Land not found. If this is a testnet farm, add ?testnet to the URL.',
   )
+}
+
+async function fetchCommunityFarm (landId, env) {
+  return fetch(`${API_CONFIG.ENDPOINTS.primary}${landId}`, {
+    headers: apiHeadersForEnv(env),
+  })
 }
 
 export async function fetchLandDataFromServer (landId) {
   if (!landId) throw new Error('landId is required')
 
+  const preferred = isTestApiEnvironment() ? 'test' : 'production'
+  const envs = preferred === 'test' ? ['test', 'production'] : ['production', 'test']
+
   try {
-    const response = await fetch(`${API_CONFIG.ENDPOINTS.primary}${landId}`, {
-      headers: getApiHeaders(),
-    })
+    for (const env of envs) {
+      const response = await fetchCommunityFarm(landId, env)
 
-    if (response.ok) {
-      const data = await response.json()
-      return normalizeApiResponse(data, 'primary')
-    }
-
-    if (response.status === 404) {
-      const backupResponse = await fetch(`${API_CONFIG.ENDPOINTS.backup}${landId}`, {
-        headers: getApiHeaders(),
-      })
-
-      if (backupResponse.ok) {
-        const data = await backupResponse.json()
-        return normalizeApiResponse(data, 'backup')
+      if (response.ok) {
+        const data = await response.json()
+        return normalizeApiResponse(data)
       }
 
-      if (backupResponse.status === 404) {
-        throw landNotFoundError()
-      }
-
-      if (backupResponse.status === 429) {
+      if (response.status === 429) {
         throw new Error('You are sending requests too quickly. Please wait a moment before trying again.')
       }
 
-      throw new Error('Failed to fetch land data from backup API.')
+      if (response.status !== 404) {
+        throw new Error(`Failed to fetch land data (${response.status}).`)
+      }
     }
 
-    if (response.status === 429) {
-      throw new Error('You are sending requests too quickly. Please wait a moment before trying again.')
-    }
-
-    throw new Error('Failed to fetch land data.')
-
+    throw landNotFoundError()
   } catch (error) {
     if (error.message.includes('fetch')) {
       throw new Error('Network error. Please check your connection and try again.')
