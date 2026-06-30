@@ -25,11 +25,25 @@
         <div class="mb-8">
           <ThemeToggle />
         </div>
-        <div v-if="isProjectMateReady || hasFeedbackForm" class="divider px-5">Support</div>
-        <div v-if="isProjectMateReady || hasFeedbackForm" class="flex flex-col gap-2">
+        <div v-if="showSupportSection" class="divider px-5">Support</div>
+        <div v-if="showSupportSection" class="flex flex-col gap-2">
+          <template v-if="kofiUrl">
+            <a
+              :href="kofiUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-primary btn-block"
+              @click="closeDrawer"
+            >
+              Support d1g.uk ☕
+            </a>
+            <p class="text-xs text-base-content/60 px-1 leading-snug">
+              Free forever. Optional tips help pay hosting.
+            </p>
+          </template>
           <button
             v-if="isProjectMateReady"
-            class="btn btn-primary btn-block"
+            :class="kofiUrl ? 'btn btn-outline btn-block' : 'btn btn-primary btn-block'"
             @click="openProjectMate"
           >
             Open Help
@@ -50,7 +64,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LandControls from '@/components/LandControls.vue'
@@ -65,6 +79,10 @@ const { isTestServer } = useApiEnvironment()
 const isProjectMateReady = ref(false)
 const feedbackOpen = ref(false)
 const hasFeedbackForm = Boolean(import.meta.env.VITE_PROJECTMATE_WEB3FORMS_KEY)
+const kofiUrl = String(import.meta.env.VITE_KOFI_URL || '').trim()
+const showSupportSection = computed(
+  () => Boolean(kofiUrl) || isProjectMateReady.value || hasFeedbackForm,
+)
 
 function syncProjectMateReady () {
   isProjectMateReady.value = Boolean(
