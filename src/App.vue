@@ -49,6 +49,7 @@
       <main class="block bg-base-100 p-2 lg:p-6 flex-1">
         <router-view />
       </main>
+      <EndSection v-if="!hideChrome" />
       <SiteFooter v-if="!hideChrome" />
     </div>
   </div>
@@ -58,6 +59,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import MainDrawer from '@/components/MainDrawer.vue'
+import EndSection from '@/components/EndSection.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { isTestApiEnvironment } from '@/config/api.js'

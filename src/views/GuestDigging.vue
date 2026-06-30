@@ -12,6 +12,8 @@
     <template v-if="hasDailyPatterns" #patterns>
       <TodayPatterns />
     </template>
+
+    <InfoFooter />
   </DiggingPageLayout>
 </template>
 
@@ -22,6 +24,7 @@ import { useRoute }         from 'vue-router'
 import DiggingPageLayout    from '@/components/DiggingPageLayout.vue'
 import Grid                 from '@/components/Grid.vue'
 import TodayPatterns        from '@/components/TodayPatterns.vue'
+import InfoFooter           from '@/components/InfoFooter.vue'
 
 import { useLandData }      from '@/composables/useLandData'
 import { useGridManager }   from '@/composables/useGridManager'

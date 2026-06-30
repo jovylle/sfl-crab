@@ -43,7 +43,7 @@
         </ul>
       </div>
 
-      <p v-if="buildHash" class="text-[0.6rem] text-base-content/30 text-right font-mono">
+      <p v-if="buildHash && !hideBuildHash" class="text-[0.6rem] text-base-content/30 text-right font-mono">
         build {{ buildHash }}
       </p>
     </div>
@@ -55,6 +55,7 @@
 defineProps({
   showWhatIsThis: { type: Boolean, default: true },
   showFeatures: { type: Boolean, default: true },
+  hideBuildHash: { type: Boolean, default: false },
 })
 
 const buildHash = typeof __APP_VERSION__ !== 'undefined' && __APP_VERSION__

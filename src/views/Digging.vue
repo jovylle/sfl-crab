@@ -65,6 +65,8 @@
     <div class="mt-6">
       <DigStats />
     </div>
+
+    <InfoFooter />
   </DiggingPageLayout>
 </template>
 <script setup>
@@ -78,6 +80,7 @@ import DigReplayModal from '@/components/DigReplayModal.vue'
 import Grid           from '@/components/Grid.vue'
 import TodayPatterns  from '@/components/TodayPatterns.vue'
 import DigStats       from '@/components/DigStats.vue'
+import InfoFooter     from '@/components/InfoFooter.vue'
 import { useLandData }    from '@/composables/useLandData'
 import { useGridManager } from '@/composables/useGridManager'
 import { useLandSync } from '@/composables/useLandSync'
