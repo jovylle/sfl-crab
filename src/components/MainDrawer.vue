@@ -72,6 +72,7 @@ import AccountSection from '@/components/AccountSection.vue'
 import FeedbackModal from '@/components/FeedbackModal.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
+import { KOFI_URL } from '@/config/support.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -79,9 +80,9 @@ const { isTestServer } = useApiEnvironment()
 const isProjectMateReady = ref(false)
 const feedbackOpen = ref(false)
 const hasFeedbackForm = Boolean(import.meta.env.VITE_PROJECTMATE_WEB3FORMS_KEY)
-const kofiUrl = String(import.meta.env.VITE_KOFI_URL || '').trim()
+const kofiUrl = KOFI_URL
 const showSupportSection = computed(
-  () => Boolean(kofiUrl) || isProjectMateReady.value || hasFeedbackForm,
+  () => isProjectMateReady.value || hasFeedbackForm || Boolean(kofiUrl),
 )
 
 function syncProjectMateReady () {
