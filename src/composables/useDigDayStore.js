@@ -190,6 +190,7 @@ export function useDigDayStore (landId, desertSource) {
 
     function scheduleSync () {
       if (!hydrated) return
+      if (buildSyncFingerprint() === lastSyncFingerprint) return
       if (syncTimer) clearTimeout(syncTimer)
       syncTimer = setTimeout(() => {
         syncTimer = null
@@ -220,11 +221,6 @@ export function useDigDayStore (landId, desertSource) {
     }
 
     watch(() => getGridSyncSignal(), () => scheduleSync())
-
-    watch(
-      () => journal.events.value.length,
-      () => scheduleSync(),
-    )
 
     const store = {
       syncStatus,
