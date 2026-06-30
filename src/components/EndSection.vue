@@ -5,6 +5,21 @@
       <DiggingAssistantLinks />
 
       <div class="pt-4 border-t border-base-300">
+        <h4 class="text-lg font-semibold">☕ Support d1g.uk</h4>
+        <p class="text-sm text-base-content/80">
+          Free forever. Optional tips help pay hosting.
+        </p>
+        <a
+          :href="KOFI_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary btn-sm mt-2"
+        >
+          Support on Ko-fi
+        </a>
+      </div>
+
+      <div class="pt-4 border-t border-base-300">
         <h4 class="text-lg font-semibold">🚀 Want to contribute?</h4>
         <p class="text-sm">
           Fork the repo on GitHub:<br />
@@ -32,4 +47,5 @@
 
 <script setup>
 import DiggingAssistantLinks from '@/components/DiggingAssistantLinks.vue'
+import { KOFI_URL } from '@/config/support.js'
 </script>

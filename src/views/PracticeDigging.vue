@@ -168,7 +168,7 @@
       <PracticePatterns :pattern-keys="usedFormationKeys" />
     </template>
 
-    <InfoFooter :show-what-is-this="false" :show-features="false" />
+    <InfoFooter :show-features="false" :hide-build-hash="true" />
   </DiggingPageLayout>
 </template>
 

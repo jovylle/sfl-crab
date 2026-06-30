@@ -64,7 +64,7 @@ function goToLand() {
   if (shouldAutoFetch) {
     setTimeout(() => {
       const { reloadFromServer } = useLandSync({ landId: id })
-      reloadFromServer({ landId: id })
+      reloadFromServer({ landId: id, skipCooldown: true })
     }, 300)
   }
 }

@@ -55,7 +55,7 @@ export function useLandSync (opts = {}) {
     onBeforeUnmount(() => clearInterval(intervalId))
 
     async function reloadFromServer (opts = {}) {
-      const { force = false, landId: overrideLandId } = opts
+      const { force = false, skipCooldown = false, landId: overrideLandId } = opts
       const targetLandId = overrideLandId || landId
       if (isLoading.value || (isCooldown.value && !force)) return
 
@@ -84,7 +84,7 @@ export function useLandSync (opts = {}) {
       } finally {
         isLoading.value = false
 
-        if (!force && !isCooldown.value) {
+        if (!force && !skipCooldown && !isCooldown.value) {
           const cooldownMs = lastFetchFailed ? FAILURE_COOLDOWN_MS : SUCCESS_COOLDOWN_MS
           const endTime = Date.now() + cooldownMs
           localStorage.setItem(cooldownKey, String(endTime))
