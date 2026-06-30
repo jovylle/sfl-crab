@@ -167,8 +167,6 @@
     <template #patterns>
       <PracticePatterns :pattern-keys="usedFormationKeys" />
     </template>
-
-    <InfoFooter :show-what-is-this="false" :show-features="false" />
   </DiggingPageLayout>
 </template>
 
@@ -183,7 +181,6 @@ import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import PracticeGrid from '@/components/PracticeGrid.vue'
 import PracticePatterns from '@/components/PracticePatterns.vue'
-import InfoFooter from '@/components/InfoFooter.vue'
 import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled, getNickname, setNickname } from '@/services/practiceHubService.js'
 import { fetchPracticeRun } from '@/services/practiceRunApiService.js'
 import { getTodayUTC } from '@/utils/buildDigTimeline.js'
