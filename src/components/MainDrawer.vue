@@ -43,7 +43,7 @@
           </template>
           <button
             v-if="isProjectMateReady"
-            :class="kofiUrl ? 'btn btn-outline btn-block' : 'btn btn-primary btn-block'"
+            class="btn btn-primary btn-block"
             @click="openProjectMate"
           >
             Open Help
@@ -72,7 +72,6 @@ import AccountSection from '@/components/AccountSection.vue'
 import FeedbackModal from '@/components/FeedbackModal.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
-import { KOFI_URL } from '@/config/support.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -80,9 +79,8 @@ const { isTestServer } = useApiEnvironment()
 const isProjectMateReady = ref(false)
 const feedbackOpen = ref(false)
 const hasFeedbackForm = Boolean(import.meta.env.VITE_PROJECTMATE_WEB3FORMS_KEY)
-const kofiUrl = KOFI_URL
 const showSupportSection = computed(
-  () => isProjectMateReady.value || hasFeedbackForm || Boolean(kofiUrl),
+  () => isProjectMateReady.value || hasFeedbackForm,
 )
 
 function syncProjectMateReady () {

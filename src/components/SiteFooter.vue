@@ -19,15 +19,6 @@
       >
         GitHub
       </a>
-      <span class="text-base-content/30" aria-hidden="true">·</span>
-      <a
-        href="https://github.com/jovylle/sfl-crab/issues"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="link link-hover"
-      >
-        Feedback
-      </a>
     </div>
     <p v-if="buildHash" class="mt-2 text-[0.6rem] text-base-content/30 font-mono">
       build {{ buildHash }}
