@@ -111,10 +111,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, toRef } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { useGridEngine } from '@/composables/useGridEngine.js'
+import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import HintPicker from '@/components/HintPicker.vue'
 
 const { getImageSrc } = useReliableAssets()
@@ -125,7 +126,15 @@ const props = defineProps({
   hiddenGrid: { type: Array, default: () => [] },
   gameOver: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
+  showPrediction: { type: Boolean, default: false },
+  patternKeys: { type: Array, default: () => [] },
 })
+
+const { guaranteed } = usePredictionEngine(
+  engine.tiles,
+  toRef(props, 'patternKeys'),
+  toRef(props, 'showPrediction'),
+)
 
 const emit = defineEmits(['dig', 'auto-finish'])
 
@@ -355,6 +364,11 @@ function outerClasses(tile, index) {
   if (hints?.length) return [...hints, 'cursor-pointer']
   const autoMarker = getAutoMarker(index)
   if (autoMarker) return [autoMarker, 'cursor-pointer']
+
+  // ── Prediction: guaranteed treasure ──
+  if (props.showPrediction && guaranteed.value.has(index)) {
+    return ['predicted-guaranteed', 'cursor-pointer']
+  }
 
   return props.gameOver
     ? ['bg-base-100']

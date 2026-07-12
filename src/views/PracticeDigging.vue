@@ -29,6 +29,13 @@
           >
             {{ showTimer ? 'Hide Timer' : 'Show Timer' }}
           </button>
+          <button
+            class="btn btn-sm btn-outline"
+            :class="showPrediction ? 'btn-info' : ''"
+            @click="showPrediction = !showPrediction"
+          >
+            {{ showPrediction ? 'Hide Prediction' : 'Prediction' }}
+          </button>
           <label class="label cursor-pointer gap-1 py-0">
             <input v-model="saveScores" type="checkbox" class="checkbox checkbox-xs" />
             <span class="label-text text-xs">Save score</span>
@@ -138,6 +145,8 @@
           :hidden-grid="hiddenGrid"
           :game-over="isGameOver"
           :loading="isStartingTodayRound"
+          :show-prediction="showPrediction"
+          :pattern-keys="usedFormationKeys"
           @auto-finish="finishGame"
           @dig="dig"
         />
@@ -175,6 +184,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useLocalStorage } from '@vueuse/core'
 import { Icon } from '@iconify/vue'
 import DiggingPageLayout from '@/components/DiggingPageLayout.vue'
 import { usePracticeEngine } from '@/composables/usePracticeEngine.js'
@@ -226,6 +236,7 @@ const TODAY_ROUND_ERROR_COOLDOWN_MS = 5000
 const todayRoundCooldownActive = ref(false)
 const todayRoundErrorMessage = ref('')
 const showTimer = ref(true)
+const showPrediction = useLocalStorage('showPrediction-practice', false)
 const saveScores = ref(isPracticeSaveScoresEnabled())
 const nickname = ref(getNickname())
 const lastRunId = ref(null)

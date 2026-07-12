@@ -341,6 +341,26 @@ body {
   border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-warning));
 }
 
+/* ── Prediction marks (auto-generated, distinct from user marks) ── */
+.tile.predicted-guaranteed {
+  background: oklch(var(--color-success) / 0.15);
+  outline: 2px solid oklch(var(--color-success) / 0.7);
+  outline-offset: -2px;
+}
+
+.tile.predicted-guaranteed::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 30%;
+  height: 30%;
+  background: oklch(var(--color-success) / 0.9);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+}
+
 .treasure-indicator {
   width: 50%;
   height: 50%;
