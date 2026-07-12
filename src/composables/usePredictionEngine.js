@@ -9,7 +9,6 @@ import { solveTreasures } from '@/utils/treasureSolver.js'
 
 export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, gridSize = 10) {
   const guaranteed = ref(new Set())
-  const isPartial = ref(false)
 
   const schedule = (typeof window !== 'undefined' && window.requestIdleCallback)
     ? window.requestIdleCallback.bind(window)
@@ -25,7 +24,6 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, gridSi
 
     if (!enabledRef.value) {
       guaranteed.value = new Set()
-      isPartial.value = false
       return
     }
 
@@ -33,7 +31,6 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, gridSi
       idleId = null
       const result = solveTreasures(tilesRef.value, patternKeysRef.value, gridSize)
       guaranteed.value = result.guaranteed
-      isPartial.value = result.partial
     })
   }
 
@@ -43,5 +40,5 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, gridSi
     { immediate: true, deep: true }
   )
 
-  return { guaranteed, isPartial }
+  return { guaranteed }
 }

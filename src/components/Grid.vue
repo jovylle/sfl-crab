@@ -24,13 +24,6 @@
       </div>
     </div>
 
-    <span
-      v-if="showPrediction && isPartial"
-      class="badge badge-warning badge-xs absolute -top-4 right-0 z-30"
-    >
-      partial
-    </span>
-
     <div class="grid w-full p-0.5 gap-0.5 bg-base-300 dark:bg-slate-500">
       <div
         v-for="(tile, index) in tiles"
@@ -115,7 +108,6 @@ import BottomGridInfo from './BottomGridInfo.vue'
 import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
 import { useLandData } from '@/composables/useLandData.js'
 import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
-import { computeActivePatternKeys } from '@/utils/treasureSolver.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { getLabelFromTile } from '@/utils/hintLabel.js'
 
@@ -142,13 +134,14 @@ const tiles  = grid.tiles
 const picker = ref(null)
 
 // ── Prediction engine ──
-const { patternKeys, completedPatternKeys } = useLandData()
-const activePatternKeys = computed(() =>
-  computeActivePatternKeys(patternKeys.value, completedPatternKeys.value)
-)
-const { guaranteed, isPartial } = usePredictionEngine(
+// Pass the FULL board multiset (not minus-completed): the solver anchors on
+// revealed treasures, so a treasure from a completed formation must still be
+// able to anchor to its shape. Including all shapes only ever makes deductions
+// more conservative (never a wrong guarantee).
+const { patternKeys } = useLandData()
+const { guaranteed } = usePredictionEngine(
   tiles,
-  activePatternKeys,
+  patternKeys,
   toRef(() => showPrediction),
 )
 

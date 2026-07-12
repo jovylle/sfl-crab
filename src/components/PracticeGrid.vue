@@ -130,8 +130,22 @@ const props = defineProps({
   patternKeys: { type: Array, default: () => [] },
 })
 
+// The solver needs the DUG reveals, which live in the `tiles` prop
+// (displayTiles: `{ type, name, revealed }` objects) — NOT in `engine.tiles`,
+// which only holds the user's right-click marks. Adapt revealed tiles into the
+// class-array shape the solver parses (same format the live grid engine emits).
+const solverTiles = computed(() =>
+  (props.tiles || []).map(tile => {
+    if (!tile?.revealed) return [] // undug / null / ghosted → unknown
+    if (tile.type === 'treasure') return ['treasure actual-treasure', `tileImage:${getSlug(tile)}`]
+    if (tile.type === 'sand') return ['sand']
+    if (tile.type === 'crab') return ['crab']
+    return []
+  })
+)
+
 const { guaranteed } = usePredictionEngine(
-  engine.tiles,
+  solverTiles,
   toRef(props, 'patternKeys'),
   toRef(props, 'showPrediction'),
 )
@@ -362,13 +376,15 @@ function outerClasses(tile, index) {
 
   const hints = engine.tiles.value[index]
   if (hints?.length) return [...hints, 'cursor-pointer']
-  const autoMarker = getAutoMarker(index)
-  if (autoMarker) return [autoMarker, 'cursor-pointer']
 
   // ── Prediction: guaranteed treasure ──
+  // Higher confidence than the speculative auto-marker below, so it wins.
   if (props.showPrediction && guaranteed.value.has(index)) {
     return ['predicted-guaranteed', 'cursor-pointer']
   }
+
+  const autoMarker = getAutoMarker(index)
+  if (autoMarker) return [autoMarker, 'cursor-pointer']
 
   return props.gameOver
     ? ['bg-base-100']
