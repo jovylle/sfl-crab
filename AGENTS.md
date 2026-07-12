@@ -1,5 +1,23 @@
 # AGENTS.md
 
+> **Start here.** This is the canonical, current reference for developers and AI assistants working on **sfl-crab / d1g.uk** — a visual Desert Digging Assistant for Sunflower Land players.
+
+## Documentation map
+
+Read in this order; each doc is kept accurate. If anything here conflicts with older prose, **this file and the `docs/` files win**.
+
+| Doc | When to read it |
+|---|---|
+| **AGENTS.md** (this file) | Dev commands, conventions, env, API-proxy quirks, dead-code register |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture: directories, routes, startup, data flow, composables/services, grid-builders, entrypoints, `src_other` |
+| [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) | The 10×10 grid engine: tiles, hints, formations, practice mode |
+| [docs/DIG_DAY_SYNC.md](docs/DIG_DAY_SYNC.md) | Dig-day Hub sync: debounce, ETag, merge-by-seq, the layers |
+| [docs/HUB_CONSUMPTION_SPEC.md](docs/HUB_CONSUMPTION_SPEC.md) | Hub-side ETag/idempotency contract |
+| [netlify/functions/README.md](netlify/functions/README.md) | Per-function reference for the `.cjs` proxies |
+| [src/data/game/README.md](src/data/game/README.md) | Auto-synced game data files |
+| [SEASON_UPDATE_GUIDE.md](SEASON_UPDATE_GUIDE.md) / [API_KEY_SETUP.md](API_KEY_SETUP.md) | Seasonal artefact updates / SFL API keys |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Fork + PR workflow |
+
 ## Dev commands
 
 ```bash
@@ -18,9 +36,9 @@ No tests for `src/`, no ESLint, no lint script. Prettier is installed but has no
 ## Architecture
 
 - Vue 3 SPA (Composition API, `<script setup>`) + Vite + Tailwind CSS + DaisyUI
-- No backend — client fetches from Sunflower Land public API through a Netlify function proxy
+- **No app backend of its own**, but it is not backend-less: the client proxies through Netlify functions to two external systems — the **Sunflower Land public API** (`sfl-api.cjs`) and the **SFL Digging Hub** (`HUB_API_BASE`, auth/dig-day/practice). Env vars ARE required for these (see Env setup).
 - Netlify functions are **CommonJS `.cjs`** with `node_bundler = "esbuild"`; do not use ESM
-- **Two Vite entrypoints**: `index.html` and `digging/index.html`. Both load `src/main.js`.
+- **Two Vite entrypoints**: `index.html` and `digging/index.html`. Both load `src/main.js` and boot the *same* app (only difference: analytics beacon). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - **British spelling "artefact"** throughout: filenames, function names, data keys, script names (`sync-artefact.js`)
 - SPA uses `createWebHistory()` — the catch-all `_redirects` rule (`/* → /index.html`) is required
 - **Grid digging mechanics**: see [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) for the 10x10 grid, crab/treasure proximity rules, hint system, formation patterns, practice mode, and data flow.
@@ -65,4 +83,14 @@ Two example files: `env.example` (detailed) and `.env.example` (terse). For `net
 | `netlify/functions/` | Serverless functions (`.cjs`) |
 | `scripts/` | Data sync + asset check scripts |
 | `public/world/` | Treasure/artefact images (`.webp`) |
-| `src_other/` | Legacy SFL game libs (types, ABIs, i18n, React hooks); aliased as `assets`/`lib` but largely unused |
+| `src_other/` | Legacy SFL game libs (types, ABIs, i18n, React hooks); aliased as `assets`/`lib` but effectively **dead** — no running app code imports it |
+
+## Dead code / gotchas
+
+Documented so you don't waste time or "fix" load-bearing weirdness. Full table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#dead-code--gotchas-register).
+
+- `npm run prerender` / `scripts/prerender.js` — **broken**, missing file, ignore.
+- `netlify/functions/projectmate-feedback.cjs` — **dead** (Web3Forms blocks server calls), still referenced by `_redirects`/`netlify.toml`.
+- `netlify/functions/_digDayStore.cjs` — **dead** legacy Netlify Blobs path, superseded by the Hub proxy; kept only as a reference impl.
+- `src/views/Home.vue`, `src/utils/artefactIcons.ts` — present but **unreferenced**.
+- Grid tiles are `string[]` of CSS classes (not objects) — fragile by design; read GRID_MECHANICS.md first.
