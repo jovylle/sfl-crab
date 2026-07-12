@@ -53,9 +53,9 @@ This is a small Vue 3 + Vite app built with:
 - Vue Composition API  
 - TailwindCSS  
 - Lightweight custom services  
-- No backend — just local + API fetch
+- No backend of its own — it proxies through Netlify functions to the Sunflower Land API and the SFL Digging Hub
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for development, setup, and pull request instructions.
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for development, setup, and pull request instructions, and [`AGENTS.md`](./AGENTS.md) + [`docs/`](./docs) for architecture.
 
 ---
 

@@ -61,6 +61,16 @@
               Show Order
             </label>
 
+            <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Auto-highlight guaranteed treasure locations from known patterns">
+              <input
+                type="checkbox"
+                :checked="showPrediction"
+                @change="$emit('update:showPrediction', $event.target.checked)"
+                class="checkbox checkbox-sm mr-1 text-nowrap"
+              />
+              Prediction
+            </label>
+
             <label
               v-if="route.params.landId"
               class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer"
@@ -112,6 +122,7 @@ const grid = useGridManager(landId)
 defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   hideLandIdInUrl: { type: Boolean, default: false },
+  showPrediction: { type: Boolean, default: false },
   digDaySyncStatus: { type: String, default: 'idle' },
   digDayUpdatedAt: { type: String, default: null },
   digDaySyncError: { type: String, default: null },
@@ -153,7 +164,7 @@ async function copyMarksLink (event) {
 }
 
 // we'll emit update:showTreasureOrder via @change above
-defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'open-replay'])
+defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'update:showPrediction', 'open-replay'])
 
 function clearLandId () {
   const test = isTestServer.value

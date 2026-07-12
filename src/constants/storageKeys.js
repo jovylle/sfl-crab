@@ -122,7 +122,7 @@ export function markJournalKey (landId, utcDate) {
 /**
  * UI preference per land.
  * @param {string} landId
- * @param {'showTreasureOrder' | 'hideLandIdInUrl'} pref
+ * @param {'showTreasureOrder' | 'hideLandIdInUrl' | 'showPrediction'} pref
  */
 export function landUiPrefKey (landId, pref) {
   return `${pref}-${landId}`

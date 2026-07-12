@@ -24,12 +24,22 @@
       </div>
     </div>
 
+    <span
+      v-if="showPrediction && isPartial"
+      class="badge badge-warning badge-xs absolute -top-4 right-0 z-30"
+    >
+      partial
+    </span>
+
     <div class="grid w-full p-0.5 gap-0.5 bg-base-300 dark:bg-slate-500">
       <div
         v-for="(tile, index) in tiles"
         :key="index"
         class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative"
-        :class="normalizeTile(tile)"
+        :class="[
+          ...normalizeTile(tile),
+          ...(showPrediction && guaranteed.has(index) && !isRevealed(tile) ? ['predicted-guaranteed'] : [])
+        ]"
         @click="onTileClick($event, index)"
         @contextmenu.prevent="onTileClick($event, index)"
       >
@@ -96,13 +106,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
 import BottomGridInfo from './BottomGridInfo.vue'
 
 import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
+import { useLandData } from '@/composables/useLandData.js'
+import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
+import { computeActivePatternKeys } from '@/utils/treasureSolver.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { getLabelFromTile } from '@/utils/hintLabel.js'
 
@@ -112,10 +125,11 @@ const { getImageSrc } = useReliableAssets()
 const possibleTreasures = useTodayTreasureNames();
 console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
 // your existing props
-const { showTreasureOrder, treasureOrderMap, showLandIdInUrl } = defineProps({
+const { showTreasureOrder, treasureOrderMap, showLandIdInUrl, showPrediction } = defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   treasureOrderMap:  { type: Array,   default: () => [] },
   showLandIdInUrl:   { type: Boolean, default: true },
+  showPrediction:    { type: Boolean, default: false },
 })
 
 // init grid manager
@@ -126,6 +140,17 @@ const grid   = useGridManager(landId)
 // reactive tiles & picker
 const tiles  = grid.tiles
 const picker = ref(null)
+
+// ── Prediction engine ──
+const { patternKeys, completedPatternKeys } = useLandData()
+const activePatternKeys = computed(() =>
+  computeActivePatternKeys(patternKeys.value, completedPatternKeys.value)
+)
+const { guaranteed, isPartial } = usePredictionEngine(
+  tiles,
+  activePatternKeys,
+  toRef(() => showPrediction),
+)
 
 // static labels for overlays
 const colLabels = computed(() =>
@@ -168,6 +193,14 @@ function getTileImage(tile) {
 function normalizeTile(tile) {
   if (Array.isArray(tile)) return tile;
   return String(tile).split(" ");
+}
+
+// A tile is revealed if its (flattened) classes include a real tile type.
+// Revealed treasures are stored as one space-joined string ('treasure actual-treasure'),
+// so flatten each class token before testing membership.
+function isRevealed(tile) {
+  const classes = normalizeTile(tile).flatMap(c => String(c).split(' '))
+  return classes.some(c => c === 'sand' || c === 'crab' || c === 'treasure')
 }
 
 function getTileLabelMark (tile) {

@@ -97,6 +97,28 @@ Three distinct pattern sets:
 
 Pattern completion is detected locally by comparing dug grid tiles against formation pattern coordinates (`utils/patternPreview.js`).
 
+## Prediction mode
+
+A toggleable auto-solver that computes **guaranteed treasure locations** from revealed tiles + the known formation multiset.
+
+### How it works
+
+1. Parses revealed state from tile classes (sand/crab/treasure + `tileImage:` name). Revealed treasure tiles store `treasure actual-treasure` as a single space-joined class, so tokens are flattened before matching (`utils/treasureSolver.js`).
+2. For each formation in the active pattern multiset (`patternKeys` minus `completedPatternKeys`, via `computeActivePatternKeys`), computes all valid translation-only placements that don't conflict with revealed tiles.
+3. Backtracking search enumerates all complete legal placements (all formations placed, all revealed treasures covered by a matching-name plot, no overlaps). Anchor-first ordering places treasure-covering formations first.
+4. A tile is **guaranteed** if it's a treasure in EVERY legal solution.
+5. Capped at 5000 solutions / 200ms — shows a "partial" badge when the cap is hit.
+
+The solve runs off the main thread via `requestIdleCallback` (`composables/usePredictionEngine.js`), so it never blocks the UI.
+
+### Visual
+
+Prediction marks use a solid green outline + corner badge + subtle green tint — visually distinct from user-placed marks (which use dashed borders). Class: `.predicted-guaranteed`.
+
+### Toggle
+
+Off by default, persisted per-land (`showPrediction-${landId}`, or `showPrediction-practice`). Available in both the live Digging view ("More ⋮" menu) and Practice (toolbar button).
+
 ## Tile CSS class conventions
 
 When working with tile state, expect these patterns:
