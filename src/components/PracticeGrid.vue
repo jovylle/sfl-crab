@@ -63,6 +63,13 @@
             alt="predicted treasure"
           />
 
+          <!-- Prediction: guaranteed treasure, exact type unknown -->
+          <span
+            v-else-if="!tile && predictionUnknown(index)"
+            class="prediction-unknown"
+            title="Guaranteed treasure — exact type unknown"
+          >?</span>
+
           <!-- Confirm-dig: pulsing check waiting for second click -->
           <span v-if="confirmIndex === index" class="confirm-dig-wrap">
             <Icon icon="mdi:check-circle" class="confirm-check-icon" />
@@ -75,7 +82,7 @@
 
           <!-- Idle hover hint -->
           <span
-            v-else-if="!tile && !gameOver && !hasHint(index) && !getAutoMarker(index) && !predictionSlug(index)"
+            v-else-if="!tile && !gameOver && !hasHint(index) && !getAutoMarker(index) && !predictionSlug(index) && !predictionUnknown(index)"
             class="hover-shovel-wrap"
           >
             <Icon icon="noto:shovel" class="hover-shovel-icon" />
@@ -165,6 +172,14 @@ function predictionSlug(index) {
   if (!props.showPrediction) return null
   if (!guaranteed.value.has(index)) return null
   return guaranteedSlugs.value.get(index) ?? null
+}
+
+// True when a cell is a guaranteed treasure but its exact type is ambiguous
+// (guaranteed, yet no agreed name) → show a "?" instead of an image.
+function predictionUnknown(index) {
+  if (!props.showPrediction) return false
+  if (!guaranteed.value.has(index)) return false
+  return !guaranteedSlugs.value.has(index)
 }
 
 const emit = defineEmits(['dig', 'auto-finish'])

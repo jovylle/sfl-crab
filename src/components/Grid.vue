@@ -52,6 +52,13 @@
           alt="predicted treasure"
         />
 
+        <!-- Prediction: guaranteed treasure, exact type unknown -->
+        <span
+          v-else-if="predictionUnknown(index)"
+          class="prediction-unknown"
+          title="Guaranteed treasure — exact type unknown"
+        >?</span>
+
         <!-- number label mark (keys 1–0) -->
         <span
           v-if="getTileLabelMark(tile)"
@@ -161,6 +168,15 @@ function predictionSlug(index) {
   if (!guaranteed.value.has(index)) return null
   if (isRevealed(tiles.value[index])) return null
   return guaranteedSlugs.value.get(index) ?? null
+}
+
+// True when a cell is a guaranteed treasure but its exact type is ambiguous
+// (guaranteed + unrevealed, yet no agreed name) → show a "?" instead of an image.
+function predictionUnknown(index) {
+  if (!showPrediction) return false
+  if (!guaranteed.value.has(index)) return false
+  if (isRevealed(tiles.value[index])) return false
+  return !guaranteedSlugs.value.has(index)
 }
 
 // static labels for overlays
