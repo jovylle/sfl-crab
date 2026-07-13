@@ -87,6 +87,50 @@ The current seasonal artefact is determined by `getCurrentSeasonalArtefact()` in
 4. Player digs to reveal tiles; game ends when all treasures are found (victory) or abandoned
 5. Practice-of-the-day is sourced from **farm ID 1** (Adam's farm, `src/data/app/constants.js:17`), fetched via `/api/practice-patterns` which is CDN-cached until UTC midnight
 
+### Round start modes (`PracticeDigging.vue`)
+
+The engine exposes three ways to build a board:
+
+- **`startGame(keys, { exact })`** — random layout. `exact: true` keeps the given key array
+  verbatim (incl. duplicates); otherwise `pickPracticePatterns` samples ≤7.
+- **`startGameFromPlacements(placements)`** — deterministic rebuild from saved
+  `[{ key, tiles:[{x,y}] }]` (used for the exact-board retry, `?board=`, and hub `?run=` replay).
+- **`restoreRound(state)`** — rebuilds a board from placements **and re-applies dig progress**
+  preserving original dig timestamps (used to resume an unfinished round).
+
+Toolbar controls (shown once a round exists):
+
+- **Today's Patterns ↺** — re-runs today's fixed daily set with a fresh random layout each press.
+- **Random Round** — new random set from all formations.
+- **Retry patterns ↺** — same pattern set as the current round, new random layout (`startGame(usedFormationKeys, { exact: true })`).
+- **Retry same board ↺** — the identical layout again, to beat your own dig count (`startGameFromPlacements(formationPlacements)`).
+- **Copy board link** — see below.
+
+### Resume an unfinished round
+
+The in-progress round is persisted to `localStorage` key **`practice:in-progress-round:1`**
+(registered in `constants/storageKeys.js` as `PRACTICE_IN_PROGRESS`). It is written whenever
+`digsMade > 0 && !isGameOver` (and on `beforeunload`/`visibilitychange`/unmount), and **cleared**
+on game-over or when a new round starts with zero digs. Shape (`version: 1`):
+
+```
+{ version, savedAt, patternSource, patternDate, isReplayMode, replayRunId,
+  placements: [{ key, tiles:[{x,y}] }], digHistory: [{ index, at }], elapsedMs }
+```
+
+On mount, precedence is: `?board=` → `?run=` → saved unfinished round (shows a **Resume /
+Start new round** banner; no silent auto-resume) → else start today's round. Only digs are
+restored — hint marks are not.
+
+### Shareable board link (`?board=`)
+
+`utils/practiceBoardCode.js` encodes a board into a self-contained, backend-free URL param.
+Each placement is stored as `[key, ox, oy]` (formation key + origin offset; shapes are fixed in
+`DIGGING_FORMATIONS`), JSON-serialized then base64url-encoded. `decodeBoard` rebuilds absolute
+tiles for `startGameFromPlacements`. "Copy board link" builds
+`/practice?board=<code>` via `router.resolve`; opening it reconstructs the exact board and shows
+the "Shared Grid" badge. Invalid codes fall back to a normal round.
+
 ## Pattern detection
 
 Three distinct pattern sets:

@@ -342,11 +342,11 @@ body {
 }
 
 /* ── Prediction marks (auto-generated, distinct from user marks) ── */
-/* A guaranteed cell shows the actual predicted treasure image at full opacity
+/* A guaranteed cell shows the actual predicted treasure image dimmed to 50%
    with a soft pulsing green glow + a corner check badge — deliberately distinct
    from a real dig. */
 .tile.predicted-guaranteed {
-  outline: 2px solid oklch(var(--color-success) / 0.7);
+  outline: 2px dashed oklch(var(--color-success) / 0.7);
   outline-offset: -2px;
   animation: predicted-glow-pulse 1.4s ease-in-out infinite;
 }
@@ -371,10 +371,11 @@ body {
   z-index: 5;
 }
 
-/* Predicted treasure image: solid, full opacity, with a subtle drop-shadow so
+/* Predicted treasure image: dimmed to 50%, with a subtle drop-shadow so
    it stays legible over any tile background. Sizing inherits from .tile-img. */
 .prediction-img {
   filter: drop-shadow(0 1px 2px oklch(var(--color-success) / 0.5));
+  opacity: 0.5;
 }
 
 /* Guaranteed treasure whose exact type is unknown: a bold "?" in the success

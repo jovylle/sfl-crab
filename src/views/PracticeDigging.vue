@@ -16,7 +16,7 @@
 
         <div class="flex flex-wrap gap-2 justify-center items-center">
           <button
-            v-if="!isGameOver"
+            v-if="!isGameOver && !resumePromptVisible"
             class="btn btn-sm btn-warning"
             @click="giveUp"
           >
@@ -88,16 +88,18 @@
 
     <template #grid>
       <div class="flex flex-col gap-2">
-        <div v-if="resumePromptVisible" class="alert alert-info py-3 text-sm flex-col gap-2">
-          <span>You have an unfinished round. Resume where you left off?</span>
-          <span class="text-xs opacity-70">Only your digs are restored (hint marks are not).</span>
-          <div class="flex gap-2">
-            <button class="btn btn-sm btn-primary" @click="resumeSavedRound(readInProgressRound())">
-              Resume
-            </button>
-            <button class="btn btn-sm btn-ghost" @click="discardSavedRound">
-              Start new round
-            </button>
+        <div v-if="resumePromptVisible" class="alert alert-info py-3 text-sm">
+          <div class="flex flex-col gap-2 w-full">
+            <span class="font-medium">You have an unfinished round. Resume where you left off?</span>
+            <span class="text-xs opacity-70">Only your digs are restored (hint marks are not).</span>
+            <div class="flex gap-2 flex-wrap">
+              <button class="btn btn-sm btn-primary" @click="resumeSavedRound(readInProgressRound())">
+                Resume
+              </button>
+              <button class="btn btn-sm btn-ghost" @click="discardSavedRound">
+                Start new round
+              </button>
+            </div>
           </div>
         </div>
 
@@ -429,6 +431,21 @@ function retrySameBoard () {
 }
 
 // ---- Shareable board link ----
+
+// Keep the address bar in sync with the active board so the URL is always
+// shareable — no need to click "Copy board link" first. Every round that has
+// placements reflects its code as `?board=…`.
+watch(formationPlacements, placements => {
+  if (typeof window === 'undefined') return
+  if (!placements?.length) return
+  try {
+    const code = encodeBoard(placements)
+    if (route.query.board === code) return
+    router.replace({ name: 'Practice', query: { board: code } })
+  } catch {
+    /* encoding/navigation failed — leave the URL as-is */
+  }
+})
 
 async function copyBoardLink () {
   if (!formationPlacements.value.length) return
