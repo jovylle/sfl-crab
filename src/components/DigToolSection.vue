@@ -2,14 +2,22 @@
   <div class="flex flex-col gap-1.5">
   <div class="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
     <InputLandIdOrRefresh />
+    <label class="flex items-center rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Auto-highlight guaranteed treasure locations from known patterns">
+      <input
+        type="checkbox"
+        :checked="showPrediction"
+        @change="$emit('update:showPrediction', $event.target.checked)"
+        class="checkbox checkbox-sm mr-1 text-nowrap"
+      />
+      Prediction
+    </label>
     <button
       type="button"
-      class="btn btn-primary btn-sm sm:btn-md"
-      :disabled="!canReplay"
-      @click="$emit('open-replay')"
-      title="Replay today's digs"
+      class="btn btn-info btn-sm sm:btn-md"
+      @click="goToPractice"
+      title="Go to Practice"
     >
-      Replay
+      Practice Today's Pattern
     </button>
     <div class="dropdown">
       <div tabindex="0" role="button" class="btn m-1 btn-accent btn-sm sm:btn-md">
@@ -22,23 +30,21 @@
         <div class="card-body">
           <div class="space-y-2 text-left">
             <button
+              type="button"
+              class="btn btn-primary btn-sm w-full"
+              :disabled="!canReplay"
+              @click="$emit('open-replay')"
+              title="Replay today's digs"
+            >
+              Replay
+            </button>
+
+            <button
               class="btn btn-warning tooltip btn-sm text-nowrap"
               data-tip="🧹 Clear all custom marks"
               @click="grid.clear()"
             >
               🧹 Clear Marks
-            </button>
-
-
-
-            <!-- Controlled checkbox -->
-            <button
-              type="button"
-              class="btn text-base-100 btn-info btn-sm w-full"
-              @click="goToPractice"
-              title="Go to Practice"
-            >
-              Practice
             </button>
 
             <button
@@ -59,16 +65,6 @@
                 class="checkbox checkbox-sm mr-1 text-nowrap "
               />
               Show Order
-            </label>
-
-            <label class="flex items-center mx-auto rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Auto-highlight guaranteed treasure locations from known patterns">
-              <input
-                type="checkbox"
-                :checked="showPrediction"
-                @change="$emit('update:showPrediction', $event.target.checked)"
-                class="checkbox checkbox-sm mr-1 text-nowrap"
-              />
-              Prediction
             </label>
 
             <label
