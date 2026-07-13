@@ -346,8 +346,8 @@ body {
    with a soft pulsing green glow + a corner check badge — deliberately distinct
    from a real dig. */
 .tile.predicted-guaranteed {
-  background-color: oklch(var(--color-success) / 0.5);
-  border: 0.35rem dashed oklch(var(--color-success) / 0.5);
+  background-color: color-mix(in oklch, var(--color-success) 50%, transparent);
+  border: 0.35rem dashed color-mix(in oklch, var(--color-success) 50%, transparent);
   animation: predicted-glow-pulse 1.4s ease-in-out infinite;
 }
 
