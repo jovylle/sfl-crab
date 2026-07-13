@@ -33,6 +33,24 @@ Use `npm run dev` when working with Netlify functions (auth, dig-day, practice p
 
 No tests for `src/`, no ESLint, no lint script. Prettier is installed but has no config file. Tests exist only in `src_other/` (legacy game libs) and are not wired into CI or any npm script. The `prerender` npm script references a missing file — ignore it.
 
+## Verifying changes end-to-end
+
+With no test runner, the real check is **build + drive the app in a browser and observe**. Tool-agnostic (works with Playwright, Puppeteer, or manual clicking).
+
+```bash
+npx vite build                                # ~8s; also catches template/compile errors
+npx vite preview --port 4319 --strictPort     # serves dist/ with SPA fallback
+```
+
+Routes: `/`, `/digging`, `/practice`, `/:landId/digging`, `/:landId/practice`.
+
+- **`vite preview` does NOT run the Netlify functions** (`/api/*` 404). "Today's Patterns" then falls back to a Random Round — fine for verifying client behavior. For function-backed flows use `npm run dev` (netlify dev).
+- **Digging a tile is two clicks + delay**: first click arms confirm, second digs after `DIG_DELAY_MS` (350ms). When scripting: click a `.tile` twice, then wait ~500ms.
+- Grid is 100 `.tile` divs. "Digs:" / "Round N" / "Shared Grid" read from spans/`.badge`.
+- In-progress practice round persists to `localStorage['practice:in-progress-round:1']`.
+- Practice board link (`?board=`) is self-contained: base64url + JSON of `[[key,ox,oy],...]`. Same board ⇒ identical code; same patterns/new layout ⇒ same key multiset, different code.
+- Ignore `cloudflareinsights.com/cdn-cgi/rum` CORS console errors — external RUM analytics, not app code.
+
 ## Architecture
 
 - Vue 3 SPA (Composition API, `<script setup>`) + Vite + Tailwind CSS + DaisyUI
