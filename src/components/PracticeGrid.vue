@@ -369,6 +369,18 @@ function collectAutoMarkers(type) {
         return hasTreasureHint(ny * 10 + nx)
       })
     ) return
+    if (
+      type === 'crab' &&
+      props.showPrediction &&
+      adjacentOffsets.some(({ dx, dy }) => {
+        const x = index % 10
+        const y = Math.floor(index / 10)
+        const nx = x + dx
+        const ny = y + dy
+        if (nx < 0 || nx >= 10 || ny < 0 || ny >= 10) return false
+        return guaranteed.value.has(ny * 10 + nx)
+      })
+    ) return
 
     const x = index % 10
     const y = Math.floor(index / 10)

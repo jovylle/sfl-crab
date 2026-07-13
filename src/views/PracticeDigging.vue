@@ -229,6 +229,7 @@ import PracticePatterns from '@/components/PracticePatterns.vue'
 import InfoFooter from '@/components/InfoFooter.vue'
 import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled, getNickname, setNickname } from '@/services/practiceHubService.js'
 import { fetchPracticeRun } from '@/services/practiceRunApiService.js'
+import { fetchLandDataFromServer } from '@/services/landApiService.js'
 import { getTodayUTC } from '@/utils/buildDigTimeline.js'
 import { buildPracticeDigTimeline } from '@/utils/buildPracticeDigTimeline.js'
 import { encodeBoard, decodeBoard } from '@/utils/practiceBoardCode.js'
@@ -576,6 +577,34 @@ function newRandomRound ({ preserveFailureState = false } = {}) {
   resetRoundTimer()
 }
 
+async function startLandRound (landId) {
+  isStartingTodayRound.value = true
+  todayRoundErrorMessage.value = ''
+  lastRunId.value = null
+  try {
+    const data = await fetchLandDataFromServer(landId)
+    const patterns = data?.visitedFarmState?.desert?.digging?.patterns || []
+    if (!patterns.length) throw new Error('No patterns found for that land.')
+    isReplayMode.value = false
+    replayRunId.value = null
+    patternSource.value = 'random'
+    patternDate.value = getTodayUTC()
+    startGame(patterns, { exact: true })
+    resetRoundTimer()
+  } catch (err) {
+    todayRoundErrorMessage.value = err?.message || 'Failed to load land data.'
+    stopTodayRoundCooldown()
+    todayRoundCooldownActive.value = true
+    todayRoundCooldownTimerId = setTimeout(() => {
+      todayRoundCooldownActive.value = false
+      todayRoundCooldownTimerId = null
+    }, TODAY_ROUND_ERROR_COOLDOWN_MS)
+    newRandomRound({ preserveFailureState: true })
+  } finally {
+    isStartingTodayRound.value = false
+  }
+}
+
 async function startReplayRound (runId) {
   isStartingTodayRound.value = true
   todayRoundErrorMessage.value = ''
@@ -636,6 +665,8 @@ onMounted(() => {
     }
   } else if (runId) {
     void startReplayRound(runId)
+  } else if (String(route.query.land || '').trim()) {
+    void startLandRound(String(route.query.land).trim())
   } else {
     const saved = readInProgressRound()
     if (saved) {

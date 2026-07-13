@@ -175,7 +175,7 @@ function goToPractice () {
   const test = isTestServer.value
   const id = route.params.landId
   router.push(
-    resolveLandRoute(id ? 'practice' : 'practiceNoId', { landId: id, test }),
+    resolveLandRoute('practiceNoId', { test, query: id ? { land: id } : {} }),
   )
 }
 
