@@ -51,6 +51,24 @@
           title="Guaranteed treasure — exact type unknown"
         >?</span>
 
+        <!-- transient shovel dig reveal for tiles dug at the current step.
+             Kept outside the tile-img/prediction v-if chain; absolute overlay. -->
+        <img
+          v-if="justRevealed.has(index) && !exportShovel"
+          :key="`shovel-${index}`"
+          class="tile-shovel"
+          :src="shovelSrc"
+          alt=""
+        />
+        <!-- GIF export: deterministic, statically-capturable shovel frame -->
+        <img
+          v-else-if="justRevealed.has(index) && exportShovel && shovelProgress >= 0"
+          class="tile-shovel-static"
+          :src="shovelSrc"
+          :style="shovelStyle"
+          alt=""
+        />
+
         <span
           v-if="getTileLabelMark(tile)"
           class="hint-label-digit"
@@ -80,6 +98,7 @@ import { computed, toRef } from 'vue'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import { getLabelFromTile } from '@/utils/hintLabel.js'
+import { isRevealed } from '@/utils/tileState.js'
 
 const props = defineProps({
   cells: { type: Array, default: () => [] },
@@ -87,6 +106,16 @@ const props = defineProps({
   showTreasureOrder: { type: Boolean, default: true },
   showPrediction: { type: Boolean, default: false },
   patternKeys: { type: Array, default: () => [] },
+  // Indices (a Set) revealed exactly at the current replay step → shovel anim.
+  justRevealed: { type: Object, default: () => new Set() },
+  // When true, prediction solves run synchronously (used during GIF export so
+  // the final captured frame already has its predictions).
+  eagerPrediction: { type: Boolean, default: false },
+  // Phase 3 GIF bake: when true, drive the shovel from `shovelProgress` (a
+  // static, snapshot-capturable transform) instead of the CSS keyframe.
+  exportShovel: { type: Boolean, default: false },
+  // 0..1 progress of the baked shovel dig; < 0 hides it (settled frame).
+  shovelProgress: { type: Number, default: -1 },
 })
 
 const { getImageSrc } = useReliableAssets()
@@ -98,7 +127,25 @@ const { guaranteed, guaranteedSlugs } = usePredictionEngine(
   toRef(props, 'cells'),
   toRef(props, 'patternKeys'),
   toRef(props, 'showPrediction'),
+  { syncRef: toRef(props, 'eagerPrediction') },
 )
+
+const shovelSrc = computed(() => getImageSrc('/images/sand-shovel.png').value)
+
+// Baked-GIF shovel pose from a 0..1 progress, mirroring @keyframes shovel-dig:
+// the shovel bobs up mid-dig, sweeps slightly, and fades out at the end.
+const shovelStyle = computed(() => {
+  const p = Math.min(1, Math.max(0, props.shovelProgress))
+  const lift = Math.sin(p * Math.PI)          // 0 → 1 → 0
+  const y = -18 * lift                        // bob upward (%)
+  const rot = -10 + 20 * p                    // sweep left → right
+  const scale = 0.75 + 0.3 * lift
+  const opacity = p >= 1 ? 0 : Math.min(1, lift + 0.35)
+  return {
+    transform: `translate(-50%, -50%) translateY(${y}%) rotate(${rot}deg) scale(${scale})`,
+    opacity: String(opacity),
+  }
+})
 
 const colLabels = computed(() =>
   Array.from({ length: 10 }, (_, i) => String.fromCharCode(65 + i))
@@ -146,12 +193,6 @@ function predictionUnknown (index) {
   if (!guaranteed.value.has(index)) return false
   if (isRevealed(props.cells[index])) return false
   return !guaranteedSlugs.value.has(index)
-}
-
-// A tile is revealed if its (flattened) classes include a real tile type.
-function isRevealed (tile) {
-  const classes = normalizeTile(tile).flatMap(c => String(c).split(' '))
-  return classes.some(c => c === 'sand' || c === 'crab' || c === 'treasure')
 }
 
 function getTileLabelMark (tile) {

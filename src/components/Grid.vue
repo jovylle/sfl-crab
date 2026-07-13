@@ -56,6 +56,16 @@
           title="Guaranteed treasure — exact type unknown"
         >?</span>
 
+        <!-- transient shovel dig reveal overlay for freshly-dug tiles.
+             Kept outside the tile-img/prediction v-if chain so it doesn't
+             break it; it's an absolute overlay so DOM order is irrelevant. -->
+        <img
+          v-if="newlyDug.has(index)"
+          class="tile-shovel"
+          :src="getImageSrc('/images/sand-shovel.png').value"
+          alt=""
+        />
+
         <!-- number label mark (keys 1–0) -->
         <span
           v-if="getTileLabelMark(tile)"
@@ -122,6 +132,7 @@ import { useLandData } from '@/composables/useLandData.js'
 import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { getLabelFromTile } from '@/utils/hintLabel.js'
+import { isRevealed } from '@/utils/tileState.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
@@ -143,6 +154,7 @@ const grid   = useGridManager(landId)
 
 // reactive tiles & picker
 const tiles  = grid.tiles
+const newlyDug = grid.newlyDug
 const picker = ref(null)
 
 // ── Prediction engine ──
@@ -227,14 +239,6 @@ function tileClasses(tile, index) {
     return ['predicted-guaranteed']
   }
   return normalizeTile(tile)
-}
-
-// A tile is revealed if its (flattened) classes include a real tile type.
-// Revealed treasures are stored as one space-joined string ('treasure actual-treasure'),
-// so flatten each class token before testing membership.
-function isRevealed(tile) {
-  const classes = normalizeTile(tile).flatMap(c => String(c).split(' '))
-  return classes.some(c => c === 'sand' || c === 'crab' || c === 'treasure')
 }
 
 function getTileLabelMark (tile) {

@@ -33,6 +33,10 @@
             :show-treasure-order="true"
             :show-prediction="predictionOn"
             :pattern-keys="patternKeys"
+            :just-revealed="justRevealed"
+            :eager-prediction="exportingGif"
+            :export-shovel="exportingGif"
+            :shovel-progress="exportShovelProgress"
           />
         </div>
 
@@ -157,6 +161,16 @@ const props = defineProps({
   showPrediction: { type: Boolean, default: false },
 })
 
+// Tiles dug exactly at the current step (order map value === step) → shovel anim.
+const justRevealed = computed(() => {
+  const set = new Set()
+  const map = props.replayOrderMap
+  for (let i = 0; i < map.length; i++) {
+    if (map[i] === props.step) set.add(i)
+  }
+  return set
+})
+
 // Own Prediction toggle: seeded from the page's setting each time the modal
 // opens, but toggleable inside without affecting the page.
 const predictionOn = ref(props.showPrediction)
@@ -177,6 +191,11 @@ const captureEl = ref(null)
 const replayCopied = ref(false)
 const exportingGif = ref(false)
 const exportProgressLabel = ref('Exporting…')
+// Baked shovel progress for GIF export: 0..1 during a dig step's sub-frames,
+// < 0 to hide the shovel for the settled frame.
+const exportShovelProgress = ref(-1)
+// Sub-frames per dig step baked into the GIF (K → K+1 shovel frames).
+const GIF_SUBFRAMES = 2
 let replayCopiedTimer = null
 
 const replayShareUrl = computed(() => buildReplayShareUrl(props.landId))
@@ -210,6 +229,11 @@ async function exportGif () {
         emit('update:step', n)
         await nextTick()
       },
+      setSubFrame: async (_s, k, K) => {
+        exportShovelProgress.value = k < 0 ? -1 : k / K
+        await nextTick()
+      },
+      subFrames: GIF_SUBFRAMES,
       onProgress: (s, total) => {
         exportProgressLabel.value = `Frame ${s}/${total}…`
       },
@@ -222,6 +246,7 @@ async function exportGif () {
     await new Promise((r) => setTimeout(r, 1500))
   } finally {
     emit('update:step', savedStep)
+    exportShovelProgress.value = -1
     exportingGif.value = false
     exportProgressLabel.value = 'Export GIF'
   }

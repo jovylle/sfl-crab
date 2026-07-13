@@ -7,7 +7,7 @@
 import { ref, watch } from 'vue'
 import { solveTreasures } from '@/utils/treasureSolver.js'
 
-export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, gridSize = 10) {
+export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { gridSize = 10, syncRef = null } = {}) {
   const guaranteed = ref(new Set())
   const guaranteedSlugs = ref(new Map())
 
@@ -20,6 +20,12 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, gridSi
 
   let idleId = null
 
+  function runSolve() {
+    const result = solveTreasures(tilesRef.value, patternKeysRef.value, gridSize)
+    guaranteed.value = result.guaranteed
+    guaranteedSlugs.value = result.guaranteedSlugs
+  }
+
   function recompute() {
     if (idleId != null) { cancel(idleId); idleId = null }
 
@@ -29,16 +35,24 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, gridSi
       return
     }
 
+    // Synchronous solve during GIF export so every captured frame — including
+    // the last — already has its predictions (no requestIdleCallback lag).
+    if (syncRef?.value) {
+      runSolve()
+      return
+    }
+
     idleId = schedule(() => {
       idleId = null
-      const result = solveTreasures(tilesRef.value, patternKeysRef.value, gridSize)
-      guaranteed.value = result.guaranteed
-      guaranteedSlugs.value = result.guaranteedSlugs
+      runSolve()
     })
   }
 
+  const sources = [tilesRef, patternKeysRef, enabledRef]
+  if (syncRef) sources.push(syncRef)
+
   watch(
-    [tilesRef, patternKeysRef, enabledRef],
+    sources,
     recompute,
     { immediate: true, deep: true }
   )
