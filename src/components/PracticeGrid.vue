@@ -55,6 +55,14 @@
             class="tile-icon"
           />
 
+          <!-- Prediction: the guaranteed treasure's actual image -->
+          <img
+            v-else-if="!tile && predictionSlug(index)"
+            :src="getImageSrc('/world/' + predictionSlug(index) + '.webp').value"
+            class="tile-img prediction-img"
+            alt="predicted treasure"
+          />
+
           <!-- Confirm-dig: pulsing check waiting for second click -->
           <span v-if="confirmIndex === index" class="confirm-dig-wrap">
             <Icon icon="mdi:check-circle" class="confirm-check-icon" />
@@ -67,7 +75,7 @@
 
           <!-- Idle hover hint -->
           <span
-            v-else-if="!tile && !gameOver && !hasHint(index) && !getAutoMarker(index)"
+            v-else-if="!tile && !gameOver && !hasHint(index) && !getAutoMarker(index) && !predictionSlug(index)"
             class="hover-shovel-wrap"
           >
             <Icon icon="noto:shovel" class="hover-shovel-icon" />
@@ -144,11 +152,20 @@ const solverTiles = computed(() =>
   })
 )
 
-const { guaranteed } = usePredictionEngine(
+const { guaranteed, guaranteedSlugs } = usePredictionEngine(
   solverTiles,
   toRef(props, 'patternKeys'),
   toRef(props, 'showPrediction'),
 )
+
+// The predicted treasure slug for a cell, iff prediction is on, the cell is
+// guaranteed, and the guaranteed treasure's name is unambiguous. Else null →
+// the cell keeps the plain green outline + check badge (no image).
+function predictionSlug(index) {
+  if (!props.showPrediction) return null
+  if (!guaranteed.value.has(index)) return null
+  return guaranteedSlugs.value.get(index) ?? null
+}
 
 const emit = defineEmits(['dig', 'auto-finish'])
 

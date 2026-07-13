@@ -44,6 +44,14 @@
           class="tile-img"
         />
 
+        <!-- Prediction: the guaranteed treasure's actual image -->
+        <img
+          v-else-if="predictionSlug(index)"
+          :src="getImageSrc('/world/' + predictionSlug(index) + '.webp').value"
+          class="tile-img prediction-img"
+          alt="predicted treasure"
+        />
+
         <!-- number label mark (keys 1–0) -->
         <span
           v-if="getTileLabelMark(tile)"
@@ -139,11 +147,21 @@ const picker = ref(null)
 // able to anchor to its shape. Including all shapes only ever makes deductions
 // more conservative (never a wrong guarantee).
 const { patternKeys } = useLandData()
-const { guaranteed } = usePredictionEngine(
+const { guaranteed, guaranteedSlugs } = usePredictionEngine(
   tiles,
   patternKeys,
   toRef(() => showPrediction),
 )
+
+// The predicted treasure slug for a cell, iff prediction is on, the cell is
+// guaranteed + unambiguous, and it isn't already revealed. Else null → the cell
+// keeps the plain green outline + check badge (no image).
+function predictionSlug(index) {
+  if (!showPrediction) return null
+  if (!guaranteed.value.has(index)) return null
+  if (isRevealed(tiles.value[index])) return null
+  return guaranteedSlugs.value.get(index) ?? null
+}
 
 // static labels for overlays
 const colLabels = computed(() =>

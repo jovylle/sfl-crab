@@ -58,6 +58,12 @@ function namesMatch(a, b) {
   return normName(a) === normName(b)
 }
 
+// Treasure slug for the asset path: normalize, then join words with '_'.
+// e.g. "Clam Shell" → "clam_shell", "Salt Dino Egg" → "salt_dino_egg".
+function slugify(name) {
+  return normName(name).replace(/\s+/g, '_')
+}
+
 /**
  * Flatten a tile's class entries into individual tokens. A revealed treasure
  * tile is stored as `['treasure actual-treasure', 'tileImage:<slug>']` — the
@@ -77,11 +83,11 @@ function flattenTile(tile) {
  * @param {(string[]|string)[]} tiles - grid cells of CSS class arrays
  * @param {string[]} patternKeys - formation multiset on the board
  * @param {number} gridSize - default 10
- * @returns {{ guaranteed: Set<number>, partial: boolean }}
+ * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, partial: boolean }}
  */
 export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   const guaranteed = new Set()
-  if (!patternKeys?.length) return { guaranteed, partial: false }
+  if (!patternKeys?.length) return { guaranteed, guaranteedSlugs: new Map(), partial: false }
 
   // ── Parse revealed state ────────────────────────────────────────────
   const revealedSand = new Set()
@@ -106,7 +112,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   }
 
   // Nothing to anchor on → no guarantees (predictions are treasure-anchored).
-  if (revealedTreasureName.size === 0) return { guaranteed, partial: false }
+  if (revealedTreasureName.size === 0) return { guaranteed, guaranteedSlugs: new Map(), partial: false }
 
   // Formation shapes present on the board. Dedup by key (one instance is enough
   // for local reasoning), and include every shape so a revealed treasure can be
@@ -117,11 +123,30 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
 
   const inBounds = (x, y) => x >= 0 && x < gridSize && y >= 0 && y < gridSize
 
+  // Names for guaranteed tiles, merged across every anchor. Unambiguous entries
+  // land in `guaranteedNames`; once two anchors disagree on the name for the same
+  // guaranteed tile, it moves to `ambiguousIdx` (index stays guaranteed, but we
+  // can no longer say WHICH treasure — so no image is shown).
+  const guaranteedNames = new Map() // idx -> display name (unambiguous so far)
+  const ambiguousIdx = new Set()
+
+  const recordName = (idx, name) => {
+    if (ambiguousIdx.has(idx)) return
+    if (guaranteedNames.has(idx)) {
+      if (!namesMatch(guaranteedNames.get(idx), name)) {
+        guaranteedNames.delete(idx)
+        ambiguousIdx.add(idx)
+      }
+    } else {
+      guaranteedNames.set(idx, name)
+    }
+  }
+
   // ── Treasure-anchored deduction ─────────────────────────────────────
   for (const [tIdx, tName] of revealedTreasureName) {
     const tx = tIdx % gridSize
     const ty = Math.floor(tIdx / gridSize)
-    const candidates = [] // each: number[] of plot indices for one legal placement
+    const candidates = [] // each: Map<idx, name> of plots for one legal placement
 
     for (const formation of shapes) {
       for (const anchor of formation) {
@@ -131,7 +156,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
         const oy = ty - anchor.y
 
         let valid = true
-        const plotIdxs = []
+        const plots = new Map()
         for (const p of formation) {
           const x = ox + p.x
           const y = oy + p.y
@@ -140,9 +165,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
           if (revealedSand.has(idx) || revealedCrab.has(idx)) { valid = false; break }
           const rn = revealedTreasureName.get(idx)
           if (rn !== undefined && !namesMatch(rn, p.name)) { valid = false; break }
-          plotIdxs.push(idx)
+          plots.set(idx, p.name)
         }
-        if (valid) candidates.push(plotIdxs)
+        if (valid) candidates.push(plots)
       }
     }
 
@@ -150,10 +175,21 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
 
     // Intersect: a tile that is a treasure-plot in EVERY candidate is guaranteed.
     const [first, ...rest] = candidates
-    for (const idx of first) {
-      if (rest.every(c => c.includes(idx))) guaranteed.add(idx)
+    for (const [idx] of first) {
+      if (!rest.every(c => c.has(idx))) continue
+      guaranteed.add(idx)
+
+      // Name this guaranteed tile only if every candidate agrees on the name.
+      const names = new Set(candidates.map(c => normName(c.get(idx))))
+      if (names.size === 1) recordName(idx, first.get(idx))
+      else { guaranteedNames.delete(idx); ambiguousIdx.add(idx) }
     }
   }
 
-  return { guaranteed, partial: false }
+  const guaranteedSlugs = new Map()
+  for (const [idx, name] of guaranteedNames) {
+    guaranteedSlugs.set(idx, slugify(name))
+  }
+
+  return { guaranteed, guaranteedSlugs, partial: false }
 }
