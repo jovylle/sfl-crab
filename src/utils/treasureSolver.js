@@ -123,6 +123,42 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
 
   const inBounds = (x, y) => x >= 0 && x < gridSize && y >= 0 && y < gridSize
 
+  // Build a legal placement of `formation` translated so plot origin sits at
+  // (ox, oy). Returns a Map<idx,name> of treasure-plots, or null if impossible.
+  //
+  // Soundness of the sand-adjacency check: per game mechanics every treasure is
+  // orthogonally surrounded by crabs, same-formation treasures, or the board
+  // edge — NEVER sand. So if a plot of this placement would land orthogonally
+  // adjacent to a revealed sand tile (and that neighbor isn't itself a plot of
+  // this same placement), the placement cannot be real. This only ever removes
+  // impossible candidates, so it can never drop the real placement.
+  const buildPlacement = (formation, ox, oy) => {
+    const plots = new Map()
+    for (const p of formation) {
+      const x = ox + p.x
+      const y = oy + p.y
+      if (!inBounds(x, y)) return null
+      const idx = y * gridSize + x
+      if (revealedSand.has(idx) || revealedCrab.has(idx)) return null
+      const rn = revealedTreasureName.get(idx)
+      if (rn !== undefined && !namesMatch(rn, p.name)) return null
+      plots.set(idx, p.name)
+    }
+    // Sand-adjacency: no plot may sit orthogonally next to revealed sand.
+    for (const idx of plots.keys()) {
+      const px = idx % gridSize
+      const py = Math.floor(idx / gridSize)
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = px + dx
+        const ny = py + dy
+        if (!inBounds(nx, ny)) continue
+        const nIdx = ny * gridSize + nx
+        if (revealedSand.has(nIdx) && !plots.has(nIdx)) return null
+      }
+    }
+    return plots
+  }
+
   // Names for guaranteed tiles, merged across every anchor. Unambiguous entries
   // land in `guaranteedNames`; once two anchors disagree on the name for the same
   // guaranteed tile, it moves to `ambiguousIdx` (index stays guaranteed, but we
@@ -142,6 +178,21 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     }
   }
 
+  // Intersect a set of legal placements (Map<idx,name>): a tile that is a
+  // treasure-plot in EVERY candidate is guaranteed. Names merge across anchors
+  // via recordName; a tile the candidates name differently is demoted.
+  const intersectCandidates = (candidates) => {
+    if (!candidates.length) return
+    const [first, ...rest] = candidates
+    for (const [idx] of first) {
+      if (!rest.every(c => c.has(idx))) continue
+      guaranteed.add(idx)
+      const names = new Set(candidates.map(c => normName(c.get(idx))))
+      if (names.size === 1) recordName(idx, first.get(idx))
+      else { guaranteedNames.delete(idx); ambiguousIdx.add(idx) }
+    }
+  }
+
   // ── Treasure-anchored deduction ─────────────────────────────────────
   for (const [tIdx, tName] of revealedTreasureName) {
     const tx = tIdx % gridSize
@@ -154,36 +205,67 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
         if (!namesMatch(anchor.name, tName)) continue
         const ox = tx - anchor.x
         const oy = ty - anchor.y
-
-        let valid = true
-        const plots = new Map()
-        for (const p of formation) {
-          const x = ox + p.x
-          const y = oy + p.y
-          if (!inBounds(x, y)) { valid = false; break }
-          const idx = y * gridSize + x
-          if (revealedSand.has(idx) || revealedCrab.has(idx)) { valid = false; break }
-          const rn = revealedTreasureName.get(idx)
-          if (rn !== undefined && !namesMatch(rn, p.name)) { valid = false; break }
-          plots.set(idx, p.name)
-        }
-        if (valid) candidates.push(plots)
+        const plots = buildPlacement(formation, ox, oy)
+        if (plots) candidates.push(plots)
       }
     }
 
     if (!candidates.length) continue // inconsistent (shouldn't happen) — skip safely
+    intersectCandidates(candidates)
+  }
 
-    // Intersect: a tile that is a treasure-plot in EVERY candidate is guaranteed.
-    const [first, ...rest] = candidates
-    for (const [idx] of first) {
-      if (!rest.every(c => c.has(idx))) continue
-      guaranteed.add(idx)
+  // ── Single-instance forcing ─────────────────────────────────────────
+  // When exactly one formation of a shape is on the board, every revealed
+  // treasure whose name is owned ONLY by that shape (among shapes present) must
+  // belong to that single instance. Enumerating the instance's legal placements
+  // that cover all such reveals and intersecting them pins the in-between tiles
+  // even when nothing adjacent has been dug (e.g. bare 1st & 3rd seaweed).
+  const shapeCount = new Map() // key -> occurrences (duplicates preserved)
+  for (const key of patternKeys) shapeCount.set(key, (shapeCount.get(key) ?? 0) + 1)
 
-      // Name this guaranteed tile only if every candidate agrees on the name.
-      const names = new Set(candidates.map(c => normName(c.get(idx))))
-      if (names.size === 1) recordName(idx, first.get(idx))
-      else { guaranteedNames.delete(idx); ambiguousIdx.add(idx) }
+  const presentKeys = [...new Set(patternKeys)].filter(
+    key => Array.isArray(DIGGING_FORMATIONS[key]) && DIGGING_FORMATIONS[key].length,
+  )
+
+  // normalized treasure name -> set of present shape keys whose plots use it.
+  const nameToKeys = new Map()
+  for (const key of presentKeys) {
+    for (const p of DIGGING_FORMATIONS[key]) {
+      const n = normName(p.name)
+      if (!nameToKeys.has(n)) nameToKeys.set(n, new Set())
+      nameToKeys.get(n).add(key)
     }
+  }
+  // A name is "confined to key" iff, among present shapes, only `key` owns it.
+  const confinedTo = (name, key) => {
+    const keys = nameToKeys.get(normName(name))
+    return keys && keys.size === 1 && keys.has(key)
+  }
+
+  for (const key of presentKeys) {
+    if (shapeCount.get(key) !== 1) continue
+    const formation = DIGGING_FORMATIONS[key]
+
+    const confined = [...revealedTreasureName].filter(([, name]) => confinedTo(name, key))
+    if (!confined.length) continue
+
+    const [aIdx, aName] = confined[0]
+    const ax = aIdx % gridSize
+    const ay = Math.floor(aIdx / gridSize)
+
+    // Enumerate placements of this single instance anchored on confined[0],
+    // keeping only those that also cover every other confined reveal.
+    const survivors = []
+    for (const anchor of formation) {
+      if (!namesMatch(anchor.name, aName)) continue
+      const plots = buildPlacement(formation, ax - anchor.x, ay - anchor.y)
+      if (!plots) continue
+      const coversAll = confined.every(([cIdx, cName]) => namesMatch(plots.get(cIdx), cName))
+      if (coversAll) survivors.push(plots)
+    }
+
+    if (!survivors.length) continue // inconsistent data — skip safely
+    intersectCandidates(survivors)
   }
 
   const guaranteedSlugs = new Map()
