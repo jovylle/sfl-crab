@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-1.5">
   <div class="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
     <InputLandIdOrRefresh />
-    <label class="flex items-center rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Auto-highlight guaranteed treasure locations from known patterns">
+    <label class="flex items-center rounded border border-base-300 p-2 tooltip cursor-pointer" data-tip="Highlights cells that are guaranteed treasure — deduced with certainty from known patterns, not a guess">
       <input
         type="checkbox"
         :checked="showPrediction"

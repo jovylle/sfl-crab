@@ -33,6 +33,7 @@
             class="btn btn-sm btn-outline"
             :class="showPrediction ? 'btn-info' : ''"
             @click="showPrediction = !showPrediction"
+            title="Highlights cells that are guaranteed treasure — deduced with certainty from known patterns, not a guess"
           >
             {{ showPrediction ? 'Hide Guaranteed' : 'Guaranteed' }}
           </button>
@@ -273,7 +274,7 @@ const TODAY_ROUND_ERROR_COOLDOWN_MS = 5000
 const todayRoundCooldownActive = ref(false)
 const todayRoundErrorMessage = ref('')
 const showTimer = ref(true)
-const showPrediction = useLocalStorage('showPrediction-practice', false)
+const showPrediction = useLocalStorage('showPrediction-practice', true)
 const saveScores = ref(isPracticeSaveScoresEnabled())
 const nickname = ref(getNickname())
 const lastRunId = ref(null)

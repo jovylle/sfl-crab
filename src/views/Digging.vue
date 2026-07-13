@@ -110,7 +110,7 @@ const hideLandIdInUrl = useLocalStorage(
   `hideLandIdInUrl-${landId}`, false
 )
 const showPrediction = useLocalStorage(
-  `showPrediction-${landId}`, false
+  `showPrediction-${landId}`, true
 )
 
 const grid = useGridManager(landId)
