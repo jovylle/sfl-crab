@@ -1,21 +1,54 @@
 /**
  * Compact, backend-free encoding of a practice board for shareable `?board=` links.
  *
- * A board is fully determined by each formation's key + origin offset (formation
- * shapes are fixed in DIGGING_FORMATIONS), so we store only [key, ox, oy] per
- * placement and rebuild absolute tiles on decode. Duplicate formations are fine
- * (the same key appears multiple times with different origins).
+ * v2 (starts with '2'): 3 chars per formation — formation index + ox + oy.
+ *   7 formations → "2" + 21 chars = 22 chars total.
+ * legacy: base64url(JSON) — decoded for backward compatibility.
  */
-import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
+import { DIGGING_FORMATIONS, FORMATION_KEYS } from '@/data/game/diggingFormations.js'
 
-function base64UrlEncode (str) {
-  // UTF-8 safe: percent-encode then map bytes into btoa.
-  const b64 = btoa(
-    encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, h) =>
-      String.fromCharCode(parseInt(h, 16))
-    )
-  )
-  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+const B64URL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+const COORD  = '0123456789abcdefghijklmn'
+const COORD_OFFSET = 4
+
+/**
+ * @param {Array<{ key: string, tiles: Array<{x:number,y:number}> }>} placements
+ * @returns {string} v2 board code
+ */
+export function encodeBoard (placements) {
+  let code = '2'
+  for (const { key, tiles } of (placements || [])) {
+    const formation = DIGGING_FORMATIONS[key]
+    if (!formation?.length || !tiles?.length) continue
+    const ki = FORMATION_KEYS.indexOf(key)
+    const ox = tiles[0].x - formation[0].x
+    const oy = tiles[0].y - formation[0].y
+    code += B64URL[ki] + COORD[ox + COORD_OFFSET] + COORD[oy + COORD_OFFSET]
+  }
+  return code
+}
+
+function decodeBoardV2 (s) {
+  try {
+    const body = s.slice(1)
+    if (!body.length || body.length % 3 !== 0) return null
+    const placements = []
+    for (let i = 0; i < body.length; i += 3) {
+      const ki  = B64URL.indexOf(body[i])
+      const oxi = COORD.indexOf(body[i + 1])
+      const oyi = COORD.indexOf(body[i + 2])
+      if (ki < 0 || oxi < 0 || oyi < 0) return null
+      const key = FORMATION_KEYS[ki]
+      const formation = DIGGING_FORMATIONS[key]
+      if (!formation?.length) return null
+      const ox = oxi - COORD_OFFSET
+      const oy = oyi - COORD_OFFSET
+      placements.push({ key, tiles: formation.map(p => ({ x: ox + p.x, y: oy + p.y })) })
+    }
+    return placements.length ? placements : null
+  } catch {
+    return null
+  }
 }
 
 function base64UrlDecode (code) {
@@ -26,31 +59,11 @@ function base64UrlDecode (code) {
   )
 }
 
-/**
- * @param {Array<{ key: string, tiles: Array<{x:number,y:number}> }>} placements
- * @returns {string} base64url-encoded board code
- */
-export function encodeBoard (placements) {
-  const compact = (placements || []).map(({ key, tiles }) => {
-    const formation = DIGGING_FORMATIONS[key]
-    if (!formation?.length || !tiles?.length) return null
-    const ox = tiles[0].x - formation[0].x
-    const oy = tiles[0].y - formation[0].y
-    return [key, ox, oy]
-  }).filter(Boolean)
-  return base64UrlEncode(JSON.stringify(compact))
-}
-
-/**
- * @param {string} code base64url-encoded board code
- * @returns {Array<{ key: string, tiles: Array<{x:number,y:number}> }>|null}
- *   placements ready for startGameFromPlacements, or null if invalid.
- */
-export function decodeBoard (code) {
+function decodeBoardLegacy (s) {
   try {
-    const compact = JSON.parse(base64UrlDecode(String(code || '')))
+    const compact = JSON.parse(base64UrlDecode(s))
     if (!Array.isArray(compact) || !compact.length) return null
-    const placements = compact.map(entry => {
+    return compact.map(entry => {
       const [key, ox, oy] = entry || []
       const formation = DIGGING_FORMATIONS[key]
       if (!formation?.length || !Number.isFinite(ox) || !Number.isFinite(oy)) {
@@ -58,8 +71,17 @@ export function decodeBoard (code) {
       }
       return { key, tiles: formation.map(p => ({ x: ox + p.x, y: oy + p.y })) }
     })
-    return placements
   } catch {
     return null
   }
+}
+
+/**
+ * @param {string} code board code (v2 or legacy base64url)
+ * @returns {Array<{ key: string, tiles: Array<{x:number,y:number}> }>|null}
+ */
+export function decodeBoard (code) {
+  const s = String(code || '').trim()
+  if (s.startsWith('2')) return decodeBoardV2(s)
+  return decodeBoardLegacy(s)
 }
