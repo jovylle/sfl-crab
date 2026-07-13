@@ -6,7 +6,7 @@ import PracticeDigging from '@/views/PracticeDigging.vue'
 
 /** @type {import('vue-router').RouteRecordRaw[]} */
 export const diggingRoutes = [
-  { path: '/', name: 'Home', redirect: '/digging' },
+  { path: '/', name: 'Home', redirect: to => ({ path: '/digging', query: to.query, hash: to.hash }) },
   {
     path: '/digging',
     name: 'GuestDigging',

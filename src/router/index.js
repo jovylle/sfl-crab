@@ -16,8 +16,17 @@ const router = createRouter({
   routes,
 })
 
+const LAND_QUERY_PROMOTE = { GuestDigging: 'Digging' } // extend later if needed
 router.beforeEach((to) => {
   syncApiEnvFromRoute(to)
+  if (to.params.landId) return                       // already has one; avoids redirect loop
+  const target = LAND_QUERY_PROMOTE[to.name]
+  if (!target) return
+  const land = String(to.query.land || '').trim()
+  if (!/^\d+$/.test(land)) return
+  const query = { ...to.query }
+  delete query.land
+  return { name: target, params: { landId: land }, query, hash: to.hash }
 })
 
 export default router

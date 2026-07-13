@@ -234,6 +234,7 @@ import { getTodayUTC } from '@/utils/buildDigTimeline.js'
 import { buildPracticeDigTimeline } from '@/utils/buildPracticeDigTimeline.js'
 import { encodeBoard, decodeBoard } from '@/utils/practiceBoardCode.js'
 import { PRACTICE_IN_PROGRESS_KEY } from '@/constants/storageKeys.js'
+import { resolveLandRoute } from '@/utils/landRoutes.js'
 
 const ALL_FORMATION_KEYS = Object.keys(DIGGING_FORMATIONS)
 const IN_PROGRESS_VERSION = 1
@@ -444,7 +445,10 @@ watch(formationPlacements, placements => {
   try {
     const code = encodeBoard(placements)
     if (route.query.board === code) return
-    router.replace({ name: 'Practice', query: { board: code } })
+    const landId = route.params.landId
+    router.replace(
+      resolveLandRoute(landId ? 'practice' : 'practiceNoId', { landId, query: { board: code } }),
+    )
   } catch {
     /* encoding/navigation failed — leave the URL as-is */
   }
@@ -454,7 +458,9 @@ async function copyBoardLink () {
   if (!formationPlacements.value.length) return
   try {
     const code = encodeBoard(formationPlacements.value)
-    const href = location.origin + router.resolve({ name: 'Practice', query: { board: code } }).href
+    const landId = route.params.landId
+    const to = resolveLandRoute(landId ? 'practice' : 'practiceNoId', { landId, query: { board: code } })
+    const href = location.origin + router.resolve(to).href
     await navigator.clipboard.writeText(href)
     boardLinkCopied.value = true
     if (boardLinkCopiedTimerId !== null) clearTimeout(boardLinkCopiedTimerId)
