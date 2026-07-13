@@ -347,7 +347,7 @@ body {
    from a real dig. */
 .tile.predicted-guaranteed {
   background-color: color-mix(in oklch, var(--color-success) 50%, transparent);
-  border: 0.35rem dashed color-mix(in oklch, var(--color-success) 50%, transparent);
+  border: 0.35rem dashed color-mix(in srgb, white 40%, var(--color-success));
   animation: predicted-glow-pulse 1.4s ease-in-out infinite;
 }
 
