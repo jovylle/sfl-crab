@@ -29,7 +29,7 @@
         v-for="(tile, index) in tiles"
         :key="index"
         class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative"
-        :class="normalizeTile(tile)"
+        :class="tileClasses(tile, index)"
         @click="onTileClick($event, index)"
         @contextmenu.prevent="onTileClick($event, index)"
       >
@@ -39,6 +39,31 @@
           :src="getImageSrc(getTileImage(normalizeTile(tile))).value"
           alt="treasure"
           class="tile-img"
+        />
+
+        <!-- Prediction: the guaranteed treasure's actual image -->
+        <img
+          v-else-if="predictionSlug(index)"
+          :src="getImageSrc('/world/' + predictionSlug(index) + '.webp').value"
+          class="tile-img prediction-img"
+          alt="predicted treasure"
+        />
+
+        <!-- Prediction: guaranteed treasure, exact type unknown -->
+        <span
+          v-else-if="predictionUnknown(index)"
+          class="prediction-unknown"
+          title="Guaranteed treasure — exact type unknown"
+        >?</span>
+
+        <!-- transient shovel dig reveal overlay for freshly-dug tiles.
+             Kept outside the tile-img/prediction v-if chain so it doesn't
+             break it; it's an absolute overlay so DOM order is irrelevant. -->
+        <img
+          v-if="newlyDug.has(index)"
+          class="tile-shovel"
+          :src="getImageSrc('/images/sand-shovel.png').value"
+          alt=""
         />
 
         <!-- number label mark (keys 1–0) -->
@@ -96,15 +121,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, toRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
 import BottomGridInfo from './BottomGridInfo.vue'
 
 import { useTodayTreasureNames } from "@/composables/useTodayTreasureNames";
+import { useLandData } from '@/composables/useLandData.js'
+import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { getLabelFromTile } from '@/utils/hintLabel.js'
+import { isRevealed } from '@/utils/tileState.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
@@ -112,10 +140,11 @@ const { getImageSrc } = useReliableAssets()
 const possibleTreasures = useTodayTreasureNames();
 console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
 // your existing props
-const { showTreasureOrder, treasureOrderMap, showLandIdInUrl } = defineProps({
+const { showTreasureOrder, treasureOrderMap, showLandIdInUrl, showPrediction } = defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   treasureOrderMap:  { type: Array,   default: () => [] },
   showLandIdInUrl:   { type: Boolean, default: true },
+  showPrediction:    { type: Boolean, default: false },
 })
 
 // init grid manager
@@ -125,7 +154,48 @@ const grid   = useGridManager(landId)
 
 // reactive tiles & picker
 const tiles  = grid.tiles
+const newlyDug = grid.newlyDug
 const picker = ref(null)
+
+// ── Prediction engine ──
+// Pass the FULL board multiset (not minus-completed): the solver anchors on
+// revealed treasures, so a treasure from a completed formation must still be
+// able to anchor to its shape. Including all shapes only ever makes deductions
+// more conservative (never a wrong guarantee).
+const { patternKeys } = useLandData()
+const { guaranteed, guaranteedSlugs } = usePredictionEngine(
+  tiles,
+  patternKeys,
+  toRef(() => showPrediction),
+)
+
+// Feed the guaranteed set into the engine as a treasure mask so a crab adjacent
+// to a guaranteed cell suppresses its near-crab halo (same as the `s` mark).
+// When the toggle is OFF the mask is empty → original behavior restored.
+watch(
+  [guaranteed, () => showPrediction],
+  ([g, on]) => grid.setPredictionMask(on ? g : new Set()),
+  { immediate: true }
+)
+
+// The predicted treasure slug for a cell, iff prediction is on, the cell is
+// guaranteed + unambiguous, and it isn't already revealed. Else null → the cell
+// keeps the plain green outline + check badge (no image).
+function predictionSlug(index) {
+  if (!showPrediction) return null
+  if (!guaranteed.value.has(index)) return null
+  if (isRevealed(tiles.value[index])) return null
+  return guaranteedSlugs.value.get(index) ?? null
+}
+
+// True when a cell is a guaranteed treasure but its exact type is ambiguous
+// (guaranteed + unrevealed, yet no agreed name) → show a "?" instead of an image.
+function predictionUnknown(index) {
+  if (!showPrediction) return false
+  if (!guaranteed.value.has(index)) return false
+  if (isRevealed(tiles.value[index])) return false
+  return !guaranteedSlugs.value.has(index)
+}
 
 // static labels for overlays
 const colLabels = computed(() =>
@@ -168,6 +238,16 @@ function getTileImage(tile) {
 function normalizeTile(tile) {
   if (Array.isArray(tile)) return tile;
   return String(tile).split(" ");
+}
+
+// Class list for a cell. A guaranteed prediction takes priority over speculative
+// hint/near marks (e.g. the near-crab yellow overlay) so the guaranteed green
+// reads cleanly — mirrors PracticeGrid.outerClasses ordering (commit ebfc06895).
+function tileClasses(tile, index) {
+  if (showPrediction && guaranteed.value.has(index) && !isRevealed(tile)) {
+    return ['predicted-guaranteed']
+  }
+  return normalizeTile(tile)
 }
 
 function getTileLabelMark (tile) {

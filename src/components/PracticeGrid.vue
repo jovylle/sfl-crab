@@ -55,6 +55,21 @@
             class="tile-icon"
           />
 
+          <!-- Prediction: the guaranteed treasure's actual image -->
+          <img
+            v-else-if="!tile && predictionSlug(index)"
+            :src="getImageSrc('/world/' + predictionSlug(index) + '.webp').value"
+            class="tile-img prediction-img"
+            alt="predicted treasure"
+          />
+
+          <!-- Prediction: guaranteed treasure, exact type unknown -->
+          <span
+            v-else-if="!tile && predictionUnknown(index)"
+            class="prediction-unknown"
+            title="Guaranteed treasure — exact type unknown"
+          >?</span>
+
           <!-- Confirm-dig: pulsing check waiting for second click -->
           <span v-if="confirmIndex === index" class="confirm-dig-wrap">
             <Icon icon="mdi:check-circle" class="confirm-check-icon" />
@@ -67,7 +82,7 @@
 
           <!-- Idle hover hint -->
           <span
-            v-else-if="!tile && !gameOver && !hasHint(index) && !getAutoMarker(index)"
+            v-else-if="!tile && !gameOver && !hasHint(index) && !getAutoMarker(index) && !predictionSlug(index) && !predictionUnknown(index)"
             class="hover-shovel-wrap"
           >
             <Icon icon="noto:shovel" class="hover-shovel-icon" />
@@ -111,10 +126,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, toRef } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { useGridEngine } from '@/composables/useGridEngine.js'
+import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import HintPicker from '@/components/HintPicker.vue'
 
 const { getImageSrc } = useReliableAssets()
@@ -125,7 +141,46 @@ const props = defineProps({
   hiddenGrid: { type: Array, default: () => [] },
   gameOver: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
+  showPrediction: { type: Boolean, default: false },
+  patternKeys: { type: Array, default: () => [] },
 })
+
+// The solver needs the DUG reveals, which live in the `tiles` prop
+// (displayTiles: `{ type, name, revealed }` objects) — NOT in `engine.tiles`,
+// which only holds the user's right-click marks. Adapt revealed tiles into the
+// class-array shape the solver parses (same format the live grid engine emits).
+const solverTiles = computed(() =>
+  (props.tiles || []).map(tile => {
+    if (!tile?.revealed) return [] // undug / null / ghosted → unknown
+    if (tile.type === 'treasure') return ['treasure actual-treasure', `tileImage:${getSlug(tile)}`]
+    if (tile.type === 'sand') return ['sand']
+    if (tile.type === 'crab') return ['crab']
+    return []
+  })
+)
+
+const { guaranteed, guaranteedSlugs } = usePredictionEngine(
+  solverTiles,
+  toRef(props, 'patternKeys'),
+  toRef(props, 'showPrediction'),
+)
+
+// The predicted treasure slug for a cell, iff prediction is on, the cell is
+// guaranteed, and the guaranteed treasure's name is unambiguous. Else null →
+// the cell keeps the plain green outline + check badge (no image).
+function predictionSlug(index) {
+  if (!props.showPrediction) return null
+  if (!guaranteed.value.has(index)) return null
+  return guaranteedSlugs.value.get(index) ?? null
+}
+
+// True when a cell is a guaranteed treasure but its exact type is ambiguous
+// (guaranteed, yet no agreed name) → show a "?" instead of an image.
+function predictionUnknown(index) {
+  if (!props.showPrediction) return false
+  if (!guaranteed.value.has(index)) return false
+  return !guaranteedSlugs.value.has(index)
+}
 
 const emit = defineEmits(['dig', 'auto-finish'])
 
@@ -314,6 +369,18 @@ function collectAutoMarkers(type) {
         return hasTreasureHint(ny * 10 + nx)
       })
     ) return
+    if (
+      type === 'crab' &&
+      props.showPrediction &&
+      adjacentOffsets.some(({ dx, dy }) => {
+        const x = index % 10
+        const y = Math.floor(index / 10)
+        const nx = x + dx
+        const ny = y + dy
+        if (nx < 0 || nx >= 10 || ny < 0 || ny >= 10) return false
+        return guaranteed.value.has(ny * 10 + nx)
+      })
+    ) return
 
     const x = index % 10
     const y = Math.floor(index / 10)
@@ -351,8 +418,14 @@ function outerClasses(tile, index) {
   if (tile?.revealed)                 return [tile.type, 'practice-reveal']
   if (tile?.ghosted)                  return ['practice-ghosted', tile.type]
 
+  // Guaranteed prediction takes priority — suppresses near-crab yellow
+  if (props.showPrediction && guaranteed.value.has(index)) {
+    return ['predicted-guaranteed', 'cursor-pointer']
+  }
+
   const hints = engine.tiles.value[index]
   if (hints?.length) return [...hints, 'cursor-pointer']
+
   const autoMarker = getAutoMarker(index)
   if (autoMarker) return [autoMarker, 'cursor-pointer']
 

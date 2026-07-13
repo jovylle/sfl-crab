@@ -267,3 +267,6 @@ export const DIGGING_FORMATIONS = {
   PIRATE_BOUNTY: [{ x: 0, y: 0, name: "Pirate Bounty" }],
 }
 
+// Stable ordered key list — index is used by v2 board encoding; do not reorder.
+export const FORMATION_KEYS = Object.keys(DIGGING_FORMATIONS)
+

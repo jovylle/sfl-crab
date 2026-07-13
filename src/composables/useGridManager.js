@@ -1,7 +1,9 @@
 // src/composables/useGridManager.js
+import { ref } from 'vue'
 import { useGridEngine } from './useGridEngine'
 import { useHintsStorage } from './useHintsStorage'
 import { getMarkJournalHandlers } from './markJournalBridge'
+import { isRevealed } from '@/utils/tileState'
 
 const cache = {}
 
@@ -12,7 +14,19 @@ export function useGridManager (rawLandId, gridSize = 10) {
     // 1️⃣ core engine + storage
     const engine = useGridEngine(gridSize)
     const storage = useHintsStorage(landKey)
-    
+
+    // Indices dug since the previous update — transient, drives the live
+    // shovel reveal animation. First update (mount) is skipped so we don't
+    // animate the whole board on load.
+    const newlyDug = ref(new Set())
+    let hasLoadedOnce = false
+    let clearNewlyDugTimer = null
+
+    // Content signature of the last prediction mask pushed into the engine.
+    // Dedups reference-only changes so a new Set from the render overlay can't
+    // trigger a recompute→rebuild→recompute loop.
+    let lastMaskSig = null
+
 
     // reapply saved hints on-top of the engine’s base grid
     function applySavedHints () {
@@ -30,9 +44,28 @@ export function useGridManager (rawLandId, gridSize = 10) {
 
     // on API update: rebuild engine + reapply storage
     function update (apiGrid) {
+      const before = engine.tiles.value.map(isRevealed)
+
       engine.updateGridFromData(apiGrid)
       storage.load()
       applySavedHints()
+
+      // Diff old vs new to find freshly-revealed tiles (false → true).
+      if (hasLoadedOnce) {
+        const after = engine.tiles.value.map(isRevealed)
+        const dug = new Set()
+        for (let i = 0; i < after.length; i++) {
+          if (after[i] && !before[i]) dug.add(i)
+        }
+        if (dug.size) {
+          newlyDug.value = dug
+          if (clearNewlyDugTimer) clearTimeout(clearNewlyDugTimer)
+          clearNewlyDugTimer = setTimeout(() => {
+            newlyDug.value = new Set()
+          }, 900)
+        }
+      }
+      hasLoadedOnce = true
     }
 
     // // inside src/composables/useGridManager.js
@@ -73,6 +106,7 @@ export function useGridManager (rawLandId, gridSize = 10) {
 
     cache[landKey] = {
       tiles: engine.tiles,
+      newlyDug,
       update,
       // cycle, removed
       pick (index, hintClass) {
@@ -95,6 +129,12 @@ export function useGridManager (rawLandId, gridSize = 10) {
 
         const journalHandlers = getMarkJournalHandlers(landKey)
         journalHandlers?.onPick?.(index, flat)
+      },
+      setPredictionMask (set) {
+        const sig = [...set].sort((a, b) => a - b).join(',')
+        if (sig === lastMaskSig) return
+        lastMaskSig = sig
+        engine.setPredictionMask(set)
       },
       clear
     }

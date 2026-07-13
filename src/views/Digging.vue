@@ -20,6 +20,7 @@
       <DigToolSection
         v-model:showTreasureOrder="showTreasureOrder"
         v-model:hideLandIdInUrl="hideLandIdInUrl"
+        v-model:showPrediction="showPrediction"
         :dig-day-sync-status="digDaySyncStatus"
         :dig-day-updated-at="digDayUpdatedAt"
         :dig-day-sync-error="digDaySyncError"
@@ -34,6 +35,7 @@
         :show-treasure-order="showTreasureOrder"
         :treasure-order-map="treasureOrderMap"
         :show-land-id-in-url="!hideLandIdInUrl"
+        :show-prediction="showPrediction"
       />
     </template>
 
@@ -54,6 +56,7 @@
       :pattern-date-label="replayPatternDateLabel"
       :marked-pattern-indexes="markedPatternIndexList"
       :completed-pattern-indexes="completedPatternIndexList"
+      :show-prediction="showPrediction"
       @close="closeReplay()"
       @prev="stepPrev()"
       @next="stepNext()"
@@ -106,11 +109,15 @@ const showTreasureOrder = useLocalStorage(
 const hideLandIdInUrl = useLocalStorage(
   `hideLandIdInUrl-${landId}`, false
 )
+const showPrediction = useLocalStorage(
+  `showPrediction-${landId}`, true
+)
 
 const grid = useGridManager(landId)
 const defaults = { visitedFarmState: { inventory: {}, desert: { digging: { grid: [] } } } }
 const {
   desert,
+  patternKeys,
   dailyPatternKeys,
   dailyPatternDate,
   completedPatternKeys,

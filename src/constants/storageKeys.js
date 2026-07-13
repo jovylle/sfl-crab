@@ -50,6 +50,12 @@ export const STORAGE_KEYS = {
     description: 'Practice score submit enabled (`1` / `0`)',
     audience: STORAGE_AUDIENCE.GUEST,
   },
+  /** Serialized unfinished practice round (board + digs + elapsed) for resume-on-return. */
+  PRACTICE_IN_PROGRESS: {
+    key: 'practice:in-progress-round:1',
+    description: 'Serialized unfinished practice round for resume',
+    audience: STORAGE_AUDIENCE.GUEST,
+  },
   API_ENVIRONMENT: {
     key: 'sfl-api-environment',
     description: 'SFL API target: production | test',
@@ -79,6 +85,7 @@ export const HUB_DISPLAY_NAME_KEY = STORAGE_KEYS.HUB_DISPLAY_NAME.key
 export const HUB_ANONYMOUS_ID_KEY = STORAGE_KEYS.HUB_ANONYMOUS_ID.key
 export const PRACTICE_NICKNAME_KEY = STORAGE_KEYS.PRACTICE_NICKNAME.key
 export const PRACTICE_SAVE_SCORES_KEY = STORAGE_KEYS.PRACTICE_SAVE_SCORES.key
+export const PRACTICE_IN_PROGRESS_KEY = STORAGE_KEYS.PRACTICE_IN_PROGRESS.key
 
 /**
  * Land snapshot cache (see `getLandDataStorageKey` in config/api.js).
@@ -122,7 +129,7 @@ export function markJournalKey (landId, utcDate) {
 /**
  * UI preference per land.
  * @param {string} landId
- * @param {'showTreasureOrder' | 'hideLandIdInUrl'} pref
+ * @param {'showTreasureOrder' | 'hideLandIdInUrl' | 'showPrediction'} pref
  */
 export function landUiPrefKey (landId, pref) {
   return `${pref}-${landId}`

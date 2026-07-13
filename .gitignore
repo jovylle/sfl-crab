@@ -30,3 +30,4 @@ dist-ssr
 .env.*.local
 # Local Netlify folder
 .netlify
+prod.env
