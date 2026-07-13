@@ -29,10 +29,7 @@
         v-for="(tile, index) in tiles"
         :key="index"
         class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative"
-        :class="[
-          ...normalizeTile(tile),
-          ...(showPrediction && guaranteed.has(index) && !isRevealed(tile) ? ['predicted-guaranteed'] : [])
-        ]"
+        :class="tileClasses(tile, index)"
         @click="onTileClick($event, index)"
         @contextmenu.prevent="onTileClick($event, index)"
       >
@@ -220,6 +217,16 @@ function getTileImage(tile) {
 function normalizeTile(tile) {
   if (Array.isArray(tile)) return tile;
   return String(tile).split(" ");
+}
+
+// Class list for a cell. A guaranteed prediction takes priority over speculative
+// hint/near marks (e.g. the near-crab yellow overlay) so the guaranteed green
+// reads cleanly — mirrors PracticeGrid.outerClasses ordering (commit ebfc06895).
+function tileClasses(tile, index) {
+  if (showPrediction && guaranteed.value.has(index) && !isRevealed(tile)) {
+    return ['predicted-guaranteed']
+  }
+  return normalizeTile(tile)
 }
 
 // A tile is revealed if its (flattened) classes include a real tile type.

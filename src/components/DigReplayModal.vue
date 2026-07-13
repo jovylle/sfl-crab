@@ -31,6 +31,8 @@
             :cells="replayCells"
             :treasure-order-map="replayOrderMap"
             :show-treasure-order="true"
+            :show-prediction="predictionOn"
+            :pattern-keys="patternKeys"
           />
         </div>
 
@@ -94,6 +96,17 @@
         </button>
       </div>
 
+      <div class="flex items-center gap-2 mt-3">
+        <label class="label cursor-pointer gap-2 p-0">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm checkbox-primary"
+            v-model="predictionOn"
+          />
+          <span class="label-text text-sm">Prediction</span>
+        </label>
+      </div>
+
       <div class="modal-action flex-wrap justify-center gap-2 mt-2 sm:mt-0">
         <button
           v-if="replayShareUrl"
@@ -120,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
 import ReplayGrid from '@/components/ReplayGrid.vue'
 import PatternStrip from '@/components/PatternStrip.vue'
@@ -141,6 +154,14 @@ const props = defineProps({
   patternDateLabel: { type: String, default: '' },
   markedPatternIndexes: { type: Array, default: () => [] },
   completedPatternIndexes: { type: Array, default: () => [] },
+  showPrediction: { type: Boolean, default: false },
+})
+
+// Own Prediction toggle: seeded from the page's setting each time the modal
+// opens, but toggleable inside without affecting the page.
+const predictionOn = ref(props.showPrediction)
+watch(() => props.open, (o) => {
+  if (o) predictionOn.value = props.showPrediction
 })
 
 const emit = defineEmits([

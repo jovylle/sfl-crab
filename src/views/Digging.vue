@@ -56,6 +56,7 @@
       :pattern-date-label="replayPatternDateLabel"
       :marked-pattern-indexes="markedPatternIndexList"
       :completed-pattern-indexes="completedPatternIndexList"
+      :show-prediction="showPrediction"
       @close="closeReplay()"
       @prev="stepPrev()"
       @next="stepNext()"

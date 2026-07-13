@@ -27,7 +27,7 @@
         v-for="(tile, index) in cells"
         :key="index"
         class="tile w-full flex items-center bg-base-100 justify-center aspect-square relative pointer-events-none"
-        :class="normalizeTile(tile)"
+        :class="tileClasses(tile, index)"
       >
         <img
           v-if="getTileImage(normalizeTile(tile))"
@@ -35,6 +35,21 @@
           alt=""
           class="tile-img"
         />
+
+        <!-- Prediction: the guaranteed treasure's actual image -->
+        <img
+          v-else-if="predictionSlug(index)"
+          :src="getImageSrc('/world/' + predictionSlug(index) + '.webp').value"
+          class="tile-img prediction-img"
+          alt="predicted treasure"
+        />
+
+        <!-- Prediction: guaranteed treasure, exact type unknown -->
+        <span
+          v-else-if="predictionUnknown(index)"
+          class="prediction-unknown"
+          title="Guaranteed treasure — exact type unknown"
+        >?</span>
 
         <span
           v-if="getTileLabelMark(tile)"
@@ -61,17 +76,29 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, toRef } from 'vue'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import { getLabelFromTile } from '@/utils/hintLabel.js'
 
-defineProps({
+const props = defineProps({
   cells: { type: Array, default: () => [] },
   treasureOrderMap: { type: Array, default: () => [] },
   showTreasureOrder: { type: Boolean, default: true },
+  showPrediction: { type: Boolean, default: false },
+  patternKeys: { type: Array, default: () => [] },
 })
 
 const { getImageSrc } = useReliableAssets()
+
+// ── Prediction engine ──
+// props.cells is already the class-token array format solveTreasures consumes,
+// so no adapter is needed. Recomputes per replay step via the deep watch inside.
+const { guaranteed, guaranteedSlugs } = usePredictionEngine(
+  toRef(props, 'cells'),
+  toRef(props, 'patternKeys'),
+  toRef(props, 'showPrediction'),
+)
 
 const colLabels = computed(() =>
   Array.from({ length: 10 }, (_, i) => String.fromCharCode(65 + i))
@@ -93,6 +120,38 @@ function getTileImage (tile) {
 function normalizeTile (tile) {
   if (Array.isArray(tile)) return tile
   return String(tile).split(' ')
+}
+
+// Class list for a cell. A guaranteed prediction takes priority over speculative
+// hint marks so the guaranteed green reads cleanly (mirrors Grid.vue).
+function tileClasses (tile, index) {
+  if (props.showPrediction && guaranteed.value.has(index) && !isRevealed(tile)) {
+    return ['predicted-guaranteed']
+  }
+  return normalizeTile(tile)
+}
+
+// The predicted treasure slug for a cell, iff prediction is on, the cell is
+// guaranteed + unambiguous, and it isn't already revealed.
+function predictionSlug (index) {
+  if (!props.showPrediction) return null
+  if (!guaranteed.value.has(index)) return null
+  if (isRevealed(props.cells[index])) return null
+  return guaranteedSlugs.value.get(index) ?? null
+}
+
+// True when a cell is a guaranteed treasure but its exact type is ambiguous.
+function predictionUnknown (index) {
+  if (!props.showPrediction) return false
+  if (!guaranteed.value.has(index)) return false
+  if (isRevealed(props.cells[index])) return false
+  return !guaranteedSlugs.value.has(index)
+}
+
+// A tile is revealed if its (flattened) classes include a real tile type.
+function isRevealed (tile) {
+  const classes = normalizeTile(tile).flatMap(c => String(c).split(' '))
+  return classes.some(c => c === 'sand' || c === 'crab' || c === 'treasure')
 }
 
 function getTileLabelMark (tile) {
