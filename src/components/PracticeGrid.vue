@@ -406,14 +406,13 @@ function outerClasses(tile, index) {
   if (tile?.revealed)                 return [tile.type, 'practice-reveal']
   if (tile?.ghosted)                  return ['practice-ghosted', tile.type]
 
-  const hints = engine.tiles.value[index]
-  if (hints?.length) return [...hints, 'cursor-pointer']
-
-  // ── Prediction: guaranteed treasure ──
-  // Higher confidence than the speculative auto-marker below, so it wins.
+  // Guaranteed prediction takes priority — suppresses near-crab yellow
   if (props.showPrediction && guaranteed.value.has(index)) {
     return ['predicted-guaranteed', 'cursor-pointer']
   }
+
+  const hints = engine.tiles.value[index]
+  if (hints?.length) return [...hints, 'cursor-pointer']
 
   const autoMarker = getAutoMarker(index)
   if (autoMarker) return [autoMarker, 'cursor-pointer']
