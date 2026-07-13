@@ -9,7 +9,7 @@
         @change="$emit('update:showPrediction', $event.target.checked)"
         class="checkbox checkbox-sm mr-1 text-nowrap"
       />
-      Prediction
+      Guaranteed
     </label>
     <button
       type="button"

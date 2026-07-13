@@ -34,7 +34,7 @@
             :class="showPrediction ? 'btn-info' : ''"
             @click="showPrediction = !showPrediction"
           >
-            {{ showPrediction ? 'Hide Prediction' : 'Prediction' }}
+            {{ showPrediction ? 'Hide Guaranteed' : 'Guaranteed' }}
           </button>
           <label class="label cursor-pointer gap-1 py-0">
             <input v-model="saveScores" type="checkbox" class="checkbox checkbox-xs" />

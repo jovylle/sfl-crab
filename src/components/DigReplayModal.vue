@@ -107,7 +107,7 @@
             class="checkbox checkbox-sm checkbox-primary"
             v-model="predictionOn"
           />
-          <span class="label-text text-sm">Prediction</span>
+          <span class="label-text text-sm">Guaranteed</span>
         </label>
       </div>
 

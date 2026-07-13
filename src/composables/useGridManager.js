@@ -22,6 +22,11 @@ export function useGridManager (rawLandId, gridSize = 10) {
     let hasLoadedOnce = false
     let clearNewlyDugTimer = null
 
+    // Content signature of the last prediction mask pushed into the engine.
+    // Dedups reference-only changes so a new Set from the render overlay can't
+    // trigger a recompute→rebuild→recompute loop.
+    let lastMaskSig = null
+
 
     // reapply saved hints on-top of the engine’s base grid
     function applySavedHints () {
@@ -124,6 +129,12 @@ export function useGridManager (rawLandId, gridSize = 10) {
 
         const journalHandlers = getMarkJournalHandlers(landKey)
         journalHandlers?.onPick?.(index, flat)
+      },
+      setPredictionMask (set) {
+        const sig = [...set].sort((a, b) => a - b).join(',')
+        if (sig === lastMaskSig) return
+        lastMaskSig = sig
+        engine.setPredictionMask(set)
       },
       clear
     }

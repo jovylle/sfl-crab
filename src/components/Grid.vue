@@ -121,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, computed, toRef } from 'vue'
+import { ref, computed, toRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGridManager } from '@/composables/useGridManager'
 import HintPicker from '@/components/HintPicker.vue'
@@ -167,6 +167,15 @@ const { guaranteed, guaranteedSlugs } = usePredictionEngine(
   tiles,
   patternKeys,
   toRef(() => showPrediction),
+)
+
+// Feed the guaranteed set into the engine as a treasure mask so a crab adjacent
+// to a guaranteed cell suppresses its near-crab halo (same as the `s` mark).
+// When the toggle is OFF the mask is empty → original behavior restored.
+watch(
+  [guaranteed, () => showPrediction],
+  ([g, on]) => grid.setPredictionMask(on ? g : new Set()),
+  { immediate: true }
 )
 
 // The predicted treasure slug for a cell, iff prediction is on, the cell is

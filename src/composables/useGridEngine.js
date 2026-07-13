@@ -10,6 +10,11 @@ export function useGridEngine (gridSize = 10) {
     Array.from({ length: gridSize * gridSize }, () => ({}))
   )
 
+  // Indices guaranteed (by the prediction engine) to contain treasure. Treated
+  // like a dropped treasure mark for near-crab suppression. Persists across the
+  // rebuildNearHints() calls made by updateGridFromData / pickEngineHint.
+  let predictionMask = new Set()
+
   function isSandNearClass (c) {
     return (
       typeof c === 'string' &&
@@ -37,7 +42,9 @@ export function useGridEngine (gridSize = 10) {
         const ny = y + dy
         if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return false
         const idx = ny * gridSize + nx
-        
+
+        if (predictionMask.has(idx)) return true
+
         return tiles.value[idx].some(c =>
         {
           // console.log('Checking classes kids:', c, 'Type:', typeof c);
@@ -215,11 +222,19 @@ export function useGridEngine (gridSize = 10) {
     hintCounts.value = Array.from({ length: gridSize * gridSize }, () => ({}))
   }
 
+  // Set the guaranteed-treasure mask and rebuild halos so near-crab suppression
+  // reflects it. Called from the manager (which dedups by content signature).
+  function setPredictionMask (set) {
+    predictionMask = set instanceof Set ? set : new Set()
+    rebuildNearHints()
+  }
+
   return {
     tiles,
     updateGridFromData,
     pickEngineHint,
     clearEngineHints,
-    rebuildNearHints
+    rebuildNearHints,
+    setPredictionMask
   }
 }
