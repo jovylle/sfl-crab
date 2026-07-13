@@ -407,7 +407,8 @@ function resumeSavedRound (saved) {
 function discardSavedRound () {
   resumePromptVisible.value = false
   clearInProgressRound()
-  void newTodayRound()
+  // If a board is already loaded (e.g. reloading a practice link), keep playing it fresh
+  if (!formationPlacements.value?.length) void newTodayRound()
 }
 
 // ---- Retry the same content ----
@@ -627,6 +628,8 @@ onMounted(() => {
       patternDate.value = getTodayUTC()
       startGameFromPlacements(placements)
       resetRoundTimer()
+      const saved = readInProgressRound()
+      if (saved) resumePromptVisible.value = true
     } else {
       void newTodayRound()
     }
