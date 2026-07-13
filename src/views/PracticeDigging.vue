@@ -58,6 +58,21 @@
           </button>
         </div>
 
+        <div
+          v-if="usedFormationKeys.length && !resumePromptVisible"
+          class="flex flex-wrap gap-2 justify-center items-center"
+        >
+          <button class="btn btn-sm btn-outline" @click="retrySamePatterns">
+            Retry patterns ↺
+          </button>
+          <button class="btn btn-sm btn-outline" @click="retrySameBoard">
+            Retry same board ↺
+          </button>
+          <button class="btn btn-sm btn-outline" @click="copyBoardLink">
+            {{ boardLinkCopied ? 'Copied!' : 'Copy board link' }}
+          </button>
+        </div>
+
         <div class="flex flex-wrap gap-2 justify-center items-center">
           <input
             v-model="nickname"
@@ -73,6 +88,20 @@
 
     <template #grid>
       <div class="flex flex-col gap-2">
+        <div v-if="resumePromptVisible" class="alert alert-info py-3 text-sm flex-col gap-2">
+          <span>You have an unfinished round. Resume where you left off?</span>
+          <span class="text-xs opacity-70">Only your digs are restored (hint marks are not).</span>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-primary" @click="resumeSavedRound(readInProgressRound())">
+              Resume
+            </button>
+            <button class="btn btn-sm btn-ghost" @click="discardSavedRound">
+              Start new round
+            </button>
+          </div>
+        </div>
+
+        <template v-if="!resumePromptVisible">
         <div
           v-if="isLoading || isStartingTodayRound"
           class="flex justify-center text-xs text-base-content/60"
@@ -170,6 +199,7 @@
             Right-click to mark
           </span>
         </div>
+        </template>
       </div>
     </template>
 
@@ -183,7 +213,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import { Icon } from '@iconify/vue'
 import DiggingPageLayout from '@/components/DiggingPageLayout.vue'
@@ -198,10 +228,14 @@ import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEn
 import { fetchPracticeRun } from '@/services/practiceRunApiService.js'
 import { getTodayUTC } from '@/utils/buildDigTimeline.js'
 import { buildPracticeDigTimeline } from '@/utils/buildPracticeDigTimeline.js'
+import { encodeBoard, decodeBoard } from '@/utils/practiceBoardCode.js'
+import { PRACTICE_IN_PROGRESS_KEY } from '@/constants/storageKeys.js'
 
 const ALL_FORMATION_KEYS = Object.keys(DIGGING_FORMATIONS)
+const IN_PROGRESS_VERSION = 1
 
 const route = useRoute()
+const router = useRouter()
 
 const {
   displayTiles,
@@ -217,6 +251,7 @@ const {
   totalTreasures,
   startGame,
   startGameFromPlacements,
+  restoreRound,
   dig,
   giveUp,
   finishGame,
@@ -248,7 +283,10 @@ const patternDate = ref(getTodayUTC())
 const lastSubmittedRound = ref(0)
 const replayRunId = ref(null)
 const isReplayMode = ref(false)
+const resumePromptVisible = ref(false)
+const boardLinkCopied = ref(false)
 let timerId = null
+let boardLinkCopiedTimerId = null
 
 const practicePatternKeys = computed(() => {
   return patternKeys.value.length ? patternKeys.value : ALL_FORMATION_KEYS
@@ -301,6 +339,114 @@ function resetRoundTimer () {
   startTimer()
 }
 
+// ---- Resume: persist the in-progress round to localStorage ----
+
+function readInProgressRound () {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage?.getItem(PRACTICE_IN_PROGRESS_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (parsed?.version !== IN_PROGRESS_VERSION) return null
+    if (!Array.isArray(parsed.placements) || !parsed.placements.length) return null
+    if (!Array.isArray(parsed.digHistory) || !parsed.digHistory.length) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function saveInProgressRound () {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage?.setItem(PRACTICE_IN_PROGRESS_KEY, JSON.stringify({
+      version: IN_PROGRESS_VERSION,
+      savedAt: Date.now(),
+      patternSource: patternSource.value,
+      patternDate: patternDate.value,
+      isReplayMode: isReplayMode.value,
+      replayRunId: replayRunId.value,
+      placements: formationPlacements.value,
+      digHistory: digHistory.value,
+      elapsedMs: elapsedMs.value,
+    }))
+  } catch {
+    /* storage full / unavailable — ignore */
+  }
+}
+
+function clearInProgressRound () {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage?.removeItem(PRACTICE_IN_PROGRESS_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+function resumeSavedRound (saved) {
+  if (!saved) {
+    discardSavedRound()
+    return
+  }
+  resumePromptVisible.value = false
+  patternSource.value = saved.patternSource || 'daily'
+  patternDate.value = saved.patternDate || getTodayUTC()
+  isReplayMode.value = Boolean(saved.isReplayMode)
+  replayRunId.value = saved.replayRunId || null
+  lastRunId.value = null
+  restoreRound(saved)
+  roundStartedAt.value = Date.now() - (saved.elapsedMs || 0)
+  elapsedMs.value = saved.elapsedMs || 0
+  finalElapsedMs.value = 0
+  startTimer()
+}
+
+function discardSavedRound () {
+  resumePromptVisible.value = false
+  clearInProgressRound()
+  void newTodayRound()
+}
+
+// ---- Retry the same content ----
+
+function retrySamePatterns () {
+  if (!usedFormationKeys.value.length) return
+  lastRunId.value = null
+  isReplayMode.value = false
+  replayRunId.value = null
+  startGame([...usedFormationKeys.value], { exact: true })
+  resetRoundTimer()
+}
+
+function retrySameBoard () {
+  if (!formationPlacements.value.length) return
+  lastRunId.value = null
+  isReplayMode.value = false
+  replayRunId.value = null
+  startGameFromPlacements(formationPlacements.value.map(p => ({ ...p, tiles: p.tiles.map(t => ({ ...t })) })))
+  resetRoundTimer()
+}
+
+// ---- Shareable board link ----
+
+async function copyBoardLink () {
+  if (!formationPlacements.value.length) return
+  try {
+    const code = encodeBoard(formationPlacements.value)
+    const href = location.origin + router.resolve({ name: 'Practice', query: { board: code } }).href
+    await navigator.clipboard.writeText(href)
+    boardLinkCopied.value = true
+    if (boardLinkCopiedTimerId !== null) clearTimeout(boardLinkCopiedTimerId)
+    boardLinkCopiedTimerId = setTimeout(() => {
+      boardLinkCopied.value = false
+      boardLinkCopiedTimerId = null
+    }, 2000)
+  } catch {
+    /* clipboard blocked — ignore */
+  }
+}
+
 watch(showTimer, () => {
   if (showTimer.value) {
     startTimer()
@@ -309,8 +455,20 @@ watch(showTimer, () => {
   }
 })
 
+// Persist progress while a round is in play; a finished round is no longer "unfinished".
+watch(digsMade, count => {
+  if (isGameOver.value) return
+  if (count > 0) {
+    saveInProgressRound()
+  } else {
+    clearInProgressRound()
+  }
+})
+
 watch(isGameOver, done => {
   if (!done) return
+
+  clearInProgressRound()
 
   finalElapsedMs.value = Date.now() - roundStartedAt.value
   elapsedMs.value = finalElapsedMs.value
@@ -353,6 +511,7 @@ async function newTodayRound () {
   if (isStartingTodayRound.value || todayRoundCooldownActive.value) return
 
   isStartingTodayRound.value = true
+  resumePromptVisible.value = false
   const startedAt = Date.now()
   todayRoundErrorMessage.value = ''
   patternSource.value = 'daily'
@@ -384,6 +543,7 @@ async function newTodayRound () {
 }
 
 function newRandomRound ({ preserveFailureState = false } = {}) {
+  resumePromptVisible.value = false
   if (!preserveFailureState) {
     todayRoundErrorMessage.value = ''
     stopTodayRoundCooldown()
@@ -433,17 +593,51 @@ const bannerClass = computed(() => {
   return 'alert-warning'
 })
 
+function persistOnHide () {
+  if (!isGameOver.value && digsMade.value > 0) saveInProgressRound()
+}
+
 onMounted(() => {
+  const boardCode = String(route.query.board || '').trim()
   const runId = String(route.query.run || '').trim()
-  if (runId) {
+
+  if (boardCode) {
+    const placements = decodeBoard(boardCode)
+    if (placements?.length) {
+      isReplayMode.value = true
+      replayRunId.value = null
+      patternSource.value = 'random'
+      patternDate.value = getTodayUTC()
+      startGameFromPlacements(placements)
+      resetRoundTimer()
+    } else {
+      void newTodayRound()
+    }
+  } else if (runId) {
     void startReplayRound(runId)
   } else {
-    void newTodayRound()
+    const saved = readInProgressRound()
+    if (saved) {
+      resumePromptVisible.value = true
+    } else {
+      void newTodayRound()
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', persistOnHide)
+    document.addEventListener('visibilitychange', persistOnHide)
   }
 })
 
 onUnmounted(() => {
+  persistOnHide()
   stopTimer()
   stopTodayRoundCooldown()
+  if (boardLinkCopiedTimerId !== null) clearTimeout(boardLinkCopiedTimerId)
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('beforeunload', persistOnHide)
+    document.removeEventListener('visibilitychange', persistOnHide)
+  }
 })
 </script>

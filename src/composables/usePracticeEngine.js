@@ -185,6 +185,24 @@ export function usePracticeEngine() {
     roundCount.value++
   }
 
+  // Rebuild a board from saved placements AND re-apply dig progress while
+  // preserving the original dig timestamps (so a later hub submit keeps an
+  // accurate timeline). Used to resume an unfinished round after reload.
+  function restoreRound(state) {
+    const placements = Array.isArray(state?.placements) ? state.placements : []
+    const history = Array.isArray(state?.digHistory) ? state.digHistory : []
+    const { grid, keyedPlacements } = _buildGridFromPlacements(placements)
+    hiddenGrid.value = grid
+    formationPlacements.value = keyedPlacements
+    usedFormationKeys.value = keyedPlacements.map(p => p.key)
+    revealedSet.value = new Set(history.map(d => d.index))
+    digHistory.value = [...history]
+    digsMade.value = revealedSet.value.size
+    isGameOver.value = false
+    isVictory.value = false
+    roundCount.value++
+  }
+
   function dig(index) {
     if (isGameOver.value || revealedSet.value.has(index)) return
     digHistory.value = [...digHistory.value, { index, at: Date.now() }]
@@ -239,6 +257,7 @@ export function usePracticeEngine() {
     totalTreasures,
     startGame,
     startGameFromPlacements,
+    restoreRound,
     dig,
     giveUp,
     finishGame,
