@@ -207,7 +207,11 @@
     </template>
 
     <template #patterns>
-      <PracticePatterns :pattern-keys="usedFormationKeys" />
+      <PracticePatterns
+        :pattern-keys="usedFormationKeys"
+        :tiles="displayTiles"
+        :show-prediction="showPrediction"
+      />
     </template>
 
     <InfoFooter :show-features="false" :hide-build-hash="true" />

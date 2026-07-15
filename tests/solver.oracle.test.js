@@ -69,6 +69,7 @@ function generateBoard(rng, numFormations) {
   const truth = new Set()
   const truthName = new Map() // idx -> plot name
   const placements = []
+  const keyToPlots = new Map() // key -> Map<idx, name> for this board's real placement
 
   for (const key of keys) {
     const formation = DIGGING_FORMATIONS[key]
@@ -86,6 +87,7 @@ function generateBoard(rng, numFormations) {
         truthName.set(idx, name)
       }
       placements.push(plots)
+      keyToPlots.set(key, plots)
       placed = true
       break
     }
@@ -130,13 +132,14 @@ function generateBoard(rng, numFormations) {
     }
   }
 
-  return { tiles: rawTiles, patternKeys: keys, truth }
+  return { tiles: rawTiles, patternKeys: keys, truth, truthName, keyToPlots }
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 function runSoundnessCheck(seeds, numFormations) {
   const failures = []
+  const formationFailures = []
   let skipped = 0
 
   for (const seed of seeds) {
@@ -144,7 +147,7 @@ function runSoundnessCheck(seeds, numFormations) {
     const board = generateBoard(rng, numFormations)
     if (!board) { skipped++; continue }
 
-    const { guaranteed } = solveTreasures(board.tiles, board.patternKeys, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationKeys } = solveTreasures(board.tiles, board.patternKeys, G)
 
     for (const idx of guaranteed) {
       if (!board.truth.has(idx)) {
@@ -156,42 +159,60 @@ function runSoundnessCheck(seeds, numFormations) {
         })
       }
     }
+
+    // Pattern-level soundness: every key the solver claims is
+    // whole-pattern-guaranteed must have EVERY cell of its real (ground-truth)
+    // placement already in `guaranteed`, with a matching name where the solver
+    // reports one. This generator only ever picks unique keys, so `keyToPlots`
+    // unambiguously identifies "this formation's real placement".
+    for (const key of guaranteedFormationKeys) {
+      const plots = board.keyToPlots.get(key)
+      for (const [idx, name] of plots) {
+        const label = String.fromCharCode(65 + (idx % G)) + (Math.floor(idx / G) + 1)
+        if (!guaranteed.has(idx)) {
+          formationFailures.push({ seed, key, idx, label, reason: 'cell not in guaranteed' })
+          continue
+        }
+        const guessedName = guaranteedSlugs.get(idx)
+        const expectedSlug = name.toLowerCase().replace(/\s+/g, '_')
+        if (guessedName && guessedName !== expectedSlug) {
+          formationFailures.push({ seed, key, idx, label, reason: `named "${guessedName}", expected "${expectedSlug}"` })
+        }
+      }
+    }
   }
 
-  return { failures, skipped }
+  return { failures, formationFailures, skipped }
+}
+
+function expectNoFailures({ failures, formationFailures }) {
+  if (failures.length) {
+    const msg = failures.slice(0, 5).map(f =>
+      `seed=${f.seed} cell=${f.label} patterns=${f.patternKeys.join(',')}`
+    ).join('\n')
+    expect.fail(`${failures.length} false positive(s):\n${msg}`)
+  }
+  if (formationFailures.length) {
+    const msg = formationFailures.slice(0, 5).map(f =>
+      `seed=${f.seed} key=${f.key} cell=${f.label} — ${f.reason}`
+    ).join('\n')
+    expect.fail(`${formationFailures.length} guaranteedFormationKeys false positive(s):\n${msg}`)
+  }
 }
 
 describe('Soundness oracle — every guaranteed cell must be a real treasure', () => {
   it('no false positives across 300 random 1-formation boards', () => {
     const seeds = Array.from({ length: 300 }, (_, i) => i + 1)
-    const { failures } = runSoundnessCheck(seeds, 1)
-    if (failures.length) {
-      const msg = failures.slice(0, 5).map(f =>
-        `seed=${f.seed} cell=${f.label} patterns=${f.patternKeys.join(',')}`
-      ).join('\n')
-      expect.fail(`${failures.length} false positive(s):\n${msg}`)
-    }
+    expectNoFailures(runSoundnessCheck(seeds, 1))
   })
 
   it('no false positives across 200 random 2-formation boards', () => {
     const seeds = Array.from({ length: 200 }, (_, i) => i + 1001)
-    const { failures } = runSoundnessCheck(seeds, 2)
-    if (failures.length) {
-      const msg = failures.slice(0, 5).map(f =>
-        `seed=${f.seed} cell=${f.label} patterns=${f.patternKeys.join(',')}`
-      ).join('\n')
-      expect.fail(`${failures.length} false positive(s):\n${msg}`)
-    }
+    expectNoFailures(runSoundnessCheck(seeds, 2))
   })
 
   it('no false positives across 100 random 3-formation boards', () => {
     const seeds = Array.from({ length: 100 }, (_, i) => i + 2001)
-    const { failures } = runSoundnessCheck(seeds, 3)
-    if (failures.length) {
-      const msg = failures.slice(0, 5).map(f =>
-        `seed=${f.seed} cell=${f.label} patterns=${f.patternKeys.join(',')}`
-      ).join('\n')
-      expect.fail(`${failures.length} false positive(s):\n${msg}`)
-    }
+    expectNoFailures(runSoundnessCheck(seeds, 3))
   })
 })

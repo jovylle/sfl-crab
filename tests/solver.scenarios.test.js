@@ -54,7 +54,7 @@ describe('Pass 2 — single-instance confined-name forcing', () => {
     const tiles = makeTiles([
       { x: 4, y: 4, items: { 'Wooden Compass': 1 } },
     ])
-    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, ['WOODEN_COMPASS'], G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationKeys } = solveTreasures(tiles, ['WOODEN_COMPASS'], G)
 
     // Both Wood tiles (x=3,y=4 idx=43 and x=5,y=4 idx=45) must be guaranteed
     expect(guaranteed.has(43)).toBe(true)
@@ -64,6 +64,24 @@ describe('Pass 2 — single-instance confined-name forcing', () => {
     // NOTE: the solver includes already-revealed treasure tiles in `guaranteed`
     // (they ARE guaranteed to be treasures — the UI handles filtering for display).
     expect(guaranteed.has(44)).toBe(true)
+
+    // Every cell of this single-instance formation is now pinned — the whole
+    // pattern is guaranteed, not just individual cells.
+    expect(guaranteedFormationKeys.has('WOODEN_COMPASS')).toBe(true)
+  })
+
+  it('does NOT mark the formation whole-pattern-guaranteed when only one of its cells is pinned', () => {
+    // A lone Old Bottle corner reveal, with no other reveals to narrow it down,
+    // leaves 4 legal 2x2 placements — only the revealed cell itself is
+    // guaranteed, the other 3 remain undetermined.
+    const tiles = makeTiles([
+      { x: 5, y: 5, items: { 'Old Bottle': 1 } },
+    ])
+    const { guaranteed, guaranteedFormationKeys } = solveTreasures(tiles, ['OLD_BOTTLE'], G)
+
+    expect(guaranteed.has(55)).toBe(true) // the revealed cell itself
+    expect(guaranteed.size).toBe(1) // nothing else pinned yet
+    expect(guaranteedFormationKeys.has('OLD_BOTTLE')).toBe(false)
   })
 })
 
@@ -157,7 +175,7 @@ describe('Edge cases', () => {
       'HIEROGLYPH', 'HIEROGLYPH', 'COCKLE', 'SEAWEED', 'CLAM_SHELLS',
     ]
     const tiles = gridArrayToTiles(grid, G)
-    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, patterns, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationKeys } = solveTreasures(tiles, patterns, G)
 
     // Clam Shell cells at (3,8),(4,8),(3,9),(4,9) already revealed — not in guaranteed
     // Seaweed at H9 (idx 78) already revealed — not in guaranteed
@@ -173,6 +191,15 @@ describe('Edge cases', () => {
 
     // H9 = idx 78: Seaweed — already revealed (in grid), not in guaranteed
     expect(guaranteed.has(78)).toBe(false)
+
+    // CLAM_SHELLS is single-instance and fully revealed (all 4 corners dug) —
+    // the whole pattern is guaranteed.
+    expect(guaranteedFormationKeys.has('CLAM_SHELLS')).toBe(true)
+
+    // HIEROGLYPH appears TWICE on this board — a duplicate shape can never be
+    // whole-pattern-guaranteed (no way to know which instance a proven cell
+    // belongs to), even though individual Hieroglyph cells are guaranteed above.
+    expect(guaranteedFormationKeys.has('HIEROGLYPH')).toBe(false)
 
     // ── Artefact cascade ─────────────────────────────────────────────────────
     // Phase A of Pass 1 promotes single-candidate anchors immediately:

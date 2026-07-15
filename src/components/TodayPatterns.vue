@@ -20,19 +20,26 @@
       :pattern-keys="patternKeys"
       :marked-indexes="markedIndexList"
       :completed-indexes="completedIndexList"
+      :guaranteed-indexes="guaranteedIndexList"
       @toggle-mark="toggleMark"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNow } from '@vueuse/core'
 import { useLandData } from '../composables/useLandData'
 import { usePatternMarks } from '@/composables/usePatternMarks.js'
 import { buildServerCompletedIndexes } from '@/utils/patternPreview.js'
+import { useGridManager } from '@/composables/useGridManager'
+import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import PatternStrip from '@/components/PatternStrip.vue'
+
+const props = defineProps({
+  showPrediction: { type: Boolean, default: false },
+})
 
 const route = useRoute()
 const landId = String(route.params.landId || '')
@@ -41,6 +48,7 @@ const {
   dailyPatternKeys: patternKeys,
   dailyPatternDate,
   completedPatternKeys,
+  patternKeys: authoritativePatternKeys,
 } = useLandData()
 
 const { markedIndexes, toggleMark } = usePatternMarks(landId)
@@ -51,6 +59,27 @@ const serverCompletedIndexes = computed(() =>
 
 const markedIndexList = computed(() => [...markedIndexes.value])
 const completedIndexList = computed(() => [...serverCompletedIndexes.value])
+
+// Second, independent solver instance — solves against the authoritative
+// (server-derived) pattern list, same as Grid.vue's own instance, since
+// dailyPatternKeys (the cached "Today's Treasures" list) can occasionally be
+// stale relative to it (see isPatternDateStale below).
+const { tiles } = useGridManager(landId)
+const { guaranteedFormationKeys } = usePredictionEngine(
+  tiles,
+  authoritativePatternKeys,
+  toRef(() => props.showPrediction),
+)
+
+const guaranteedIndexList = computed(() => {
+  const indexes = []
+  patternKeys.value.forEach((key, index) => {
+    if (guaranteedFormationKeys.value.has(key) && !serverCompletedIndexes.value.has(index)) {
+      indexes.push(index)
+    }
+  })
+  return indexes
+})
 
 const now = useNow({ interval: 30000 })
 const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))

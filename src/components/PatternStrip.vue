@@ -16,6 +16,12 @@
         class="pattern-thumb-check"
         aria-hidden="true"
       >✓</span>
+      <span
+        v-else-if="isGuaranteed(i)"
+        class="pattern-thumb-check pattern-thumb-check--guaranteed"
+        aria-hidden="true"
+        title="Guaranteed treasure — solver certain, not yet dug"
+      >✓</span>
       <div class="pattern-preview">
         <div
           v-for="cell in 16"
@@ -47,6 +53,7 @@ const props = defineProps({
   patternKeys: { type: Array, default: () => [] },
   markedIndexes: { type: Array, default: () => [] },
   completedIndexes: { type: Array, default: () => [] },
+  guaranteedIndexes: { type: Array, default: () => [] },
   readonly: { type: Boolean, default: false },
 })
 
@@ -59,6 +66,7 @@ const serverCompletedTooltip =
 
 const markedSet = computed(() => new Set(props.markedIndexes))
 const completedSet = computed(() => new Set(props.completedIndexes))
+const guaranteedSet = computed(() => new Set(props.guaranteedIndexes))
 
 function isMarked (index) {
   return markedSet.value.has(index)
@@ -66,6 +74,10 @@ function isMarked (index) {
 
 function isServerCompleted (index) {
   return completedSet.value.has(index)
+}
+
+function isGuaranteed (index) {
+  return guaranteedSet.value.has(index)
 }
 
 function thumbClass (index) {
