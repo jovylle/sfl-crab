@@ -45,9 +45,23 @@ node scripts/debug-solver.js --diff scripts/fixtures/<earlier>.json scripts/fixt
 ### Vitest test suite
 
 ```bash
-npm test          # run all 3 test files (oracle + scenarios + transform contract)
-npm run test:watch
+npm test              # run all 3 test files once
+npm run test:watch    # watch mode
 ```
+
+**Three test files** — run `npm test` before pushing any change to `treasureSolver.js` or `gridTileTransform.js`:
+
+| File | What it guards |
+|---|---|
+| `tests/solver.oracle.test.js` | **Soundness oracle** — 600 random boards with known ground-truth; every `guaranteed` cell must be a real treasure. Catches false positives introduced by solver logic changes. Uses deterministic PRNG (xorshift32, seeded) so failures are reproducible. |
+| `tests/solver.scenarios.test.js` | **Hand-crafted scenarios** — one test per algorithm path (Pass 1 treasure-anchor, Pass 2 single-instance forcing, 3-of-4 reveal, edge cases). Intent readable from the board. Catches gross breakage and documents expected solver behaviour. |
+| `tests/gridTileTransform.test.js` | **Transform contract** — locks the string format between `gridArrayToTiles` (emitter) and `treasureSolver` (consumer). Changing `"treasure actual-treasure"` or the `tileImage:` prefix in either file without updating the other silently breaks the solver with zero errors. |
+
+**Key constraints when writing new solver tests**:
+- Use only **non-seasonal formations**: `HIEROGLYPH`, `OLD_BOTTLE`, `COCKLE`, `WOODEN_COMPASS`, `CLAM_SHELLS`, `SEAWEED`, `SEA_CUCUMBERS`. Seasonal formations reference `CURRENT_SEASONAL_ARTEFACT` which changes monthly and breaks test assertions.
+- The solver's **critical invariant** is soundness (no false positives) — it is intentionally conservative. A cell in `guaranteed` means it is safe to dig; a cell absent from `guaranteed` means nothing either way.
+- Already-revealed treasure tiles ARE included in `guaranteed` (they are provably treasures); the UI filters them for display.
+- Do NOT use a differential oracle (compare two solver implementations). The production solver runs iterative pseudo-reveal propagation that no single-pass oracle can reproduce correctly. Use **ground-truth comparison** instead: generate a board with known treasure positions and assert every `guaranteed` cell is in that truth set.
 
 ### Raw API shape (stable)
 
@@ -74,13 +88,13 @@ npm run preview      # netlify build → netlify serve (full prod simulation)
 
 Use `npm run dev` when working with Netlify functions (auth, dig-day, practice patterns). Use `npm run dev:vite` for UI-only work. To proxy `/api` to local functions in vite-only mode, set `VITE_API_PROXY_TARGET=http://localhost:8888` in `.env`.
 
-## No test runner or linter
+## Linter / formatter
 
-No tests for `src/`, no ESLint, no lint script. Prettier is installed but has no config file. Tests exist only in `src_other/` (legacy game libs) and are not wired into CI or any npm script. The `prerender` npm script references a missing file — ignore it.
+No ESLint, no lint script. Prettier is installed but has no config file. Tests in `src_other/` (legacy game libs) are not wired into CI.
 
 ## Verifying changes end-to-end
 
-With no test runner, the real check is **build + drive the app in a browser and observe**. Tool-agnostic (works with Playwright, Puppeteer, or manual clicking).
+For changes to the solver or grid transform: **run `npm test` first** (17 tests, ~1s). For everything else the real check is **build + drive the app in a browser and observe**. Tool-agnostic (works with Playwright, Puppeteer, or manual clicking).
 
 ```bash
 npx vite build                                # ~8s; also catches template/compile errors
