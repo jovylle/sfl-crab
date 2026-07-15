@@ -23,6 +23,12 @@
             : 'bg-base-100 dark:bg-neutral-content',
         ]"
       >
+        <span
+          v-if="isGuaranteed(i)"
+          class="pattern-thumb-check pattern-thumb-check--guaranteed"
+          aria-hidden="true"
+          title="Guaranteed treasure — solver certain, not yet dug"
+        >✓</span>
         <div
           class="pattern-preview"
         >
@@ -45,18 +51,60 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
+import { buildGuaranteedIndexes } from '@/utils/patternPreview.js'
 
 const { getImageSrc } = useReliableAssets()
 
-defineProps({
+const props = defineProps({
   patternKeys: { type: Array, default: () => [] },
+  tiles: { type: Array, default: () => [] },
+  showPrediction: { type: Boolean, default: false },
 })
 
 const GRID_SIZE = 4
 const marked = ref(new Set())
+
+// The solver needs the DUG reveals, which live in the `tiles` prop
+// (displayTiles: `{ type, name, revealed }` objects) — adapt into the
+// class-array shape the solver parses (same adapter PracticeGrid.vue uses,
+// which runs its own independent solver instance).
+function getSlug(tile) {
+  if (!tile) return null
+  if (tile.type === 'crab') return 'crab'
+  if (tile.type === 'sand') return 'sand'
+  if (tile.type === 'treasure' && tile.name) return tile.name.toLowerCase().replace(/\s+/g, '_')
+  return null
+}
+
+const solverTiles = computed(() =>
+  (props.tiles || []).map(tile => {
+    if (!tile?.revealed) return [] // undug / null / ghosted → unknown
+    if (tile.type === 'treasure') return ['treasure actual-treasure', `tileImage:${getSlug(tile)}`]
+    if (tile.type === 'sand') return ['sand']
+    if (tile.type === 'crab') return ['crab']
+    return []
+  })
+)
+
+// Second, independent solver instance (PracticeGrid.vue runs its own) — cheap
+// pure/synchronous solve, avoids lifting prediction state into props.
+const { guaranteedFormationCounts } = usePredictionEngine(
+  solverTiles,
+  toRef(props, 'patternKeys'),
+  toRef(props, 'showPrediction'),
+)
+
+const guaranteedIndexSet = computed(() =>
+  buildGuaranteedIndexes(props.patternKeys, guaranteedFormationCounts.value),
+)
+
+function isGuaranteed (index) {
+  return guaranteedIndexSet.value.has(index)
+}
 
 function formatKey(key) {
   return key.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')

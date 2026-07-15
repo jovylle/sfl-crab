@@ -40,6 +40,15 @@
             </button>
 
             <button
+              type="button"
+              class="btn btn-outline btn-sm w-full"
+              title="Report a bug or issue"
+              @click="openFeedback({ source: 'more-menu' })"
+            >
+              🚩 Report Issue
+            </button>
+
+            <button
               class="btn btn-warning tooltip btn-sm text-nowrap"
               data-tip="🧹 Clear all custom marks"
               @click="grid.clear()"
@@ -107,12 +116,14 @@ import InputLandIdOrRefresh from '@/components/InputLandIdOrRefresh.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
+import { useFeedbackModal } from '@/composables/useFeedbackModal.js'
 
 const route  = useRoute()
 const router = useRouter()
 const { isTestServer } = useApiEnvironment()
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
+const { openFeedback } = useFeedbackModal()
 
 // Public dig-day snapshots: data is keyed by landId + UTC date (no ownership in v1).
 defineProps({

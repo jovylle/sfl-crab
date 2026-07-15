@@ -569,6 +569,16 @@ body {
   pointer-events: none;
 }
 
+/* Solver-proven whole pattern, not yet dug — deliberately NOT green so it
+   never reads as the server-confirmed check above. */
+.digging-patterns .pattern-thumb-check--guaranteed {
+  background: white;
+  color: #111;
+  border: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, black 15%, transparent);
+  border-radius: 50%;
+}
+
 .digging-patterns .pattern-thumb {
   display: inline-block;
   vertical-align: top;

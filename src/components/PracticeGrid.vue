@@ -121,6 +121,7 @@
       :hints="MARK_HINTS"
       :possibleTreasures="[]"
       @pick="onHintPicked"
+      @report="onReportFromPicker"
     />
   </div>
 </template>
@@ -132,6 +133,7 @@ import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { useGridEngine } from '@/composables/useGridEngine.js'
 import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import HintPicker from '@/components/HintPicker.vue'
+import { useFeedbackModal } from '@/composables/useFeedbackModal.js'
 
 const { getImageSrc } = useReliableAssets()
 const engine = useGridEngine(10)
@@ -289,12 +291,26 @@ function onRightClick(event, index) {
     y: tR.top  - cR.top  + tR.height / 2,
   }
 }
+const { openFeedback } = useFeedbackModal()
+
 function onHintPicked({ tileIndex, hint }) {
   picker.value = null
   if (hint === 'no-hint-and-show-trash-icon') {
     engine.pickEngineHint(tileIndex, null)
   } else {
     engine.pickEngineHint(tileIndex, hint)
+  }
+}
+
+function onReportFromPicker() {
+  const p = picker.value
+  picker.value = null
+  if (p) {
+    const col = colLabels.value[p.tileIndex % 10]
+    const row = rowLabels.value[Math.floor(p.tileIndex / 10)]
+    openFeedback({ tileLabel: `${col}${row}`, landId: null, source: 'grid-context-menu' })
+  } else {
+    openFeedback({ source: 'grid-context-menu' })
   }
 }
 

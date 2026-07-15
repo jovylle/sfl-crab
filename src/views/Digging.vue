@@ -40,7 +40,7 @@
     </template>
 
     <template v-if="hasDailyPatterns" #patterns>
-      <TodayPatterns />
+      <TodayPatterns :show-prediction="showPrediction" />
     </template>
 
     <DigReplayModal
