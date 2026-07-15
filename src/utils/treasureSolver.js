@@ -231,14 +231,20 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     iterChanged = false
 
     // ── Pass 1: treasure-anchored deduction ────────────────────────────
-    for (const [tIdx, tName] of revealedTreasureName) {
+    // Two-phase to avoid anchor-ordering ambiguity:
+    //   Phase A — single-candidate anchors promote their cells immediately so
+    //             subsequent anchors in Phase B see tighter constraints.
+    //   Phase B — recompute all candidates (some may now be blocked) and intersect.
+    //
+    // Why sound: a single-candidate anchor means exactly one placement is legal
+    // for that revealed treasure — all its cells are certain. Promoting them
+    // before Phase B is equivalent to the end-of-iteration promotion, just earlier.
+    const computeCandidates = (tIdx, tName) => {
       const tx = tIdx % gridSize
       const ty = Math.floor(tIdx / gridSize)
-      const candidates = [] // each: Map<idx, name> of plots for one legal placement
-
+      const candidates = []
       for (const formation of shapes) {
         for (const anchor of formation) {
-          // Align this plot to the revealed treasure (translation only).
           if (!namesMatch(anchor.name, tName)) continue
           const ox = tx - anchor.x
           const oy = ty - anchor.y
@@ -246,8 +252,26 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
           if (plots) candidates.push(plots)
         }
       }
+      return candidates
+    }
 
-      if (!candidates.length) continue // inconsistent (shouldn't happen) — skip safely
+    // Phase A: immediately promote single-candidate anchors
+    for (const [tIdx, tName] of revealedTreasureName) {
+      const candidates = computeCandidates(tIdx, tName)
+      if (candidates.length !== 1) continue
+      for (const [idx, name] of candidates[0]) {
+        if (!revealedTreasureName.has(idx) && !pseudoRevealed.has(idx)) {
+          revealedTreasureName.set(idx, name)
+          pseudoRevealed.add(idx)
+          iterChanged = true
+        }
+      }
+    }
+
+    // Phase B: recompute with Phase A promotions applied, then intersect
+    for (const [tIdx, tName] of revealedTreasureName) {
+      const candidates = computeCandidates(tIdx, tName)
+      if (!candidates.length) continue // inconsistent — skip safely
       intersectCandidates(candidates)
     }
 
