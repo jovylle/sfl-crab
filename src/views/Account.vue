@@ -110,7 +110,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useHubSession } from '@/composables/useHubSession.js'
 import { isTestApiEnvironment } from '@/config/api.js'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
-import { isTestnetLandId } from '@/utils/testnet.js'
 import {
   fetchProfile,
   fetchSavedLands,
@@ -206,7 +205,7 @@ const displayLands = computed(() => (
       return {
         ...item,
         ...decoded,
-        isTestnet: decoded.isTestnet || isTestnetLandId(decoded.landId),
+        isTestnet: decoded.isTestnet,
       }
     })
     .filter((item) => item.landId)
