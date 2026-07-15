@@ -576,6 +576,7 @@ body {
   color: #111;
   border: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, black 15%, transparent);
+  border-radius: 50%;
 }
 
 .digging-patterns .pattern-thumb {

@@ -201,6 +201,19 @@ describe('Edge cases', () => {
     // belongs to), even though individual Hieroglyph cells are guaranteed above.
     expect(guaranteedFormationKeys.has('HIEROGLYPH')).toBe(false)
 
+    // COCKLE and SEAWEED are single-instance and fully pinned — guaranteed.
+    expect(guaranteedFormationKeys.has('COCKLE')).toBe(true)
+    expect(guaranteedFormationKeys.has('SEAWEED')).toBe(true)
+
+    // ARTEFACT_TWENTY_TWO/_THREE/_TWENTY are each single-instance shapes whose
+    // one true placement is pinned by Pass 1's per-anchor reasoning (shared
+    // "Camel Bone" name across all three prevents the full-board fallback from
+    // narrowing to one candidate on its own) — confirmedInstanceKeys should
+    // still catch them.
+    expect(guaranteedFormationKeys.has('ARTEFACT_TWENTY_TWO')).toBe(true)
+    expect(guaranteedFormationKeys.has('ARTEFACT_TWENTY_THREE')).toBe(true)
+    expect(guaranteedFormationKeys.has('ARTEFACT_TWENTY')).toBe(true)
+
     // ── Artefact cascade ─────────────────────────────────────────────────────
     // Phase A of Pass 1 promotes single-candidate anchors immediately:
     //   C3=SDE → 1 candidate Arte20@(2,1) → D2='camel_bone' promoted

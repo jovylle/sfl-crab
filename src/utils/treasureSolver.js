@@ -116,9 +116,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // Formation shapes present on the board. Dedup by key (one instance is enough
   // for local reasoning), and include every shape so a revealed treasure can be
   // anchored to whichever shape truly owns it.
-  const shapes = [...new Set(patternKeys)]
-    .map(key => DIGGING_FORMATIONS[key])
-    .filter(f => Array.isArray(f) && f.length)
+  const shapeEntries = [...new Set(patternKeys)]
+    .map(key => ({ key, formation: DIGGING_FORMATIONS[key] }))
+    .filter(({ formation }) => Array.isArray(formation) && formation.length)
 
   const inBounds = (x, y) => x >= 0 && x < gridSize && y >= 0 && y < gridSize
 
@@ -268,6 +268,13 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // no new promotable cells.
   const pseudoRevealed = new Set()
 
+  // Keys whose one true instance was pinned by Pass 1's per-anchor reasoning
+  // (a single surviving candidate for a shapeCount(key) === 1 formation is the
+  // same soundness condition used elsewhere to promote pseudo-reveals/mark
+  // cells guaranteed — this just remembers WHICH key produced that proof, so
+  // finalization doesn't have to weaker-rediscover it via full-board fallback).
+  const confirmedInstanceKeys = new Set()
+
   let iterChanged = true
   while (iterChanged) {
     iterChanged = false
@@ -285,13 +292,13 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       const tx = tIdx % gridSize
       const ty = Math.floor(tIdx / gridSize)
       const candidates = []
-      for (const formation of shapes) {
+      for (const { key, formation } of shapeEntries) {
         for (const anchor of formation) {
           if (!namesMatch(anchor.name, tName)) continue
           const ox = tx - anchor.x
           const oy = ty - anchor.y
           const plots = buildPlacement(formation, ox, oy)
-          if (plots) candidates.push(plots)
+          if (plots) candidates.push({ key, plots })
         }
       }
       return candidates
@@ -301,7 +308,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (candidates.length !== 1) continue
-      for (const [idx, name] of candidates[0]) {
+      const { key, plots } = candidates[0]
+      if (shapeCount.get(key) === 1) confirmedInstanceKeys.add(key)
+      for (const [idx, name] of plots) {
         if (!revealedTreasureName.has(idx) && !pseudoRevealed.has(idx)) {
           revealedTreasureName.set(idx, name)
           pseudoRevealed.add(idx)
@@ -314,7 +323,10 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (!candidates.length) continue // inconsistent — skip safely
-      intersectCandidates(candidates)
+      if (candidates.length === 1 && shapeCount.get(candidates[0].key) === 1) {
+        confirmedInstanceKeys.add(candidates[0].key)
+      }
+      intersectCandidates(candidates.map(c => c.plots))
     }
 
     // ── Pass 2: single-instance forcing ─────────────────────────────────
@@ -376,7 +388,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // one last time: if exactly one legal placement remains, that placement IS
   // the real instance — every one of its cells is a proven treasure at its
   // correct relative offset, so the whole formation is guaranteed.
-  const guaranteedFormationKeys = new Set()
+  const guaranteedFormationKeys = new Set(confirmedInstanceKeys)
   for (const key of presentKeys) {
     if (shapeCount.get(key) !== 1) continue
     const survivors = enumerateSingleInstanceSurvivors(key)
