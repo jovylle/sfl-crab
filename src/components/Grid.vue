@@ -110,6 +110,7 @@
         'hint-nothing',
         'no-hint-and-show-trash-icon',
         'hint-crab-eyes-maybe',
+        'action:report-issue',
       ]"
       @pick="onHintPicked"
       :possibleTreasures="possibleTreasures"
@@ -133,6 +134,7 @@ import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { getLabelFromTile } from '@/utils/hintLabel.js'
 import { isRevealed } from '@/utils/tileState.js'
+import { useFeedbackModal } from '@/composables/useFeedbackModal.js'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
@@ -218,7 +220,16 @@ function onTileClick (event, index) {
   picker.value = { tileIndex: index, x: centerX, y: centerY }
 }
 
+const { openFeedback } = useFeedbackModal()
+
 function onHintPicked({ tileIndex, hint }) {
+  if (hint === 'action:report-issue') {
+    const col = colLabels.value[tileIndex % 10]
+    const row = rowLabels.value[Math.floor(tileIndex / 10)]
+    openFeedback({ tileLabel: `${col}${row}`, landId: landId ?? null, source: 'grid-context-menu' })
+    picker.value = null
+    return
+  }
   grid.pick(tileIndex, hint)
   picker.value = null
 }

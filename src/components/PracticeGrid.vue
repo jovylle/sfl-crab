@@ -132,6 +132,7 @@ import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { useGridEngine } from '@/composables/useGridEngine.js'
 import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import HintPicker from '@/components/HintPicker.vue'
+import { useFeedbackModal } from '@/composables/useFeedbackModal.js'
 
 const { getImageSrc } = useReliableAssets()
 const engine = useGridEngine(10)
@@ -224,6 +225,7 @@ const MARK_HINTS = [
   'hint-nothing',
   'no-hint-and-show-trash-icon',
   'hint-crab-eyes-maybe',
+  'action:report-issue',
 ]
 
 // ── Dig animation state ──────────────────────────────────────────────
@@ -289,8 +291,16 @@ function onRightClick(event, index) {
     y: tR.top  - cR.top  + tR.height / 2,
   }
 }
+const { openFeedback } = useFeedbackModal()
+
 function onHintPicked({ tileIndex, hint }) {
   picker.value = null
+  if (hint === 'action:report-issue') {
+    const col = colLabels.value[tileIndex % 10]
+    const row = rowLabels.value[Math.floor(tileIndex / 10)]
+    openFeedback({ tileLabel: `${col}${row}`, landId: null, source: 'grid-context-menu' })
+    return
+  }
   if (hint === 'no-hint-and-show-trash-icon') {
     engine.pickEngineHint(tileIndex, null)
   } else {

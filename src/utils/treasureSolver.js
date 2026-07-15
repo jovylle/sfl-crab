@@ -111,9 +111,6 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // else: undug / hint-only — unknown, could be treasure
   }
 
-  // Nothing to anchor on → no guarantees (predictions are treasure-anchored).
-  if (revealedTreasureName.size === 0) return { guaranteed, guaranteedSlugs: new Map(), partial: false }
-
   // Formation shapes present on the board. Dedup by key (one instance is enough
   // for local reasoning), and include every shape so a revealed treasure can be
   // anchored to whichever shape truly owns it.
@@ -193,33 +190,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     }
   }
 
-  // ── Treasure-anchored deduction ─────────────────────────────────────
-  for (const [tIdx, tName] of revealedTreasureName) {
-    const tx = tIdx % gridSize
-    const ty = Math.floor(tIdx / gridSize)
-    const candidates = [] // each: Map<idx, name> of plots for one legal placement
-
-    for (const formation of shapes) {
-      for (const anchor of formation) {
-        // Align this plot to the revealed treasure (translation only).
-        if (!namesMatch(anchor.name, tName)) continue
-        const ox = tx - anchor.x
-        const oy = ty - anchor.y
-        const plots = buildPlacement(formation, ox, oy)
-        if (plots) candidates.push(plots)
-      }
-    }
-
-    if (!candidates.length) continue // inconsistent (shouldn't happen) — skip safely
-    intersectCandidates(candidates)
-  }
-
-  // ── Single-instance forcing ─────────────────────────────────────────
-  // When exactly one formation of a shape is on the board, every revealed
-  // treasure whose name is owned ONLY by that shape (among shapes present) must
-  // belong to that single instance. Enumerating the instance's legal placements
-  // that cover all such reveals and intersecting them pins the in-between tiles
-  // even when nothing adjacent has been dug (e.g. bare 1st & 3rd seaweed).
+  // Shape bookkeeping for single-instance reasoning (Passes 2 & 3). Depends
+  // only on patternKeys/DIGGING_FORMATIONS, not on reveals, so it's computed
+  // once outside the iterative loop below.
   const shapeCount = new Map() // key -> occurrences (duplicates preserved)
   for (const key of patternKeys) shapeCount.set(key, (shapeCount.get(key) ?? 0) + 1)
 
@@ -242,30 +215,116 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     return keys && keys.size === 1 && keys.has(key)
   }
 
-  for (const key of presentKeys) {
-    if (shapeCount.get(key) !== 1) continue
-    const formation = DIGGING_FORMATIONS[key]
+  // ── Iterative deduction ──────────────────────────────────────────────
+  // Each iteration runs three passes, then promotes any newly-guaranteed cell
+  // with a known (unambiguous) name into `revealedTreasureName` as a
+  // "pseudo-reveal": a cell already proven to be treasure T constrains other
+  // formations' placements exactly the way an actually-dug treasure T would.
+  // buildPlacement only ever REJECTS a placement that conflicts with a
+  // pseudo-reveal's name, so this can only shrink candidate sets — it can
+  // never manufacture a false guarantee. The loop stops once a pass produces
+  // no new promotable cells.
+  const pseudoRevealed = new Set()
 
-    const confined = [...revealedTreasureName].filter(([, name]) => confinedTo(name, key))
-    if (!confined.length) continue
+  let iterChanged = true
+  while (iterChanged) {
+    iterChanged = false
 
-    const [aIdx, aName] = confined[0]
-    const ax = aIdx % gridSize
-    const ay = Math.floor(aIdx / gridSize)
+    // ── Pass 1: treasure-anchored deduction ────────────────────────────
+    for (const [tIdx, tName] of revealedTreasureName) {
+      const tx = tIdx % gridSize
+      const ty = Math.floor(tIdx / gridSize)
+      const candidates = [] // each: Map<idx, name> of plots for one legal placement
 
-    // Enumerate placements of this single instance anchored on confined[0],
-    // keeping only those that also cover every other confined reveal.
-    const survivors = []
-    for (const anchor of formation) {
-      if (!namesMatch(anchor.name, aName)) continue
-      const plots = buildPlacement(formation, ax - anchor.x, ay - anchor.y)
-      if (!plots) continue
-      const coversAll = confined.every(([cIdx, cName]) => namesMatch(plots.get(cIdx), cName))
-      if (coversAll) survivors.push(plots)
+      for (const formation of shapes) {
+        for (const anchor of formation) {
+          // Align this plot to the revealed treasure (translation only).
+          if (!namesMatch(anchor.name, tName)) continue
+          const ox = tx - anchor.x
+          const oy = ty - anchor.y
+          const plots = buildPlacement(formation, ox, oy)
+          if (plots) candidates.push(plots)
+        }
+      }
+
+      if (!candidates.length) continue // inconsistent (shouldn't happen) — skip safely
+      intersectCandidates(candidates)
     }
 
-    if (!survivors.length) continue // inconsistent data — skip safely
-    intersectCandidates(survivors)
+    // ── Pass 2: single-instance forcing ─────────────────────────────────
+    // When exactly one formation of a shape is on the board, every revealed
+    // treasure whose name is owned ONLY by that shape (among shapes present)
+    // must belong to that single instance. Enumerating the instance's legal
+    // placements that cover all such reveals and intersecting them pins the
+    // in-between tiles even when nothing adjacent has been dug.
+    for (const key of presentKeys) {
+      if (shapeCount.get(key) !== 1) continue
+      const formation = DIGGING_FORMATIONS[key]
+
+      const confined = [...revealedTreasureName].filter(([, name]) => confinedTo(name, key))
+      if (!confined.length) continue
+
+      const [aIdx, aName] = confined[0]
+      const ax = aIdx % gridSize
+      const ay = Math.floor(aIdx / gridSize)
+
+      // Enumerate placements of this single instance anchored on confined[0],
+      // keeping only those that also cover every other confined reveal.
+      const survivors = []
+      for (const anchor of formation) {
+        if (!namesMatch(anchor.name, aName)) continue
+        const plots = buildPlacement(formation, ax - anchor.x, ay - anchor.y)
+        if (!plots) continue
+        const coversAll = confined.every(([cIdx, cName]) => namesMatch(plots.get(cIdx), cName))
+        if (coversAll) survivors.push(plots)
+      }
+
+      if (!survivors.length) continue // inconsistent data — skip safely
+      intersectCandidates(survivors)
+    }
+
+    // ── Pass 3: pure-elimination ─────────────────────────────────────────
+    // For a single-instance formation with no confined-name reveal to anchor
+    // on, enumerate EVERY legal placement across the whole board. If sand,
+    // crab, edges, and (from prior iterations) pseudo-reveals rule out all
+    // but one, that lone survivor's cells are guaranteed.
+    for (const key of presentKeys) {
+      if (shapeCount.get(key) !== 1) continue
+      const formation = DIGGING_FORMATIONS[key]
+
+      const hasConfinedReveal = [...revealedTreasureName].some(([, n]) => confinedTo(n, key))
+      if (hasConfinedReveal) continue // Pass 2 already covers this shape with a tighter candidate set
+
+      const minX = Math.min(...formation.map(p => p.x))
+      const maxX = Math.max(...formation.map(p => p.x))
+      const minY = Math.min(...formation.map(p => p.y))
+      const maxY = Math.max(...formation.map(p => p.y))
+
+      const allPlacements = []
+      for (let oy = -minY; oy <= gridSize - 1 - maxY; oy++) {
+        for (let ox = -minX; ox <= gridSize - 1 - maxX; ox++) {
+          const plots = buildPlacement(formation, ox, oy)
+          if (plots) allPlacements.push(plots)
+        }
+      }
+
+      if (allPlacements.length === 1) intersectCandidates(allPlacements)
+    }
+
+    // Promote newly-guaranteed, unambiguously-named cells into
+    // revealedTreasureName so the next iteration can use them as spatial
+    // constraints for other formations (e.g. a single-instance shape whose
+    // last ambiguity depends on treating this cell as taken). Ambiguous
+    // guaranteed cells (unknown name) are intentionally left alone — treating
+    // them as "unavailable to other formations" could wrongly eliminate the
+    // real placement of a different shape.
+    for (const [idx, name] of guaranteedNames) {
+      if (!revealedTreasureName.has(idx) && !pseudoRevealed.has(idx)) {
+        revealedTreasureName.set(idx, name)
+        pseudoRevealed.add(idx)
+        iterChanged = true
+      }
+    }
   }
 
   const guaranteedSlugs = new Map()

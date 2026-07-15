@@ -42,6 +42,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/feedback"
+  to = "/.netlify/functions/feedback"
+  status = 200
+
+[[redirects]]
   from = "/api/hub-auth/*"
   to = "/.netlify/functions/hub-auth/:splat"
   status = 200

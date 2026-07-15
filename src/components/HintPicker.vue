@@ -33,6 +33,13 @@
             <span class="text-[0.45rem] sm:text-[0.5rem] font-bold text-warning leading-none">DIG</span>
           </div>
           <div
+            v-else-if="hintClass === 'action:report-issue'"
+            class="flex flex-col justify-center items-center tile w-full h-full border border-info bg-info/10 gap-0.5 cursor-pointer"
+          >
+            <Icon icon="mdi:flag-outline" class="w-4 h-4 sm:w-5 sm:h-5" />
+            <span class="text-[0.45rem] sm:text-[0.5rem] font-bold text-info leading-none">Report</span>
+          </div>
+          <div
             v-else
             :class="[hintClass, 'tile w-full h-full border border-base-300']"
           />

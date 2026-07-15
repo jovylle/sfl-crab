@@ -25,6 +25,12 @@ const STORES = [
     keyHint: 'landId/YYYY-MM-DD.json',
     canRebuild: false,
   },
+  {
+    id: 'feedback-reports',
+    label: 'Feedback reports',
+    keyHint: 'timestamp-id.json',
+    canRebuild: false,
+  },
 ]
 
 function findStore (storeId) {

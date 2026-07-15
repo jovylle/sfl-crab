@@ -135,6 +135,12 @@
                 <div v-if="loadingBlob" class="flex justify-center py-8">
                   <span class="loading loading-spinner" />
                 </div>
+                <img
+                  v-if="blobScreenshotSrc"
+                  :src="blobScreenshotSrc"
+                  class="max-h-64 rounded border border-base-300 mb-2"
+                  alt="Feedback screenshot"
+                />
                 <pre
                   v-else-if="blobPreview"
                   class="text-xs bg-base-300 rounded-lg p-3 overflow-auto max-h-96 whitespace-pre-wrap break-words"
@@ -174,6 +180,7 @@ const prefixFilter = ref('')
 const keys = ref([])
 const selectedKey = ref('')
 const blobPreview = ref('')
+const blobScreenshotSrc = ref('')
 
 const loadingKeys = ref(false)
 const loadingBlob = ref(false)
@@ -217,6 +224,7 @@ function logout () {
   keys.value = []
   selectedKey.value = ''
   blobPreview.value = ''
+  blobScreenshotSrc.value = ''
 }
 
 async function bootstrapSession () {
@@ -235,6 +243,7 @@ function selectStore (storeId) {
   selectedStoreId.value = storeId
   selectedKey.value = ''
   blobPreview.value = ''
+  blobScreenshotSrc.value = ''
   blobError.value = ''
   refreshKeys()
 }
@@ -263,9 +272,19 @@ async function openKey (key) {
   blobError.value = ''
   loadingBlob.value = true
   blobPreview.value = ''
+  blobScreenshotSrc.value = ''
   try {
     const result = await getAdminBlob(password.value, selectedStoreId.value, key)
-    blobPreview.value = JSON.stringify(result.data, null, 2)
+    if (selectedStoreId.value === 'feedback-reports' && result.data?.screenshot) {
+      blobScreenshotSrc.value = result.data.screenshot
+      blobPreview.value = JSON.stringify(
+        { ...result.data, screenshot: '[image omitted, see preview above]' },
+        null,
+        2,
+      )
+    } else {
+      blobPreview.value = JSON.stringify(result.data, null, 2)
+    }
   } catch (err) {
     blobError.value = err.message
   } finally {
@@ -298,6 +317,7 @@ async function confirmDelete () {
     await deleteAdminBlob(password.value, selectedStoreId.value, selectedKey.value)
     selectedKey.value = ''
     blobPreview.value = ''
+    blobScreenshotSrc.value = ''
     await refreshKeys()
   } catch (err) {
     blobError.value = err.message

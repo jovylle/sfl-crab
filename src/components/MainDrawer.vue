@@ -60,7 +60,7 @@
     </div>
   </div>
 
-  <FeedbackModal :open="feedbackOpen" @close="feedbackOpen = false" />
+  <FeedbackModal :open="feedbackOpen" :prefill="feedbackPrefill" @close="closeFeedback" />
 </template>
 
 <script setup>
@@ -72,12 +72,13 @@ import AccountSection from '@/components/AccountSection.vue'
 import FeedbackModal from '@/components/FeedbackModal.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
+import { useFeedbackModal } from '@/composables/useFeedbackModal.js'
 
 const route = useRoute()
 const router = useRouter()
 const { isTestServer } = useApiEnvironment()
 const isProjectMateReady = ref(false)
-const feedbackOpen = ref(false)
+const { feedbackOpen, feedbackPrefill, openFeedback: openFeedbackModal, closeFeedback } = useFeedbackModal()
 const hasFeedbackForm = Boolean(import.meta.env.VITE_PROJECTMATE_WEB3FORMS_KEY)
 const showSupportSection = computed(
   () => isProjectMateReady.value || hasFeedbackForm,
@@ -101,7 +102,7 @@ function openProjectMate () {
 }
 
 function openFeedback () {
-  feedbackOpen.value = true
+  openFeedbackModal()
   closeDrawer()
 }
 
