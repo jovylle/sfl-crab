@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { solveTreasures } from '@/utils/treasureSolver.js'
 import { gridArrayToTiles } from '@/utils/gridTileTransform.js'
+import { buildGuaranteedIndexes } from '@/utils/patternPreview.js'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 
 const G = 10
@@ -125,7 +126,7 @@ describe('Pass 2 — single-instance confined-name forcing', () => {
     const tiles = makeTiles([
       { x: 4, y: 4, items: { 'Wooden Compass': 1 } },
     ])
-    const { guaranteed, guaranteedSlugs, guaranteedFormationKeys } = solveTreasures(tiles, ['WOODEN_COMPASS'], G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, ['WOODEN_COMPASS'], G)
 
     // Both Wood tiles (x=3,y=4 idx=43 and x=5,y=4 idx=45) must be guaranteed
     expect(guaranteed.has(43)).toBe(true)
@@ -138,7 +139,7 @@ describe('Pass 2 — single-instance confined-name forcing', () => {
 
     // Every cell of this single-instance formation is now pinned — the whole
     // pattern is guaranteed, not just individual cells.
-    expect(guaranteedFormationKeys.has('WOODEN_COMPASS')).toBe(true)
+    expect(guaranteedFormationCounts.has('WOODEN_COMPASS')).toBe(true)
   })
 
   it('does NOT mark the formation whole-pattern-guaranteed when only one of its cells is pinned', () => {
@@ -148,11 +149,11 @@ describe('Pass 2 — single-instance confined-name forcing', () => {
     const tiles = makeTiles([
       { x: 5, y: 5, items: { 'Old Bottle': 1 } },
     ])
-    const { guaranteed, guaranteedFormationKeys } = solveTreasures(tiles, ['OLD_BOTTLE'], G)
+    const { guaranteed, guaranteedFormationCounts } = solveTreasures(tiles, ['OLD_BOTTLE'], G)
 
     expect(guaranteed.has(55)).toBe(true) // the revealed cell itself
     expect(guaranteed.size).toBe(1) // nothing else pinned yet
-    expect(guaranteedFormationKeys.has('OLD_BOTTLE')).toBe(false)
+    expect(guaranteedFormationCounts.has('OLD_BOTTLE')).toBe(false)
   })
 })
 
@@ -246,7 +247,7 @@ describe('Edge cases', () => {
       'HIEROGLYPH', 'HIEROGLYPH', 'COCKLE', 'SEAWEED', 'CLAM_SHELLS',
     ]
     const tiles = gridArrayToTiles(grid, G)
-    const { guaranteed, guaranteedSlugs, guaranteedFormationKeys } = solveTreasures(tiles, patterns, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, patterns, G)
     printSolverResult(tiles, guaranteed, guaranteedSlugs, patterns, G)
 
     // Clam Shell cells at (3,8),(4,8),(3,9),(4,9) already revealed — not in guaranteed
@@ -266,12 +267,29 @@ describe('Edge cases', () => {
 
     // CLAM_SHELLS is single-instance and fully revealed (all 4 corners dug) —
     // the whole pattern is guaranteed.
-    expect(guaranteedFormationKeys.has('CLAM_SHELLS')).toBe(true)
+    expect(guaranteedFormationCounts.get('CLAM_SHELLS')).toBe(1)
 
-    // HIEROGLYPH appears TWICE on this board — a duplicate shape can never be
-    // whole-pattern-guaranteed (no way to know which instance a proven cell
-    // belongs to), even though individual Hieroglyph cells are guaranteed above.
-    expect(guaranteedFormationKeys.has('HIEROGLYPH')).toBe(false)
+    // HIEROGLYPH appears TWICE on this board, and BOTH instances are
+    // individually pinned by Pass 1's per-anchor reasoning: the Hieroglyph
+    // dug at E2 (idx 14) forces its Vase cells at E1/F1, and the Hieroglyph
+    // dug at D5 (idx 43) forces its Vase cells at D4/E4 — two distinct,
+    // non-overlapping placements, so both instances are known and the count
+    // is 2 (not gated to "all-or-nothing" — see buildGuaranteedIndexes, which
+    // checkmarks exactly as many of the key's thumbnails as instances proven).
+    expect(guaranteedFormationCounts.get('HIEROGLYPH')).toBe(2)
+
+    // COCKLE and SEAWEED are single-instance and fully pinned — guaranteed.
+    expect(guaranteedFormationCounts.get('COCKLE')).toBe(1)
+    expect(guaranteedFormationCounts.get('SEAWEED')).toBe(1)
+
+    // ARTEFACT_TWENTY_TWO/_THREE/_TWENTY are each single-instance shapes whose
+    // one true placement is pinned by Pass 1's per-anchor reasoning (shared
+    // "Camel Bone" name across all three prevents the full-board fallback from
+    // narrowing to one candidate on its own) — confirmedInstances should
+    // still catch them.
+    expect(guaranteedFormationCounts.get('ARTEFACT_TWENTY_TWO')).toBe(1)
+    expect(guaranteedFormationCounts.get('ARTEFACT_TWENTY_THREE')).toBe(1)
+    expect(guaranteedFormationCounts.get('ARTEFACT_TWENTY')).toBe(1)
 
     // ── Artefact cascade ─────────────────────────────────────────────────────
     // Phase A of Pass 1 promotes single-candidate anchors immediately:
@@ -298,6 +316,72 @@ describe('Edge cases', () => {
       expect(guaranteed.has(idx), `arte23 bone ${lbl} (idx ${idx})`).toBe(true)
       expect(guaranteedSlugs.get(idx)).toBe('camel_bone')
     }
+  })
+
+  it('known real-world snapshot — land 1405000790165644 partially confirms one of two HIEROGLYPH instances', () => {
+    // Captured 2026-07-16. Same 8-key pattern list as the 4485248732423974
+    // snapshot above, but a different dig layout: only ONE Hieroglyph is dug
+    // (at H4, idx 37), pinning its Vase cells at H3 (idx 27, guaranteed) and
+    // I3 (idx 28, already dug) — the OTHER Hieroglyph instance has no reveals
+    // anywhere near it and stays completely unknown. Confirms the N-of-M
+    // behavior end-to-end: guaranteedFormationCounts.get('HIEROGLYPH') is 1,
+    // not 2, and buildGuaranteedIndexes flags exactly one of the two
+    // HIEROGLYPH thumbnails (not both, not neither).
+    const grid = [
+      { x: 8, y: 7, items: { Crab: 1 } },
+      { x: 2, y: 8, items: { 'Camel Bone': 1 } },
+      { x: 1, y: 7, items: { Crab: 1 } },
+      { x: 3, y: 7, items: { Seaweed: 1 } },
+      { x: 1, y: 9, items: { 'Camel Bone': 1 } },
+      { x: 4, y: 8, items: { Starfish: 1 } },
+      { x: 7, y: 1, items: { Crab: 1 } },
+      { x: 1, y: 2, items: { 'Cockle Shell': 1 } },
+      { x: 3, y: 4, items: { Crab: 1 } },
+      { x: 0, y: 8, items: { Crab: 1 } },
+      { x: 8, y: 2, items: { Vase: 1 } },
+      { x: 7, y: 3, items: { Hieroglyph: 1 } },
+      { x: 7, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 3, y: 1, items: { Sand: 1 } },
+      { x: 4, y: 3, items: { Sand: 1 } },
+      { x: 2, y: 5, items: { 'Clam Shell': 1 } },
+      { x: 8, y: 5, items: { Sand: 1 } },
+      { x: 1, y: 4, items: { 'Clam Shell': 1 } },
+      { x: 5, y: 5, items: { Sand: 1 } },
+      { x: 5, y: 1, items: { 'Camel Bone': 1 } },
+    ]
+    const patterns = [
+      'ARTEFACT_TWENTY_TWO', 'ARTEFACT_TWENTY_THREE', 'ARTEFACT_TWENTY',
+      'HIEROGLYPH', 'HIEROGLYPH', 'COCKLE', 'SEAWEED', 'CLAM_SHELLS',
+    ]
+    const tiles = gridArrayToTiles(grid, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, patterns, G)
+
+    // H3 = idx 27: the Vase cell forced by the single dug Hieroglyph at H4 (idx 37)
+    expect(guaranteed.has(27)).toBe(true)
+    expect(guaranteedSlugs.get(27)).toBe('vase')
+
+    // Only ONE Hieroglyph instance is pinned — the other has no reveals to anchor on.
+    expect(guaranteedFormationCounts.get('HIEROGLYPH')).toBe(1)
+
+    // buildGuaranteedIndexes should flag exactly one of the two HIEROGLYPH
+    // thumbnails (indexes 3 and 4 in `patterns`), not both.
+    const guaranteedIndexes = buildGuaranteedIndexes(patterns, guaranteedFormationCounts)
+    const hieroglyphFlagged = [3, 4].filter(i => guaranteedIndexes.has(i))
+    expect(hieroglyphFlagged.length).toBe(1)
+
+    // Regression guard: ARTEFACT_TWENTY has only ONE instance on this board.
+    // Once ARTE_22 (B10) and ARTE_23 (H9) are consumed by Pass 1's
+    // instance-consumption cascade, re-examining their now-pseudo-revealed
+    // cells (e.g. F8/G8/H8/G9, all Camel Bone) as fresh Pass 1 anchors could
+    // spuriously "explain" them via a wrong, overlapping ARTEFACT_TWENTY
+    // candidate — since ARTEFACT_TWENTY's real placement is confined to
+    // (5,1)-(6,2), NOT (5,7)-(6,8). Without committedCellOrigin's
+    // short-circuit (a cell that already has a known confirmed-instance
+    // origin is never re-searched for an alternate explanation), this
+    // wrongly guarantees F9 (idx 85) as "salt dino egg" and inflates the
+    // count to 3.
+    expect(guaranteedFormationCounts.get('ARTEFACT_TWENTY')).toBe(1)
+    expect(guaranteed.has(85), 'F9 (idx 85) must NOT be a false positive').toBe(false)
   })
 
   it('artefact-only — same board, D2 slug unambiguous without other formations', () => {

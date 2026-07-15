@@ -55,6 +55,7 @@ import { computed, ref, toRef } from 'vue'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
 import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
+import { buildGuaranteedIndexes } from '@/utils/patternPreview.js'
 
 const { getImageSrc } = useReliableAssets()
 
@@ -91,15 +92,18 @@ const solverTiles = computed(() =>
 
 // Second, independent solver instance (PracticeGrid.vue runs its own) — cheap
 // pure/synchronous solve, avoids lifting prediction state into props.
-const { guaranteedFormationKeys } = usePredictionEngine(
+const { guaranteedFormationCounts } = usePredictionEngine(
   solverTiles,
   toRef(props, 'patternKeys'),
   toRef(props, 'showPrediction'),
 )
 
+const guaranteedIndexSet = computed(() =>
+  buildGuaranteedIndexes(props.patternKeys, guaranteedFormationCounts.value),
+)
+
 function isGuaranteed (index) {
-  const key = props.patternKeys[index]
-  return key != null && guaranteedFormationKeys.value.has(key)
+  return guaranteedIndexSet.value.has(index)
 }
 
 function formatKey(key) {

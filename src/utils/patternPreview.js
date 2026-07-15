@@ -77,3 +77,28 @@ export function buildServerCompletedIndexes (patternKeys, completedPatternKeys) 
   })
   return indexes
 }
+
+/**
+ * Map guaranteed-instance counts (per formation key) to thumb indexes
+ * (left-to-right), even when a key repeats. Indexes in `excludedIndexes`
+ * (e.g. already server-completed) are skipped and don't consume an allocation.
+ * @param {string[]} patternKeys
+ * @param {Map<string, number>} guaranteedFormationCounts
+ * @param {Set<number>} [excludedIndexes]
+ * @returns {Set<number>}
+ */
+export function buildGuaranteedIndexes(patternKeys, guaranteedFormationCounts, excludedIndexes) {
+  const remaining = new Map()
+  const indexes = new Set()
+  ;(patternKeys || []).forEach((key, index) => {
+    if (excludedIndexes?.has(index)) return
+    const left = remaining.has(key) ? remaining.get(key) : (guaranteedFormationCounts.get(key) ?? 0)
+    if (left > 0) {
+      indexes.add(index)
+      remaining.set(key, left - 1)
+    } else {
+      remaining.set(key, 0)
+    }
+  })
+  return indexes
+}

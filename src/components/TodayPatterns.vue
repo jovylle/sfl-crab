@@ -32,7 +32,7 @@ import { useRoute } from 'vue-router'
 import { useNow } from '@vueuse/core'
 import { useLandData } from '../composables/useLandData'
 import { usePatternMarks } from '@/composables/usePatternMarks.js'
-import { buildServerCompletedIndexes } from '@/utils/patternPreview.js'
+import { buildServerCompletedIndexes, buildGuaranteedIndexes } from '@/utils/patternPreview.js'
 import { useGridManager } from '@/composables/useGridManager'
 import { usePredictionEngine } from '@/composables/usePredictionEngine.js'
 import PatternStrip from '@/components/PatternStrip.vue'
@@ -65,21 +65,15 @@ const completedIndexList = computed(() => [...serverCompletedIndexes.value])
 // dailyPatternKeys (the cached "Today's Treasures" list) can occasionally be
 // stale relative to it (see isPatternDateStale below).
 const { tiles } = useGridManager(landId)
-const { guaranteedFormationKeys } = usePredictionEngine(
+const { guaranteedFormationCounts } = usePredictionEngine(
   tiles,
   authoritativePatternKeys,
   toRef(() => props.showPrediction),
 )
 
-const guaranteedIndexList = computed(() => {
-  const indexes = []
-  patternKeys.value.forEach((key, index) => {
-    if (guaranteedFormationKeys.value.has(key) && !serverCompletedIndexes.value.has(index)) {
-      indexes.push(index)
-    }
-  })
-  return indexes
-})
+const guaranteedIndexList = computed(() => [
+  ...buildGuaranteedIndexes(patternKeys.value, guaranteedFormationCounts.value, serverCompletedIndexes.value),
+])
 
 const now = useNow({ interval: 30000 })
 const currentUtcDate = computed(() => new Date(now.value).toISOString().slice(0, 10))

@@ -83,12 +83,12 @@ function flattenTile(tile) {
  * @param {(string[]|string)[]} tiles - grid cells of CSS class arrays
  * @param {string[]} patternKeys - formation multiset on the board
  * @param {number} gridSize - default 10
- * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedFormationKeys: Set<string>, partial: boolean }}
+ * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedFormationCounts: Map<string,number>, partial: boolean }}
  */
 export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   const guaranteed = new Set()
   if (!patternKeys?.length) {
-    return { guaranteed, guaranteedSlugs: new Map(), guaranteedFormationKeys: new Set(), partial: false }
+    return { guaranteed, guaranteedSlugs: new Map(), guaranteedFormationCounts: new Map(), partial: false }
   }
 
   // ── Parse revealed state ────────────────────────────────────────────
@@ -274,6 +274,41 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // no new promotable cells.
   const pseudoRevealed = new Set()
 
+  // A single surviving candidate for a treasure anchor pins that placement as
+  // the real instance, regardless of whether the shape has 1 or N occurrences
+  // on the board (same soundness argument either way — see Pass 1 below). We
+  // remember WHICH instance was pinned, per key, keyed by a canonical
+  // signature of its cell indices, so finalization can count how many
+  // DISTINCT instances of a duplicated shape are individually proven. A
+  // Set<signature> (not a counter) is required because the same real instance
+  // can be independently re-confirmed by two different anchors within it
+  // (e.g. two plots sharing a name) — deduping by signature avoids
+  // double-counting one instance as two.
+  const confirmedInstances = new Map() // key -> Set<signature>
+
+  const placementSignature = (plots) => [...plots.keys()].sort((a, b) => a - b).join(',')
+
+  // idx -> the exact {key, plots} that a confirmed instance pinned it to.
+  // Once a key is fully consumed (remainingCount reaches 0), computeCandidates
+  // stops generating that key's placements — but a pseudo-revealed cell that
+  // came FROM that consumed instance still needs re-explaining every time
+  // Phase A/B re-examines it as an anchor. Without this map, the search would
+  // exclude the (correct, but now-consumed) key and could latch onto a
+  // different, spurious single-candidate explanation for the same cell — a
+  // real false positive (e.g. re-deriving a since-consumed ARTEFACT_TWENTY_THREE
+  // cell as an alternate, wrong ARTEFACT_TWENTY placement). Short-circuiting
+  // to the already-known origin avoids ever re-searching for an anchor whose
+  // answer is already settled.
+  const committedCellOrigin = new Map() // idx -> { key, plots }
+
+  const recordConfirmedInstance = (key, plots) => {
+    if (!confirmedInstances.has(key)) confirmedInstances.set(key, new Set())
+    confirmedInstances.get(key).add(placementSignature(plots))
+    for (const idx of plots.keys()) {
+      if (!committedCellOrigin.has(idx)) committedCellOrigin.set(idx, { key, plots })
+    }
+  }
+
   let iterChanged = true
   while (iterChanged) {
     iterChanged = false
@@ -289,6 +324,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // before Phase B is equivalent to the end-of-iteration promotion, just earlier.
     // Returns [{key, plots}] — only formations with remainingCount > 0.
     const computeCandidates = (tIdx, tName) => {
+      const origin = committedCellOrigin.get(tIdx)
+      if (origin) return [origin]
+
       const tx = tIdx % gridSize
       const ty = Math.floor(tIdx / gridSize)
       const candidates = []
@@ -313,6 +351,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       const candidates = computeCandidates(tIdx, tName)
       if (candidates.length !== 1) continue
       const { key, plots } = candidates[0]
+      recordConfirmedInstance(key, plots)
       // Guarantee immediately — Phase B won't see this anchor if the instance
       // is consumed below (count drops to 0), so we can't rely on Phase B.
       intersectCandidates([plots])
@@ -337,6 +376,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (!candidates.length) continue // inconsistent — skip safely
+      if (candidates.length === 1) {
+        recordConfirmedInstance(candidates[0].key, candidates[0].plots)
+      }
       intersectCandidates(candidates.map(c => c.plots))
     }
 
@@ -392,19 +434,32 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   }
 
   // ── Whole-pattern-guarantee finalization ────────────────────────────
-  // Only single-instance shapes can ever be pinned to one specific placement
-  // (a duplicated shape leaves ambiguity about which instance owns a proven
-  // cell). Against the now-converged revealedTreasureName (including all
-  // pseudo-reveals from the loop above), re-run the same survivor enumeration
-  // one last time: if exactly one legal placement remains, that placement IS
-  // the real instance — every one of its cells is a proven treasure at its
-  // correct relative offset, so the whole formation is guaranteed.
-  const guaranteedFormationKeys = new Set()
+  // For each present key, the count of individually-proven instances is the
+  // number of distinct signatures Pass 1 pinned for it (sound regardless of
+  // shapeCount — two real formation instances can never occupy overlapping
+  // cells, so N distinct confirmed signatures means N real instances are
+  // individually known, full stop). When exactly one instance of a key
+  // remains uncommitted (remainingCount === 1 — true for originally
+  // single-instance shapes, and also for a duplicated shape once its other
+  // instances have been consumed by Pass 1), also fold in the confined-name/
+  // full-board enumeration route (e.g. COCKLE/SEAWEED, or the last instance
+  // of a cascade-consumed duplicate) — but only bump the count if that
+  // survivor's signature isn't already one of the confirmed ones, since
+  // enumerateSingleInstanceSurvivors re-derives the SAME instance Pass 1 may
+  // have already confirmed (double-counting it would overcount past the
+  // real number of instances on the board).
+  const guaranteedFormationCounts = new Map()
   for (const key of presentKeys) {
-    if (shapeCount.get(key) !== 1) continue
-    const survivors = enumerateSingleInstanceSurvivors(key)
-    if (survivors.length === 1) guaranteedFormationKeys.add(key)
+    const confirmed = confirmedInstances.get(key)
+    let count = confirmed?.size ?? 0
+    if (remainingCount.get(key) === 1) {
+      const survivors = enumerateSingleInstanceSurvivors(key)
+      if (survivors.length === 1 && !confirmed?.has(placementSignature(survivors[0]))) {
+        count += 1
+      }
+    }
+    if (count > 0) guaranteedFormationCounts.set(key, count)
   }
 
-  return { guaranteed, guaranteedSlugs, guaranteedFormationKeys, partial: false }
+  return { guaranteed, guaranteedSlugs, guaranteedFormationCounts, partial: false }
 }
