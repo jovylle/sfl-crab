@@ -132,8 +132,11 @@ describe('Edge cases', () => {
 
   it('known real-world snapshot — land 4485248732423974 produces expected guarantees', () => {
     // Captured 2026-07-15. ARTEFACT_TWENTY_TWO/THREE/TWENTY + HIEROGLYPH×2 + COCKLE + SEAWEED + CLAM_SHELLS
-    // After the pure-elimination fix, Hieroglyph at D5 (idx 43) and E2 (idx 14) are guaranteed,
-    // and Clam Shell cells are guaranteed. We check a few key cells.
+    // Artefact deductions (local, per-anchor):
+    //   Arte22 (SDE at H7) → 1 valid placement → guarantees G6/H6/I6/G7 as Camel Bone.
+    //   Arte20 (SDE at C3) → 1 valid placement → guarantees D2 as treasure (slug ambiguous).
+    //   Arte23 (SDE at I2) → 3-way tie (Arte20/22/23) → guarantees I1 as Camel Bone.
+    //   G1/H1/H2 NOT guaranteed because Arte23@(1,0) is a permanently valid alternative.
     const grid = [
       { x: 8, y: 8, items: { Seaweed: 1 } },
       { x: 8, y: 9, items: { Crab: 1 } },
@@ -197,5 +200,93 @@ describe('Edge cases', () => {
     // whole-pattern-guaranteed (no way to know which instance a proven cell
     // belongs to), even though individual Hieroglyph cells are guaranteed above.
     expect(guaranteedFormationKeys.has('HIEROGLYPH')).toBe(false)
+
+    // ── Artefact cascade ─────────────────────────────────────────────────────
+    // Phase A of Pass 1 promotes single-candidate anchors immediately:
+    //   C3=SDE → 1 candidate Arte20@(2,1) → D2='camel_bone' promoted
+    //   H7=SDE → 1 candidate Arte22@(6,5) → G6/H6/I6/G7='camel_bone' promoted
+    // Phase B then recomputes with those promotions:
+    //   C2=CB anchor: Arte23@(1,0) expects D2=SDE, but D2='camel_bone' → blocked.
+    //   Only Arte20@(2,1) survives → D2 slug unambiguous.
+    // Pass 3 for Arte23: with Arte23@(1,0) blocked, only @(6,0) valid globally
+    //   → G1/H1/I1/H2 guaranteed as Camel Bone.
+
+    // arte22 bone cells
+    for (const [idx, lbl] of [[56,'G6'],[57,'H6'],[58,'I6'],[66,'G7']]) {
+      expect(guaranteed.has(idx), `arte22 bone ${lbl} (idx ${idx})`).toBe(true)
+      expect(guaranteedSlugs.get(idx)).toBe('camel_bone')
+    }
+
+    // arte20 — D2 now unambiguously Camel Bone
+    expect(guaranteed.has(13), 'arte20 D2 (idx 13) should be guaranteed').toBe(true)
+    expect(guaranteedSlugs.get(13)).toBe('camel_bone')
+
+    // arte23 cascade — all four bones guaranteed
+    for (const [idx, lbl] of [[6,'G1'],[7,'H1'],[8,'I1'],[17,'H2']]) {
+      expect(guaranteed.has(idx), `arte23 bone ${lbl} (idx ${idx})`).toBe(true)
+      expect(guaranteedSlugs.get(idx)).toBe('camel_bone')
+    }
+  })
+
+  it('artefact-only — same board, D2 slug unambiguous without other formations', () => {
+    // Same grid, only the three artefact patterns.
+    // Proves Phase A (single-candidate anchor promotion) fixes D2's slug ambiguity
+    // even without HIEROGLYPH/COCKLE. The full arte23 cascade (G1/H1/H2) still
+    // requires COCKLE because Arte23@(2,5) is a valid alternative until COCKLE
+    // promotes D6='cockle_shell' and blocks it.
+    const grid = [
+      { x: 8, y: 8, items: { Seaweed: 1 } },
+      { x: 8, y: 9, items: { Crab: 1 } },
+      { x: 1, y: 8, items: { Sand: 2 } },
+      { x: 1, y: 1, items: { Crab: 1 } },
+      { x: 1, y: 2, items: { Crab: 1 } },
+      { x: 2, y: 1, items: { 'Camel Bone': 1 } },
+      { x: 3, y: 2, items: { 'Camel Bone': 1 } },
+      { x: 4, y: 2, items: { Crab: 1 } },
+      { x: 2, y: 2, items: { 'Salt Dino Egg': 1 } },
+      { x: 8, y: 1, items: { 'Salt Dino Egg': 1 } },
+      { x: 8, y: 3, items: { Sand: 2 } },
+      { x: 8, y: 6, items: { Crab: 1 } },
+      { x: 7, y: 6, items: { 'Salt Dino Egg': 1 } },
+      { x: 4, y: 8, items: { 'Clam Shell': 1 } },
+      { x: 3, y: 7, items: { Crab: 1 } },
+      { x: 4, y: 7, items: { Crab: 1 } },
+      { x: 3, y: 8, items: { 'Clam Shell': 1 } },
+      { x: 3, y: 9, items: { 'Clam Shell': 1 } },
+      { x: 4, y: 9, items: { 'Clam Shell': 1 } },
+      { x: 1, y: 4, items: { Crab: 1 } },
+      { x: 2, y: 4, items: { 'Cockle Shell': 1 } },
+      { x: 1, y: 3, items: { Sand: 2 } },
+      { x: 6, y: 1, items: { Crab: 1 } },
+      { x: 5, y: 4, items: { Sand: 2 } },
+      { x: 1, y: 6, items: { Sand: 2 } },
+      { x: 5, y: 1, items: { Crab: 1 } },
+      { x: 4, y: 1, items: { Hieroglyph: 1 } },
+      { x: 6, y: 2, items: { Sand: 2 } },
+      { x: 5, y: 7, items: { Sand: 2 } },
+      { x: 0, y: 1, items: { Sand: 2 } },
+      { x: 3, y: 4, items: { Hieroglyph: 1 } },
+    ]
+    const patterns = ['ARTEFACT_TWENTY_TWO', 'ARTEFACT_TWENTY_THREE', 'ARTEFACT_TWENTY']
+    const tiles = gridArrayToTiles(grid, G)
+    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, patterns, G)
+
+    // arte22 bone cells
+    for (const [idx, lbl] of [[56,'G6'],[57,'H6'],[58,'I6'],[66,'G7']]) {
+      expect(guaranteed.has(idx), `arte22 bone ${lbl} (idx ${idx})`).toBe(true)
+      expect(guaranteedSlugs.get(idx)).toBe('camel_bone')
+    }
+
+    // arte20 — D2 now unambiguously Camel Bone (Phase A fix)
+    expect(guaranteed.has(13), 'arte20 D2 (idx 13) should be guaranteed').toBe(true)
+    expect(guaranteedSlugs.get(13)).toBe('camel_bone')
+
+    // arte23 — I1 guaranteed from I2-anchor 3-way intersection; G1/H1/H2 not guaranteed
+    // (Arte23@(2,5) is still valid — COCKLE is needed to block it via D6 promotion)
+    expect(guaranteed.has(8), 'arte23 I1 (idx 8) should be guaranteed').toBe(true)
+    expect(guaranteedSlugs.get(8)).toBe('camel_bone')
+    expect(guaranteed.has(6)).toBe(false)   // G1 — Arte23@(2,5) keeps it open
+    expect(guaranteed.has(7)).toBe(false)   // H1
+    expect(guaranteed.has(17)).toBe(false)  // H2
   })
 })
