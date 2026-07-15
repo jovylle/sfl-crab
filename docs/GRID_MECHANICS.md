@@ -63,7 +63,7 @@ The current seasonal artefact is determined by `getCurrentSeasonalArtefact()` in
 1. **Fetch**: `landApiService.js` → Netlify proxy `sfl-api.cjs` → Sunflower Land API `/community/farms/:id`
 2. **Response shape**: `{ visitedFarmState: { desert: { digging: { grid, patterns, completedPatterns } } } }`
 3. **Cache**: Data in localStorage per landId + API env, date-stamped (`useLandData.js`). Stale after UTC date changes.
-4. **Grid render** (`updateGridFromData`): Converts API grid tiles (`{x, y, items: {Crab|Sand|TreasureName}}`) to CSS class arrays, then calls `rebuildNearHints()` to generate neighbor hints.
+4. **Grid render** (`updateGridFromData`): Calls `gridArrayToTiles()` (`src/utils/gridTileTransform.js` — shared pure function, also used by the solver debug CLI) to convert API grid tiles (`{x, y, items: {Crab|Sand|TreasureName}}`) to CSS class arrays, then calls `rebuildNearHints()` to generate neighbor hints.
 5. **Cooldown**: 15s between successful refreshes, 30s after failures (`useLandSync.js:10-11`). `bypassCache` is sent on every sync to skip the proxy's own 60s cache.
 
 ## Dig day persistence
@@ -145,15 +145,24 @@ Pattern completion is detected locally by comparing dug grid tiles against forma
 
 A toggleable auto-solver that computes **guaranteed treasure locations** from revealed tiles + the known formation multiset.
 
-### How it works
+### How it works (`src/utils/treasureSolver.js`)
 
-1. Parses revealed state from tile classes (sand/crab/treasure + `tileImage:` name). Revealed treasure tiles store `treasure actual-treasure` as a single space-joined class, so tokens are flattened before matching (`utils/treasureSolver.js`).
-2. For each formation in the active pattern multiset (`patternKeys` minus `completedPatternKeys`, via `computeActivePatternKeys`), computes all valid translation-only placements that don't conflict with revealed tiles.
-3. Backtracking search enumerates all complete legal placements (all formations placed, all revealed treasures covered by a matching-name plot, no overlaps). Anchor-first ordering places treasure-covering formations first.
-4. A tile is **guaranteed** if it's a treasure in EVERY legal solution.
-5. Capped at 5000 solutions / 200ms — shows a "partial" badge when the cap is hit.
+Parses revealed state from tile classes (sand/crab/treasure + `tileImage:` name). Revealed treasure tiles store `treasure actual-treasure` as a single space-joined class, so tokens are flattened before matching.
 
-The solve runs off the main thread via `requestIdleCallback` (`composables/usePredictionEngine.js`), so it never blocks the UI.
+**Algorithm — local treasure-anchored deduction (three passes, iterated until stable):**
+
+- **Pass 1 — treasure-anchored**: for each revealed treasure T, enumerate every legal placement of any formation shape that could cover T (translation-only, no rotation/reflection; conflicts with revealed sand/crab/wrong-name tiles are ruled out immediately). Any cell that is a treasure-plot in *every* candidate placement is guaranteed.
+- **Pass 2 — single-instance forcing**: when exactly one instance of a formation is on the board and a revealed treasure name is owned only by that shape, enumerate all legal placements of that single instance and intersect them.
+- **Pass 3 — pure elimination**: for a single-instance formation with no name-confined reveal to anchor on, enumerate all legal placements across the whole board. If only one survives (ruled out by sand/crab/edges/pseudo-reveals), its cells are guaranteed.
+- **Propagation**: newly guaranteed cells with an unambiguous name are promoted to `revealedTreasureName` as *pseudo-reveals* so subsequent iterations can use them as spatial constraints for other formations. The loop repeats until nothing changes.
+
+**Why local instead of global backtracking search**: the global approach is exponential and, once capped, its solution set is incomplete — intersecting an incomplete set can wrongly guarantee a tile. The local method needs no cap and is always sound (never a false positive).
+
+The solve is synchronous and instant (no cap, no idle callback needed). It is called inside `usePredictionEngine.js` which wraps it in a `watchEffect` and debounces via `requestIdleCallback` for UI responsiveness.
+
+### Testing the solver
+
+Use the in-browser page at `/<landId>/solver-debug` (paste raw `desert.digging` JSON → instant board + guaranteed list) or the CLI `node scripts/debug-solver.js --file <snapshot.json>`. Both use the identical code path. See **Solver debug tools** in `AGENTS.md` for the full reference.
 
 ### Visual
 

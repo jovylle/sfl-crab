@@ -18,6 +18,51 @@ Read in this order; each doc is kept accurate. If anything here conflicts with o
 | [SEASON_UPDATE_GUIDE.md](SEASON_UPDATE_GUIDE.md) / [API_KEY_SETUP.md](API_KEY_SETUP.md) | Seasonal artefact updates / SFL API keys |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Fork + PR workflow |
 
+## Solver debug tools
+
+Ways to test / verify the treasure solver (`src/utils/treasureSolver.js`) against real data — no browser screenshots, no bookmarklets.
+
+### CLI: `scripts/debug-solver.js`
+
+Runs under plain `node`, sub-second, no browser. Uses `scripts/lib/resolve-alias-loader.mjs` to resolve `@/` imports without Vite.
+
+**Snapshot format** — the file must be a `landData_<id>` JSON blob:
+```json
+{ "visitedFarmState": { "desert": { "digging": { "patterns": [...], "grid": [...] } } } }
+```
+
+Snapshots go in `scripts/fixtures/` (gitignored — contains real player data).
+
+```bash
+# Print 10x10 board + guaranteed-cell list for a single snapshot
+node scripts/debug-solver.js --file scripts/fixtures/<land>.json
+
+# Soundness regression oracle: guaranteed cells in <earlier> must not appear as
+# sand/crab in <later>. Prints FAIL loudly and exits nonzero on any false positive.
+node scripts/debug-solver.js --diff scripts/fixtures/<earlier>.json scripts/fixtures/<later>.json
+```
+
+### Vitest test suite
+
+```bash
+npm test          # run all 3 test files (oracle + scenarios + transform contract)
+npm run test:watch
+```
+
+### Raw API shape (stable)
+
+```
+desert.digging = {
+  patterns: string[],              // formation keys still on the board
+  completedPatterns: string[],     // fully-dug patterns
+  grid: [{ x, y, items: { <TreasureName>|Crab|Sand: count } }]
+}
+```
+
+The `grid` array contains only **dug** tiles. Undug tiles are absent. `x`/`y` are 0-based (0–9). Item keys are display names as returned by the SFL API — exactly as used in `DIGGING_FORMATIONS` plot names.
+
+**Primary way to feed AI assistants real data**: paste the raw `desert.digging` JSON directly into the chat.
+
 ## Dev commands
 
 ```bash

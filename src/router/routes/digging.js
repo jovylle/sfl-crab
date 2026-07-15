@@ -3,7 +3,6 @@ import Digging from '@/views/Digging.vue'
 import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
 import PracticeDigging from '@/views/PracticeDigging.vue'
-
 /** @type {import('vue-router').RouteRecordRaw[]} */
 export const diggingRoutes = [
   { path: '/', name: 'Home', redirect: to => ({ path: '/digging', query: to.query, hash: to.hash }) },

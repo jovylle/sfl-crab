@@ -14,7 +14,9 @@
     "prerender": "node scripts/prerender.js",
     "sync-game-data": "node scripts/parse-treasure-data.js",
     "check-assets": "node scripts/check-missing-assets.js",
-    "sync-artefact": "node scripts/sync-artefact.js"
+    "sync-artefact": "node scripts/sync-artefact.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
@@ -39,6 +41,7 @@
     "puppeteer": "^24.8.2",
     "tailwindcss": "^4.1.4",
     "ts-morph": "^25.0.1",
-    "vite": "^6.3.1"
+    "vite": "^6.3.1",
+    "vitest": "^4.1.10"
   }
 }

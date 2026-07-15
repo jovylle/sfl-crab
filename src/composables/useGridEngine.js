@@ -1,5 +1,6 @@
 // src/composables/useGridEngine.js
 import { ref } from 'vue'
+import { gridArrayToTiles } from '@/utils/gridTileTransform.js'
 
 export function useGridEngine (gridSize = 10) {
   // 1) Initialize each cell with its own empty array
@@ -153,27 +154,9 @@ export function useGridEngine (gridSize = 10) {
   function updateGridFromData (grid) {
     if (!grid) return
 
-    // 1️⃣ Reset all cells & counts
-    tiles.value = Array.from({ length: gridSize * gridSize }, () => [])
+    // 1️⃣ Reset counts, assign base item classes via the shared pure transform
     hintCounts.value = Array.from({ length: gridSize * gridSize }, () => ({}))
-
-    // 2️⃣ First pass: assign the base item classes
-    grid.forEach(tile => {
-      const idx = tile.y * gridSize + tile.x
-      const itemName = Object.keys(tile.items || {})[0]
-      const slug = itemName
-        ? itemName.toLowerCase().replace(/\s+/g, '_')
-        : 'unknown'
-      const tileImageClass = `tileImage:${slug}`
-
-      if (tile.items?.Crab) {
-        tiles.value[idx] = ['crab', tileImageClass]
-      } else if (tile.items?.Sand) {
-        tiles.value[idx] = ['sand', tileImageClass]
-      } else {
-        tiles.value[idx] = ['treasure actual-treasure', tileImageClass]
-      }
-    })
+    tiles.value = gridArrayToTiles(grid, gridSize)
 
     // 4️⃣ Trigger reactivity
     tiles.value = [...tiles.value]
