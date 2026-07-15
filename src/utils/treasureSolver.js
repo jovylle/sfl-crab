@@ -117,8 +117,8 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // for local reasoning), and include every shape so a revealed treasure can be
   // anchored to whichever shape truly owns it.
   const shapes = [...new Set(patternKeys)]
-    .map(key => DIGGING_FORMATIONS[key])
-    .filter(f => Array.isArray(f) && f.length)
+    .filter(key => Array.isArray(DIGGING_FORMATIONS[key]) && DIGGING_FORMATIONS[key].length)
+    .map(key => ({ key, formation: DIGGING_FORMATIONS[key] }))
 
   const inBounds = (x, y) => x >= 0 && x < gridSize && y >= 0 && y < gridSize
 
@@ -197,6 +197,12 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // once outside the iterative loop below.
   const shapeCount = new Map() // key -> occurrences (duplicates preserved)
   for (const key of patternKeys) shapeCount.set(key, (shapeCount.get(key) ?? 0) + 1)
+
+  // Remaining instance count per key — decremented when Phase A locks an actual
+  // reveal to a unique placement. Once a key reaches 0, no further candidates
+  // of that shape are generated, unblocking other anchors that were ambiguous
+  // only because of the now-committed instance.
+  const remainingCount = new Map(shapeCount)
 
   const presentKeys = [...new Set(patternKeys)].filter(
     key => Array.isArray(DIGGING_FORMATIONS[key]) && DIGGING_FORMATIONS[key].length,
@@ -281,27 +287,44 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // Why sound: a single-candidate anchor means exactly one placement is legal
     // for that revealed treasure — all its cells are certain. Promoting them
     // before Phase B is equivalent to the end-of-iteration promotion, just earlier.
+    // Returns [{key, plots}] — only formations with remainingCount > 0.
     const computeCandidates = (tIdx, tName) => {
       const tx = tIdx % gridSize
       const ty = Math.floor(tIdx / gridSize)
       const candidates = []
-      for (const formation of shapes) {
+      for (const { key, formation } of shapes) {
+        if ((remainingCount.get(key) ?? 0) === 0) continue
         for (const anchor of formation) {
           if (!namesMatch(anchor.name, tName)) continue
           const ox = tx - anchor.x
           const oy = ty - anchor.y
           const plots = buildPlacement(formation, ox, oy)
-          if (plots) candidates.push(plots)
+          if (plots) candidates.push({ key, plots })
         }
       }
       return candidates
     }
 
-    // Phase A: immediately promote single-candidate anchors
+    // Phase A: immediately promote single-candidate anchors.
+    // Only actual reveals (not pseudo-reveals) source instance-consumption locks —
+    // pseudo-revealed cells are already attributed to a committed formation instance
+    // and must not be used to consume a second one.
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (candidates.length !== 1) continue
-      for (const [idx, name] of candidates[0]) {
+      const { key, plots } = candidates[0]
+      // Guarantee immediately — Phase B won't see this anchor if the instance
+      // is consumed below (count drops to 0), so we can't rely on Phase B.
+      intersectCandidates([plots])
+      // Consume the instance only when the anchor is a real dug tile.
+      if (!pseudoRevealed.has(tIdx)) {
+        const rem = remainingCount.get(key) ?? 0
+        if (rem > 0) {
+          remainingCount.set(key, rem - 1)
+          iterChanged = true
+        }
+      }
+      for (const [idx, name] of plots) {
         if (!revealedTreasureName.has(idx) && !pseudoRevealed.has(idx)) {
           revealedTreasureName.set(idx, name)
           pseudoRevealed.add(idx)
@@ -314,7 +337,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (!candidates.length) continue // inconsistent — skip safely
-      intersectCandidates(candidates)
+      intersectCandidates(candidates.map(c => c.plots))
     }
 
     // ── Pass 2: single-instance forcing ─────────────────────────────────
@@ -324,7 +347,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // placements that cover all such reveals and intersecting them pins the
     // in-between tiles even when nothing adjacent has been dug.
     for (const key of presentKeys) {
-      if (shapeCount.get(key) !== 1) continue
+      if (remainingCount.get(key) !== 1) continue
       const hasConfinedReveal = [...revealedTreasureName].some(([, name]) => confinedTo(name, key))
       if (!hasConfinedReveal) continue
 
@@ -339,7 +362,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // crab, edges, and (from prior iterations) pseudo-reveals rule out all
     // but one, that lone survivor's cells are guaranteed.
     for (const key of presentKeys) {
-      if (shapeCount.get(key) !== 1) continue
+      if (remainingCount.get(key) !== 1) continue
       const hasConfinedReveal = [...revealedTreasureName].some(([, n]) => confinedTo(n, key))
       if (hasConfinedReveal) continue // Pass 2 already covers this shape with a tighter candidate set
 
