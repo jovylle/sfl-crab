@@ -121,6 +121,7 @@
       :hints="MARK_HINTS"
       :possibleTreasures="[]"
       @pick="onHintPicked"
+      @report="onReportFromPicker"
     />
   </div>
 </template>
@@ -225,7 +226,6 @@ const MARK_HINTS = [
   'hint-nothing',
   'no-hint-and-show-trash-icon',
   'hint-crab-eyes-maybe',
-  'action:report-issue',
 ]
 
 // ── Dig animation state ──────────────────────────────────────────────
@@ -295,16 +295,22 @@ const { openFeedback } = useFeedbackModal()
 
 function onHintPicked({ tileIndex, hint }) {
   picker.value = null
-  if (hint === 'action:report-issue') {
-    const col = colLabels.value[tileIndex % 10]
-    const row = rowLabels.value[Math.floor(tileIndex / 10)]
-    openFeedback({ tileLabel: `${col}${row}`, landId: null, source: 'grid-context-menu' })
-    return
-  }
   if (hint === 'no-hint-and-show-trash-icon') {
     engine.pickEngineHint(tileIndex, null)
   } else {
     engine.pickEngineHint(tileIndex, hint)
+  }
+}
+
+function onReportFromPicker() {
+  const p = picker.value
+  picker.value = null
+  if (p) {
+    const col = colLabels.value[p.tileIndex % 10]
+    const row = rowLabels.value[Math.floor(p.tileIndex / 10)]
+    openFeedback({ tileLabel: `${col}${row}`, landId: null, source: 'grid-context-menu' })
+  } else {
+    openFeedback({ source: 'grid-context-menu' })
   }
 }
 

@@ -73,6 +73,9 @@
       <p class="text-[0.5rem] sm:text-[0.55rem] text-center text-base-content/55 mt-1 pt-1 border-t border-base-300/80 px-2 leading-tight">
         Press <span class="font-semibold text-base-content/70">1</span>–<span class="font-semibold text-base-content/70">0</span> to place a number mark (e.g. dig order)
       </p>
+      <p class="text-[0.5rem] sm:text-[0.55rem] text-center mt-0.5 pb-0.5 px-2 leading-tight">
+        <button type="button" class="text-info underline underline-offset-1 cursor-pointer" @click="emit('report')">Report Issue</button>
+      </p>
     </div>
   </div>
 </template>
@@ -92,7 +95,7 @@ const props = defineProps({
 })
 
 // 2️⃣ Define the emit
-const emit = defineEmits(['pick'])
+const emit = defineEmits(['pick', 'report'])
 const dropdownContent = ref(null)
 const visible = ref(true)
 const keyMap = {

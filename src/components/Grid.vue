@@ -110,9 +110,9 @@
         'hint-nothing',
         'no-hint-and-show-trash-icon',
         'hint-crab-eyes-maybe',
-        'action:report-issue',
       ]"
       @pick="onHintPicked"
+      @report="onReportFromPicker"
       :possibleTreasures="possibleTreasures"
     />
 
@@ -223,14 +223,19 @@ function onTileClick (event, index) {
 const { openFeedback } = useFeedbackModal()
 
 function onHintPicked({ tileIndex, hint }) {
-  if (hint === 'action:report-issue') {
-    const col = colLabels.value[tileIndex % 10]
-    const row = rowLabels.value[Math.floor(tileIndex / 10)]
-    openFeedback({ tileLabel: `${col}${row}`, landId: landId ?? null, source: 'grid-context-menu' })
-    picker.value = null
-    return
-  }
   grid.pick(tileIndex, hint)
+  picker.value = null
+}
+
+function onReportFromPicker() {
+  const p = picker.value
+  if (p) {
+    const col = colLabels.value[p.tileIndex % 10]
+    const row = rowLabels.value[Math.floor(p.tileIndex / 10)]
+    openFeedback({ tileLabel: `${col}${row}`, landId: landId ?? null, source: 'grid-context-menu' })
+  } else {
+    openFeedback({ source: 'grid-context-menu' })
+  }
   picker.value = null
 }
 
