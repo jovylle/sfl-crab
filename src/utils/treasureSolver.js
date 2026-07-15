@@ -83,11 +83,13 @@ function flattenTile(tile) {
  * @param {(string[]|string)[]} tiles - grid cells of CSS class arrays
  * @param {string[]} patternKeys - formation multiset on the board
  * @param {number} gridSize - default 10
- * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, partial: boolean }}
+ * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedFormationKeys: Set<string>, partial: boolean }}
  */
 export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   const guaranteed = new Set()
-  if (!patternKeys?.length) return { guaranteed, guaranteedSlugs: new Map(), partial: false }
+  if (!patternKeys?.length) {
+    return { guaranteed, guaranteedSlugs: new Map(), guaranteedFormationKeys: new Set(), partial: false }
+  }
 
   // ── Parse revealed state ────────────────────────────────────────────
   const revealedSand = new Set()
@@ -215,6 +217,46 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     return keys && keys.size === 1 && keys.has(key)
   }
 
+  // Enumerate every still-legal placement of a single-instance formation
+  // `key`, against whatever `revealedTreasureName` holds at call time. If a
+  // revealed (or pseudo-revealed) treasure name is confined to this shape,
+  // anchor on it — cheap and exact (Pass 2's approach). Otherwise fall back
+  // to full-board enumeration (Pass 3's approach). Shared by Pass 2, Pass 3,
+  // and the whole-pattern-guarantee finalization below.
+  const enumerateSingleInstanceSurvivors = (key) => {
+    const formation = DIGGING_FORMATIONS[key]
+    const confined = [...revealedTreasureName].filter(([, name]) => confinedTo(name, key))
+
+    if (confined.length) {
+      const [aIdx, aName] = confined[0]
+      const ax = aIdx % gridSize
+      const ay = Math.floor(aIdx / gridSize)
+      const survivors = []
+      for (const anchor of formation) {
+        if (!namesMatch(anchor.name, aName)) continue
+        const plots = buildPlacement(formation, ax - anchor.x, ay - anchor.y)
+        if (!plots) continue
+        const coversAll = confined.every(([cIdx, cName]) => namesMatch(plots.get(cIdx), cName))
+        if (coversAll) survivors.push(plots)
+      }
+      return survivors
+    }
+
+    const minX = Math.min(...formation.map(p => p.x))
+    const maxX = Math.max(...formation.map(p => p.x))
+    const minY = Math.min(...formation.map(p => p.y))
+    const maxY = Math.max(...formation.map(p => p.y))
+
+    const allPlacements = []
+    for (let oy = -minY; oy <= gridSize - 1 - maxY; oy++) {
+      for (let ox = -minX; ox <= gridSize - 1 - maxX; ox++) {
+        const plots = buildPlacement(formation, ox, oy)
+        if (plots) allPlacements.push(plots)
+      }
+    }
+    return allPlacements
+  }
+
   // ── Iterative deduction ──────────────────────────────────────────────
   // Each iteration runs three passes, then promotes any newly-guaranteed cell
   // with a known (unambiguous) name into `revealedTreasureName` as a
@@ -259,26 +301,10 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // in-between tiles even when nothing adjacent has been dug.
     for (const key of presentKeys) {
       if (shapeCount.get(key) !== 1) continue
-      const formation = DIGGING_FORMATIONS[key]
+      const hasConfinedReveal = [...revealedTreasureName].some(([, name]) => confinedTo(name, key))
+      if (!hasConfinedReveal) continue
 
-      const confined = [...revealedTreasureName].filter(([, name]) => confinedTo(name, key))
-      if (!confined.length) continue
-
-      const [aIdx, aName] = confined[0]
-      const ax = aIdx % gridSize
-      const ay = Math.floor(aIdx / gridSize)
-
-      // Enumerate placements of this single instance anchored on confined[0],
-      // keeping only those that also cover every other confined reveal.
-      const survivors = []
-      for (const anchor of formation) {
-        if (!namesMatch(anchor.name, aName)) continue
-        const plots = buildPlacement(formation, ax - anchor.x, ay - anchor.y)
-        if (!plots) continue
-        const coversAll = confined.every(([cIdx, cName]) => namesMatch(plots.get(cIdx), cName))
-        if (coversAll) survivors.push(plots)
-      }
-
+      const survivors = enumerateSingleInstanceSurvivors(key)
       if (!survivors.length) continue // inconsistent data — skip safely
       intersectCandidates(survivors)
     }
@@ -290,24 +316,10 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // but one, that lone survivor's cells are guaranteed.
     for (const key of presentKeys) {
       if (shapeCount.get(key) !== 1) continue
-      const formation = DIGGING_FORMATIONS[key]
-
       const hasConfinedReveal = [...revealedTreasureName].some(([, n]) => confinedTo(n, key))
       if (hasConfinedReveal) continue // Pass 2 already covers this shape with a tighter candidate set
 
-      const minX = Math.min(...formation.map(p => p.x))
-      const maxX = Math.max(...formation.map(p => p.x))
-      const minY = Math.min(...formation.map(p => p.y))
-      const maxY = Math.max(...formation.map(p => p.y))
-
-      const allPlacements = []
-      for (let oy = -minY; oy <= gridSize - 1 - maxY; oy++) {
-        for (let ox = -minX; ox <= gridSize - 1 - maxX; ox++) {
-          const plots = buildPlacement(formation, ox, oy)
-          if (plots) allPlacements.push(plots)
-        }
-      }
-
+      const allPlacements = enumerateSingleInstanceSurvivors(key)
       if (allPlacements.length === 1) intersectCandidates(allPlacements)
     }
 
@@ -332,5 +344,20 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     guaranteedSlugs.set(idx, slugify(name))
   }
 
-  return { guaranteed, guaranteedSlugs, partial: false }
+  // ── Whole-pattern-guarantee finalization ────────────────────────────
+  // Only single-instance shapes can ever be pinned to one specific placement
+  // (a duplicated shape leaves ambiguity about which instance owns a proven
+  // cell). Against the now-converged revealedTreasureName (including all
+  // pseudo-reveals from the loop above), re-run the same survivor enumeration
+  // one last time: if exactly one legal placement remains, that placement IS
+  // the real instance — every one of its cells is a proven treasure at its
+  // correct relative offset, so the whole formation is guaranteed.
+  const guaranteedFormationKeys = new Set()
+  for (const key of presentKeys) {
+    if (shapeCount.get(key) !== 1) continue
+    const survivors = enumerateSingleInstanceSurvivors(key)
+    if (survivors.length === 1) guaranteedFormationKeys.add(key)
+  }
+
+  return { guaranteed, guaranteedSlugs, guaranteedFormationKeys, partial: false }
 }
