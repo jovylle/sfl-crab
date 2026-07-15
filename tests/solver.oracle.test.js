@@ -147,7 +147,7 @@ function runSoundnessCheck(seeds, numFormations) {
     const board = generateBoard(rng, numFormations)
     if (!board) { skipped++; continue }
 
-    const { guaranteed, guaranteedSlugs, guaranteedFormationKeys } = solveTreasures(board.tiles, board.patternKeys, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(board.tiles, board.patternKeys, G)
 
     for (const idx of guaranteed) {
       if (!board.truth.has(idx)) {
@@ -165,7 +165,7 @@ function runSoundnessCheck(seeds, numFormations) {
     // placement already in `guaranteed`, with a matching name where the solver
     // reports one. This generator only ever picks unique keys, so `keyToPlots`
     // unambiguously identifies "this formation's real placement".
-    for (const key of guaranteedFormationKeys) {
+    for (const key of guaranteedFormationCounts.keys()) {
       const plots = board.keyToPlots.get(key)
       for (const [idx, name] of plots) {
         const label = String.fromCharCode(65 + (idx % G)) + (Math.floor(idx / G) + 1)
@@ -196,7 +196,7 @@ function expectNoFailures({ failures, formationFailures }) {
     const msg = formationFailures.slice(0, 5).map(f =>
       `seed=${f.seed} key=${f.key} cell=${f.label} — ${f.reason}`
     ).join('\n')
-    expect.fail(`${formationFailures.length} guaranteedFormationKeys false positive(s):\n${msg}`)
+    expect.fail(`${formationFailures.length} guaranteedFormationCounts false positive(s):\n${msg}`)
   }
 }
 

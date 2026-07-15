@@ -83,12 +83,12 @@ function flattenTile(tile) {
  * @param {(string[]|string)[]} tiles - grid cells of CSS class arrays
  * @param {string[]} patternKeys - formation multiset on the board
  * @param {number} gridSize - default 10
- * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedFormationKeys: Set<string>, partial: boolean }}
+ * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedFormationCounts: Map<string,number>, partial: boolean }}
  */
 export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   const guaranteed = new Set()
   if (!patternKeys?.length) {
-    return { guaranteed, guaranteedSlugs: new Map(), guaranteedFormationKeys: new Set(), partial: false }
+    return { guaranteed, guaranteedSlugs: new Map(), guaranteedFormationCounts: new Map(), partial: false }
   }
 
   // ── Parse revealed state ────────────────────────────────────────────
@@ -268,12 +268,24 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // no new promotable cells.
   const pseudoRevealed = new Set()
 
-  // Keys whose one true instance was pinned by Pass 1's per-anchor reasoning
-  // (a single surviving candidate for a shapeCount(key) === 1 formation is the
-  // same soundness condition used elsewhere to promote pseudo-reveals/mark
-  // cells guaranteed — this just remembers WHICH key produced that proof, so
-  // finalization doesn't have to weaker-rediscover it via full-board fallback).
-  const confirmedInstanceKeys = new Set()
+  // A single surviving candidate for a treasure anchor pins that placement as
+  // the real instance, regardless of whether the shape has 1 or N occurrences
+  // on the board (same soundness argument either way — see Pass 1 below). We
+  // remember WHICH instance was pinned, per key, keyed by a canonical
+  // signature of its cell indices, so finalization can count how many
+  // DISTINCT instances of a duplicated shape are individually proven. A
+  // Set<signature> (not a counter) is required because the same real instance
+  // can be independently re-confirmed by two different anchors within it
+  // (e.g. two plots sharing a name) — deduping by signature avoids
+  // double-counting one instance as two.
+  const confirmedInstances = new Map() // key -> Set<signature>
+
+  const placementSignature = (plots) => [...plots.keys()].sort((a, b) => a - b).join(',')
+
+  const recordConfirmedInstance = (key, plots) => {
+    if (!confirmedInstances.has(key)) confirmedInstances.set(key, new Set())
+    confirmedInstances.get(key).add(placementSignature(plots))
+  }
 
   let iterChanged = true
   while (iterChanged) {
@@ -309,7 +321,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       const candidates = computeCandidates(tIdx, tName)
       if (candidates.length !== 1) continue
       const { key, plots } = candidates[0]
-      if (shapeCount.get(key) === 1) confirmedInstanceKeys.add(key)
+      recordConfirmedInstance(key, plots)
       for (const [idx, name] of plots) {
         if (!revealedTreasureName.has(idx) && !pseudoRevealed.has(idx)) {
           revealedTreasureName.set(idx, name)
@@ -323,8 +335,8 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (!candidates.length) continue // inconsistent — skip safely
-      if (candidates.length === 1 && shapeCount.get(candidates[0].key) === 1) {
-        confirmedInstanceKeys.add(candidates[0].key)
+      if (candidates.length === 1) {
+        recordConfirmedInstance(candidates[0].key, candidates[0].plots)
       }
       intersectCandidates(candidates.map(c => c.plots))
     }
@@ -381,19 +393,23 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   }
 
   // ── Whole-pattern-guarantee finalization ────────────────────────────
-  // Only single-instance shapes can ever be pinned to one specific placement
-  // (a duplicated shape leaves ambiguity about which instance owns a proven
-  // cell). Against the now-converged revealedTreasureName (including all
-  // pseudo-reveals from the loop above), re-run the same survivor enumeration
-  // one last time: if exactly one legal placement remains, that placement IS
-  // the real instance — every one of its cells is a proven treasure at its
-  // correct relative offset, so the whole formation is guaranteed.
-  const guaranteedFormationKeys = new Set(confirmedInstanceKeys)
+  // For each present key, the count of individually-proven instances is the
+  // number of distinct signatures Pass 1 pinned for it (sound regardless of
+  // shapeCount — two real formation instances can never occupy overlapping
+  // cells, so N distinct confirmed signatures means N real instances are
+  // individually known, full stop). For single-instance shapes, also fold in
+  // the confined-name/full-board enumeration route (e.g. COCKLE/SEAWEED),
+  // bumping the count to 1 if Pass 1's anchor reasoning didn't already catch
+  // it — this preserves the previously-working single-instance path.
+  const guaranteedFormationCounts = new Map()
   for (const key of presentKeys) {
-    if (shapeCount.get(key) !== 1) continue
-    const survivors = enumerateSingleInstanceSurvivors(key)
-    if (survivors.length === 1) guaranteedFormationKeys.add(key)
+    let count = confirmedInstances.get(key)?.size ?? 0
+    if (shapeCount.get(key) === 1 && count === 0) {
+      const survivors = enumerateSingleInstanceSurvivors(key)
+      if (survivors.length === 1) count = 1
+    }
+    if (count > 0) guaranteedFormationCounts.set(key, count)
   }
 
-  return { guaranteed, guaranteedSlugs, guaranteedFormationKeys, partial: false }
+  return { guaranteed, guaranteedSlugs, guaranteedFormationCounts, partial: false }
 }

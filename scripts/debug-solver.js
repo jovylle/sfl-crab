@@ -123,7 +123,7 @@ function printBoard (tiles, guaranteed, guaranteedSlugs) {
 
 function runSingle (filePath) {
   const { tiles, patternKeys } = loadSnapshot(filePath)
-  const { guaranteed, guaranteedSlugs, guaranteedFormationKeys } = solveTreasures(tiles, patternKeys, GRID_SIZE)
+  const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, patternKeys, GRID_SIZE)
 
   console.log(`\n=== ${filePath} ===`)
   console.log(`Patterns on board: ${patternKeys.length ? patternKeys.join(', ') : '(none)'}\n`)
@@ -139,8 +139,10 @@ function runSingle (filePath) {
     }
   }
 
-  console.log(`\nWhole-pattern-guaranteed (${guaranteedFormationKeys.size}):`)
-  console.log(guaranteedFormationKeys.size ? `  ${[...guaranteedFormationKeys].join(', ')}` : '  (none)')
+  console.log(`\nWhole-pattern-guaranteed (${guaranteedFormationCounts.size}):`)
+  console.log(guaranteedFormationCounts.size
+    ? `  ${[...guaranteedFormationCounts].map(([key, count]) => `${key} (${count})`).join(', ')}`
+    : '  (none)')
 }
 
 function runDiff (earlierPath, laterPath) {
