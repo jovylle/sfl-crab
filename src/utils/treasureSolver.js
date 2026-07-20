@@ -301,12 +301,24 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // answer is already settled.
   const committedCellOrigin = new Map() // idx -> { key, plots }
 
+  // Returns true iff this signature was not already recorded for `key` — i.e.
+  // this call establishes a NEW instance rather than re-confirming one already
+  // known. Callers use this (not "was this anchor a real dig?") to decide
+  // whether to consume a remainingCount slot: two different real-dug anchors
+  // (e.g. Vase then Hieroglyph) can both independently confirm the SAME
+  // instance, and only the first such confirmation may consume a slot —
+  // otherwise a single real instance gets double-counted as two, starving
+  // remainingCount before any evidence of the second real instance exists.
   const recordConfirmedInstance = (key, plots) => {
     if (!confirmedInstances.has(key)) confirmedInstances.set(key, new Set())
-    confirmedInstances.get(key).add(placementSignature(plots))
+    const sig = placementSignature(plots)
+    const set = confirmedInstances.get(key)
+    const isNewInstance = !set.has(sig)
+    set.add(sig)
     for (const idx of plots.keys()) {
       if (!committedCellOrigin.has(idx)) committedCellOrigin.set(idx, { key, plots })
     }
+    return isNewInstance
   }
 
   let iterChanged = true
@@ -337,7 +349,22 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
           const ox = tx - anchor.x
           const oy = ty - anchor.y
           const plots = buildPlacement(formation, ox, oy)
-          if (plots) candidates.push({ key, plots })
+          if (!plots) continue
+          // Cross-check for single-remaining-instance shapes: every revealed
+          // treasure whose name is confined to this key — and not already
+          // attributed to a previously committed (consumed) instance — must be
+          // covered by this candidate. There is no other instance left to explain
+          // uncovered reveals, so any candidate that misses one is impossible.
+          if ((remainingCount.get(key) ?? 0) === 1) {
+            const hasUncovered = [...revealedTreasureName].some(
+              ([rIdx, rName]) =>
+                confinedTo(rName, key) &&
+                !committedCellOrigin.has(rIdx) &&
+                !plots.has(rIdx),
+            )
+            if (hasUncovered) continue
+          }
+          candidates.push({ key, plots })
         }
       }
       return candidates
@@ -346,17 +373,21 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // Phase A: immediately promote single-candidate anchors.
     // Only actual reveals (not pseudo-reveals) source instance-consumption locks —
     // pseudo-revealed cells are already attributed to a committed formation instance
-    // and must not be used to consume a second one.
+    // and must not be used to consume a second one. Likewise, a second real-dug
+    // anchor that re-confirms an ALREADY-recorded instance (e.g. both the Vase and
+    // the Hieroglyph of the same HIEROGLYPH placement got dug) must not consume a
+    // second slot — see recordConfirmedInstance's isNewInstance.
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (candidates.length !== 1) continue
       const { key, plots } = candidates[0]
-      recordConfirmedInstance(key, plots)
+      const isNewInstance = recordConfirmedInstance(key, plots)
       // Guarantee immediately — Phase B won't see this anchor if the instance
       // is consumed below (count drops to 0), so we can't rely on Phase B.
       intersectCandidates([plots])
-      // Consume the instance only when the anchor is a real dug tile.
-      if (!pseudoRevealed.has(tIdx)) {
+      // Consume the instance only when the anchor is a real dug tile AND this is
+      // the first confirmation of this specific instance.
+      if (!pseudoRevealed.has(tIdx) && isNewInstance) {
         const rem = remainingCount.get(key) ?? 0
         if (rem > 0) {
           remainingCount.set(key, rem - 1)
@@ -410,6 +441,40 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
 
       const allPlacements = enumerateSingleInstanceSurvivors(key)
       if (allPlacements.length === 1) intersectCandidates(allPlacements)
+    }
+
+    // ── Pass 4: crab-satisfaction forcing ────────────────────────────────
+    // Every crab borders at least one treasure. If a crab has no known treasure
+    // neighbour yet and exactly one candidate neighbour remains, that neighbour
+    // must be the treasure. Only marks the cell guaranteed (no name known).
+    for (const cIdx of revealedCrab) {
+      const cx = cIdx % gridSize
+      const cy = Math.floor(cIdx / gridSize)
+      const ns = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+        .map(([dx, dy]) => [cx + dx, cy + dy])
+        .filter(([nx, ny]) => inBounds(nx, ny))
+
+      const satisfied = ns.some(([nx, ny]) => {
+        const nIdx = ny * gridSize + nx
+        return revealedTreasureName.has(nIdx) || guaranteed.has(nIdx)
+      })
+      if (satisfied) continue
+
+      const candidates = ns.filter(([nx, ny]) => {
+        const nIdx = ny * gridSize + nx
+        if (revealedSand.has(nIdx) || revealedCrab.has(nIdx) || revealedTreasureName.has(nIdx)) return false
+        return ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+          const sx = nx + dx
+          const sy = ny + dy
+          return inBounds(sx, sy) && revealedSand.has(sy * gridSize + sx) &&
+            !(sx === cx && sy === cy)
+        })
+      })
+      if (candidates.length === 1) {
+        const [nx, ny] = candidates[0]
+        const nIdx = ny * gridSize + nx
+        if (!guaranteed.has(nIdx)) { guaranteed.add(nIdx); iterChanged = true }
+      }
     }
 
     // Promote newly-guaranteed, unambiguously-named cells into

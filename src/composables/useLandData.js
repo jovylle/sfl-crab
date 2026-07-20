@@ -5,6 +5,7 @@ import { useStorage } from '@vueuse/core'
 import {
   PRACTICE_PATTERN_CACHE_KEY,
   PRACTICE_PATTERN_CACHE_VERSION,
+  historicalPatternOverride,
   usePracticePatterns,
 } from '@/composables/usePracticePatterns.js'
 import { getLandDataStorageKey } from '@/config/api.js'
@@ -43,6 +44,9 @@ export function useLandData (defaults = {}) {
     () => desert.value.digging?.completedPatterns || [],
   )
   const dailyPatternKeys = computed(() => {
+    if (historicalPatternOverride.value?.patterns?.length) {
+      return historicalPatternOverride.value.patterns
+    }
     const cached = practicePatternCache.value
     return cached?.version === PRACTICE_PATTERN_CACHE_VERSION
       && typeof cached?.date === 'string'
@@ -51,7 +55,9 @@ export function useLandData (defaults = {}) {
       ? cached.patterns
       : []
   })
-  const dailyPatternDate = computed(() => practicePatternCache.value?.date || '')
+  const dailyPatternDate = computed(() =>
+    historicalPatternOverride.value?.date || practicePatternCache.value?.date || '',
+  )
 
   // If local storage doesn't yet have today's patterns, ask the practice
   // patterns composable to refresh (it implements single-flight so

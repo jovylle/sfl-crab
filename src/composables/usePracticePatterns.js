@@ -7,6 +7,18 @@ const getTodayUTC = () => new Date().toISOString().slice(0, 10)
 const UTC_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 export const PRACTICE_PATTERN_CACHE_VERSION = 2
 
+// Module-level historical override — when set, useLandData reads from this
+// instead of the localStorage cache. Set by Digging.vue when ?date= is present.
+export const historicalPatternOverride = ref(null) // { date: string, patterns: string[] } | null
+
+export function setHistoricalPatternOverride (data) {
+  historicalPatternOverride.value = data ?? null
+}
+
+export function clearHistoricalPatternOverride () {
+  historicalPatternOverride.value = null
+}
+
 function normalizeUTCDate (value) {
   return typeof value === 'string' && UTC_DATE_PATTERN.test(value) ? value : ''
 }
@@ -58,7 +70,26 @@ export function usePracticePatterns () {
   ))
   const patternKeys = computed(() => (isCachedForToday.value ? cache.value.patterns : []))
 
-  async function refreshPracticePatterns ({ force = false } = {}) {
+  async function refreshPracticePatterns ({ force = false, date = null } = {}) {
+    // Historical date request: fetch a specific past date without touching today's cache.
+    if (date && date !== getTodayUTC()) {
+      const dateStr = normalizeUTCDate(date)
+      if (!dateStr) throw new Error(`Invalid date: ${date}`)
+      isLoading.value = true
+      error.value = ''
+      try {
+        const fresh = await fetchPracticePatterns(dateStr)
+        const visitedFarmState = fresh?.visitedFarmState || {}
+        const patterns = visitedFarmState.desert?.digging?.patterns || []
+        return { date: dateStr, patterns }
+      } catch (err) {
+        error.value = err?.message || `Failed to load practice patterns for ${date}.`
+        throw err
+      } finally {
+        isLoading.value = false
+      }
+    }
+
     if (!force && isCachedForToday.value) {
       return cache.value
     }

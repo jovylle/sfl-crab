@@ -42,5 +42,11 @@ export const publicRoutes = [
     name: 'LegacyTestPath',
     redirect: to => legacyTestPathRedirect(to) || '/digging',
   },
+  {
+    path: '/solver-debug',
+    name: 'SolverDebug',
+    component: () => import('@/views/SolverDebug.vue'),
+    meta: { public: true, hideChrome: true },
+  },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

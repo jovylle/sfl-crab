@@ -442,6 +442,51 @@ describe('Edge cases', () => {
       expect(guaranteedSlugs.get(idx)).toBe('camel_bone')
     }
   })
+
+  it('regression — double-consumption bug: BOTH anchors of one HIEROGLYPH dug must not starve the other instance (land 3321133018291793)', () => {
+    // Root-caused against real land 3321133018291793: two HIEROGLYPH instances
+    // on the board. Instance A has BOTH its Vase AND its Hieroglyph tile dug
+    // (idx 31 and idx 40, processed in that ascending order by the Map
+    // iteration in Pass 1's Phase A). Instance B has only its Hieroglyph tile
+    // dug (idx 85), at a HIGHER index than instance A's cells — so instance
+    // A's second anchor (idx 40) gets re-examined by Phase A (via
+    // committedCellOrigin) BEFORE instance B's single anchor is ever reached.
+    //
+    // Bug (pre-fix): Phase A decremented remainingCount on every real-dug
+    // anchor whose computeCandidates returned exactly one candidate — with no
+    // check for whether that candidate was a NEW instance or a re-confirmation
+    // of one already recorded. idx 31 confirms instance A and decrements
+    // remainingCount 2→1 (correct — first confirmation). idx 40 re-confirms
+    // the SAME instance A (already committed via idx 31) but the old code
+    // still decremented again, 1→0 (WRONG — a single real instance consumed
+    // two slots). By the time idx 85 (instance B) is reached, remainingCount
+    // is already 0, so computeCandidates skips HIEROGLYPH entirely and
+    // instance B's Vase cells (75, 76) are never guaranteed — reproducing the
+    // exact Vase+Hieroglyph miss the user reported.
+    //
+    // Fix: recordConfirmedInstance now tracks instances by placement
+    // signature and only the FIRST confirmation of a given signature consumes
+    // a remainingCount slot (see isNewInstance in treasureSolver.js).
+    const grid = [
+      { x: 1, y: 3, items: { Vase: 1 } },       // idx 31
+      { x: 0, y: 4, items: { Hieroglyph: 1 } }, // idx 40 — same instance as idx 31
+      { x: 2, y: 3, items: { Crab: 1 } },       // idx 32 — blocks the ambiguous alt placement for idx 31
+      { x: 5, y: 8, items: { Hieroglyph: 1 } }, // idx 85 — instance B's ONLY reveal
+    ]
+    const patterns = ['HIEROGLYPH', 'HIEROGLYPH']
+    const tiles = gridArrayToTiles(grid, G)
+    const { guaranteed, guaranteedFormationCounts } = solveTreasures(tiles, patterns, G)
+
+    // Instance A: fully pinned regardless of the bug (both its own anchors are dug).
+    expect(guaranteed.has(30), 'instance A Vase (idx 30)').toBe(true)
+
+    // Instance B: only discoverable once the double-consumption bug is fixed.
+    expect(guaranteed.has(75), 'instance B Vase (idx 75) — starved by the bug pre-fix').toBe(true)
+    expect(guaranteed.has(76), 'instance B Vase (idx 76) — starved by the bug pre-fix').toBe(true)
+
+    // Both instances individually confirmed → count is 2, not 1.
+    expect(guaranteedFormationCounts.get('HIEROGLYPH')).toBe(2)
+  })
 })
 
 // ── Instance-consumption cascade — land 1405000790165644 ─────────────────────
@@ -515,4 +560,78 @@ describe('Instance-consumption cascade — land 1405000790165644', () => {
     expect(guaranteed.has(26), 'G3 camel_bone').toBe(true)
     expect(guaranteedSlugs.get(26)).toBe('camel_bone')
   })
+})
+
+describe('Pass 4 — crab-satisfaction forcing', () => {
+  it('forces the only open neighbour when all others are sand', () => {
+    // Crab at F6 (idx 55), sand at E6/G6/F5 — only F7 (idx 65) open
+    const tiles = makeTiles([
+      { x: 5, y: 5, items: { Crab: 1 } },
+      { x: 4, y: 5, items: { Sand: 1 } },
+      { x: 6, y: 5, items: { Sand: 1 } },
+      { x: 5, y: 4, items: { Sand: 1 } },
+    ])
+    const { guaranteed } = solveTreasures(tiles, ['COCKLE'], G)
+    expect(guaranteed.has(65), 'F7 (idx 65) must be forced').toBe(true)
+  })
+
+  it('does not force when crab has two open candidates', () => {
+    // Crab at F6 (idx 55), sand at E6/G6 — F5 and F7 both open
+    const tiles = makeTiles([
+      { x: 5, y: 5, items: { Crab: 1 } },
+      { x: 4, y: 5, items: { Sand: 1 } },
+      { x: 6, y: 5, items: { Sand: 1 } },
+    ])
+    const { guaranteed } = solveTreasures(tiles, ['COCKLE'], G)
+    expect(guaranteed.has(45), 'F5 must NOT be forced').toBe(false)
+    expect(guaranteed.has(65), 'F7 must NOT be forced').toBe(false)
+  })
+
+  it('does not force when crab is already satisfied by an adjacent known treasure', () => {
+    const tiles = makeTiles([
+      { x: 5, y: 5, items: { Crab: 1 } },
+      { x: 5, y: 6, items: { 'Cockle Shell': 1 } },
+    ])
+    const { guaranteed } = solveTreasures(tiles, ['COCKLE'], G)
+    // guaranteed may include idx 56 (the revealed treasure) but nothing forced by crab
+    expect(guaranteed.has(45), 'F5 must NOT be forced (crab satisfied)').toBe(false)
+    expect(guaranteed.has(55), 'F6 crab cell itself not in guaranteed').toBe(false)
+  })
+
+  it('cascade: forcing one crab satisfies another which then forces further', () => {
+    // Two crabs in a chain:
+    // Crab at (3,3) idx 33: sand at (2,3),(3,2),(4,3) → only (3,4) idx 43 open
+    // Crab at (3,5) idx 53: sand at (2,5),(4,5),(3,6) → only (3,4) open too
+    // Once (3,4) is guaranteed by first crab, second crab is satisfied
+    const tiles = makeTiles([
+      { x: 3, y: 3, items: { Crab: 1 } },
+      { x: 2, y: 3, items: { Sand: 1 } },
+      { x: 3, y: 2, items: { Sand: 1 } },
+      { x: 4, y: 3, items: { Sand: 1 } },
+      { x: 3, y: 5, items: { Crab: 1 } },
+      { x: 2, y: 5, items: { Sand: 1 } },
+      { x: 4, y: 5, items: { Sand: 1 } },
+      { x: 3, y: 6, items: { Sand: 1 } },
+    ])
+    const { guaranteed } = solveTreasures(tiles, ['COCKLE', 'SEAWEED'], G)
+    expect(guaranteed.has(43), 'D5 (idx 43) must be forced by first crab').toBe(true)
+  })
+})
+
+import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
+
+describe('SOLVER_SCENARIOS auto-generated regression suite', () => {
+  for (const s of SOLVER_SCENARIOS) {
+    if (!s.assertions || s.assertions.length === 0) continue
+    it(s.name, () => {
+      const tiles = gridArrayToTiles(s.grid, G)
+      const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, s.patterns, G)
+      for (const a of s.assertions) {
+        if (a.property === 'guaranteed')
+          expect(guaranteed.has(a.idx), a.label).toBe(a.expected)
+        else if (a.property === 'slug')
+          expect(guaranteedSlugs.get(a.idx), a.label).toBe(a.expected)
+      }
+    })
+  }
 })

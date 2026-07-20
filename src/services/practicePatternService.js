@@ -34,11 +34,10 @@ function normalizePracticePayload (data, responseDate = '') {
   }
 }
 
-export async function fetchPracticePatterns () {
+export async function fetchPracticePatterns (utcDate = getTodayUTC()) {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
   const url = new URL(PRACTICE_PATTERN_ENDPOINT, baseUrl)
-  // Keep one shared cache entry per UTC day across all users.
-  url.searchParams.set('utcDate', getTodayUTC())
+  url.searchParams.set('utcDate', utcDate)
   const response = await fetch(url.toString())
 
   if (!response.ok) {
