@@ -231,7 +231,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // and the whole-pattern-guarantee finalization below.
   const enumerateSingleInstanceSurvivors = (key) => {
     const formation = DIGGING_FORMATIONS[key]
-    const confined = [...revealedTreasureName].filter(([, name]) => confinedTo(name, key))
+    const confined = [...revealedTreasureName].filter(
+      ([idx, name]) => confinedTo(name, key) && !committedCellOrigin.has(idx),
+    )
 
     if (confined.length) {
       const [aIdx, aName] = confined[0]

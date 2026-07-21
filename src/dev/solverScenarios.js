@@ -365,4 +365,30 @@ export const SOLVER_SCENARIOS = [
       { idx: 56, property: 'guaranteed', expected: false, label: '(6,5) idx 56 NOT guaranteed (Pipi only in one candidate)' },
     ],
   },
+
+  {
+    id: 'stale-confined-anchor-two-seaweed',
+    name: 'Stale confined-reveal anchor — two SEAWEED instances (grid ref F6, land 7242422682754425)',
+    // Instance A is fully confirmed via Starfish@(7,6) → pins Seaweed at
+    // (5,5),(6,5),(7,5). Instance B's own Seaweed reveal at (9,0) is far
+    // enough away that only a corner placement anchored there is legal.
+    // Without excluding instance A's already-committed cells from the
+    // confined-reveal anchor search, no single SEAWEED placement can cover
+    // both instances' reveals at once → zero survivors, instance B silently
+    // unforced. See tests/solver.scenarios.test.js for the full regression
+    // (asserts guaranteedFormationCounts too, not just per-cell `guaranteed`).
+    grid: [
+      { x: 7, y: 6, items: { Starfish: 1 } },
+      { x: 9, y: 0, items: { Seaweed: 1 } },
+    ],
+    patterns: ['SEAWEED', 'SEAWEED'],
+    assertions: [
+      { idx: 55, property: 'guaranteed', expected: true, label: 'instance A Seaweed (idx 55)' },
+      { idx: 56, property: 'guaranteed', expected: true, label: 'instance A Seaweed (idx 56)' },
+      { idx: 57, property: 'guaranteed', expected: true, label: 'instance A Seaweed (idx 57)' },
+      { idx: 7, property: 'guaranteed', expected: true, label: 'instance B Seaweed (idx 7) forced post-fix' },
+      { idx: 8, property: 'guaranteed', expected: true, label: 'instance B Seaweed (idx 8) forced post-fix' },
+      { idx: 19, property: 'guaranteed', expected: true, label: 'instance B Starfish (idx 19) forced post-fix' },
+    ],
+  },
 ]

@@ -487,6 +487,50 @@ describe('Edge cases', () => {
     // Both instances individually confirmed → count is 2, not 1.
     expect(guaranteedFormationCounts.get('HIEROGLYPH')).toBe(2)
   })
+
+  it('regression — stale confined-reveal anchors must not block the remaining SEAWEED instance (grid ref F6, land 7242422682754425)', () => {
+    // Root-caused against real land 7242422682754425: two SEAWEED instances on
+    // the board. Instance A is fully confirmed via its Starfish reveal at
+    // (7,6) — anchoring pins Seaweed at (5,5),(6,5),(7,5) [idx 55,56,57] and
+    // the Starfish itself [idx 76], all recorded in committedCellOrigin.
+    // Instance B has its own, separate Seaweed reveal at (9,0) [idx 9] — far
+    // enough from instance A that only a corner placement anchored there is
+    // geometrically legal.
+    //
+    // Bug (pre-fix): enumerateSingleInstanceSurvivors('SEAWEED') filtered
+    // confined reveals by name-confinement only, so it still included
+    // instance A's already-committed cells (55,56,57,76) alongside instance
+    // B's reveal (9). No single SEAWEED placement can cover both instances'
+    // cells at once, so the anchor search returned ZERO survivors —
+    // silently failing to confirm instance B or force its remaining tiles,
+    // even though a legal placement for it obviously exists.
+    //
+    // Fix: exclude any confined reveal already claimed via committedCellOrigin
+    // before anchoring, so the search for instance B's placement is anchored
+    // on idx 9 alone.
+    const grid = [
+      { x: 7, y: 6, items: { Starfish: 1 } }, // idx 76 — instance A anchor (fully confirms A)
+      { x: 9, y: 0, items: { Seaweed: 1 } },  // idx 9 — instance B's only reveal
+    ]
+    const patterns = ['SEAWEED', 'SEAWEED']
+    const tiles = gridArrayToTiles(grid, G)
+    const { guaranteed, guaranteedFormationCounts } = solveTreasures(tiles, patterns, G)
+
+    // Instance A: pinned regardless of the bug (single Starfish anchor).
+    expect(guaranteed.has(55), 'instance A Seaweed (idx 55)').toBe(true)
+    expect(guaranteed.has(56), 'instance A Seaweed (idx 56)').toBe(true)
+    expect(guaranteed.has(57), 'instance A Seaweed (idx 57)').toBe(true)
+
+    // Instance B: only discoverable once the stale-anchor bug is fixed —
+    // the sole legal placement covering idx 9 also forces idx 7 and idx 8
+    // (Seaweed) and idx 19 (Starfish).
+    expect(guaranteed.has(7), 'instance B Seaweed (idx 7) — blocked by the bug pre-fix').toBe(true)
+    expect(guaranteed.has(8), 'instance B Seaweed (idx 8) — blocked by the bug pre-fix').toBe(true)
+    expect(guaranteed.has(19), 'instance B Starfish (idx 19) — blocked by the bug pre-fix').toBe(true)
+
+    // Both instances individually confirmed → count is 2, not 1.
+    expect(guaranteedFormationCounts.get('SEAWEED')).toBe(2)
+  })
 })
 
 // ── Instance-consumption cascade — land 1405000790165644 ─────────────────────
