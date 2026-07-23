@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-07-22T02:57:35.107Z",
+  "lastUpdated": "2026-07-23T03:19:24.920Z",
   "source": "https://github.com/sunflower-land/sunflower-land/blob/main/src/features/game/types/treasure.ts",
   "version": "1.0.0",
   "prices": {
@@ -28,6 +28,7 @@
     "Coprolite": 200,
     "Moon Crystal": 200,
     "Ammonite Shell": 200,
-    "Salt Dino Egg": 200
+    "Salt Dino Egg": 200,
+    "Otter Pebble": 200
   }
 }
