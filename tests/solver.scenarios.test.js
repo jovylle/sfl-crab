@@ -531,6 +531,70 @@ describe('Edge cases', () => {
     // Both instances individually confirmed → count is 2, not 1.
     expect(guaranteedFormationCounts.get('SEAWEED')).toBe(2)
   })
+
+  it('regression — Phase B confirmations must consume remainingCount (land 4485248732423974, 2026-07-27 snapshot)', () => {
+    // ARTEFACT_EIGHTEEN, ARTEFACT_SIXTEEN, and ARTEFACT_TWENTY are all present
+    // (one each) and all share the same two plot names (seasonal artefact +
+    // Camel Bone), so none of them ever has a name "confined" to it alone —
+    // Pass 2/3 can't touch any of them. Each gets pinned to its true placement
+    // purely by Pass 1: H3=artefact → Arte16@(7,2) is Phase B's only surviving
+    // candidate (H3/I3/I4 all match); E4=artefact → Arte18@(4,3) is Phase B's
+    // only surviving candidate (E4/F4/E5/F5 all match). Phase B recorded both
+    // as confirmed instances but — pre-fix — never decremented remainingCount
+    // for them, so A9's own candidate search kept treating the ALREADY-CONFIRMED
+    // Arte16/Arte18 as live competing hypotheses forever, alongside the true
+    // Arte20@(0,7) explanation, and never isolated a single candidate to pin
+    // A8/B8 as Camel Bone. Fixed by decrementing remainingCount in Phase B too
+    // (mirroring Phase A), the same way Phase A already does.
+    const grid = [
+      { x: 8, y: 8, items: { Sand: 2 } },
+      { x: 1, y: 8, items: { 'Camel Bone': 1 } },
+      { x: 0, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 1, y: 1, items: { Crab: 1 } },
+      { x: 1, y: 2, items: { 'Cockle Shell': 1 } },
+      { x: 0, y: 1, items: { 'Cockle Shell': 1 } },
+      { x: 8, y: 1, items: { Crab: 1 } },
+      { x: 8, y: 2, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 2, items: { 'Salt Dino Egg': 1 } },
+      { x: 5, y: 8, items: { Crab: 1 } },
+      { x: 5, y: 7, items: { Vase: 1 } },
+      { x: 3, y: 1, items: { Sand: 2 } },
+      { x: 1, y: 5, items: { Sand: 2 } },
+      { x: 8, y: 5, items: { Sand: 2 } },
+      { x: 5, y: 5, items: { 'Clam Shell': 1 } },
+      { x: 4, y: 4, items: { 'Camel Bone': 1 } },
+      { x: 3, y: 4, items: { Crab: 1 } },
+      { x: 3, y: 3, items: { Crab: 1 } },
+      { x: 4, y: 3, items: { 'Salt Dino Egg': 1 } },
+      { x: 6, y: 6, items: { Crab: 1 } },
+      { x: 5, y: 6, items: { 'Clam Shell': 1 } },
+      { x: 4, y: 6, items: { 'Clam Shell': 1 } },
+      { x: 4, y: 5, items: { 'Clam Shell': 1 } },
+      { x: 4, y: 8, items: { Hieroglyph: 1 } },
+      { x: 6, y: 1, items: { Crab: 1 } },
+      { x: 5, y: 1, items: { Hieroglyph: 1 } },
+    ]
+    const patterns = [
+      'ARTEFACT_EIGHTEEN', 'ARTEFACT_SIXTEEN', 'ARTEFACT_TWENTY',
+      'HIEROGLYPH', 'HIEROGLYPH', 'COCKLE', 'SEA_CUCUMBERS', 'CLAM_SHELLS',
+    ]
+    const tiles = gridArrayToTiles(grid, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, patterns, G)
+    printSolverResult(tiles, guaranteed, guaranteedSlugs, patterns, G)
+
+    // A8 = idx 70, B8 = idx 71: the Camel Bone cells of ARTEFACT_TWENTY's sole
+    // placement, anchored below A9's revealed Salt Dino Egg (the seasonal
+    // artefact this season).
+    expect(guaranteed.has(70), 'A8 (idx 70) — blocked by the bug pre-fix').toBe(true)
+    expect(guaranteedSlugs.get(70)).toBe('camel_bone')
+    expect(guaranteed.has(71), 'B8 (idx 71) — blocked by the bug pre-fix').toBe(true)
+    expect(guaranteedSlugs.get(71)).toBe('camel_bone')
+
+    // All three single-instance artefact formations individually confirmed.
+    expect(guaranteedFormationCounts.get('ARTEFACT_EIGHTEEN')).toBe(1)
+    expect(guaranteedFormationCounts.get('ARTEFACT_SIXTEEN')).toBe(1)
+    expect(guaranteedFormationCounts.get('ARTEFACT_TWENTY')).toBe(1)
+  })
 })
 
 // ── Instance-consumption cascade — land 1405000790165644 ─────────────────────

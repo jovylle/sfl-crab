@@ -405,12 +405,26 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       }
     }
 
-    // Phase B: recompute with Phase A promotions applied, then intersect
+    // Phase B: recompute with Phase A promotions applied, then intersect.
+    // Mirrors Phase A's consume-on-confirm: a single-candidate anchor found
+    // only here (not in Phase A) still pins a real instance and must consume
+    // its remainingCount slot — otherwise other anchors keep seeing this
+    // already-confirmed shape as a live competing hypothesis forever (it can
+    // never reach candidates.length === 1 for them, since the confirmed
+    // instance's own reveal keeps re-adding it as a candidate).
     for (const [tIdx, tName] of revealedTreasureName) {
       const candidates = computeCandidates(tIdx, tName)
       if (!candidates.length) continue // inconsistent — skip safely
       if (candidates.length === 1) {
-        recordConfirmedInstance(candidates[0].key, candidates[0].plots)
+        const { key, plots } = candidates[0]
+        const isNewInstance = recordConfirmedInstance(key, plots)
+        if (!pseudoRevealed.has(tIdx) && isNewInstance) {
+          const rem = remainingCount.get(key) ?? 0
+          if (rem > 0) {
+            remainingCount.set(key, rem - 1)
+            iterChanged = true
+          }
+        }
       }
       intersectCandidates(candidates.map(c => c.plots))
     }
