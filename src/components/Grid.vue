@@ -142,11 +142,12 @@ const { getImageSrc } = useReliableAssets()
 const possibleTreasures = useTodayTreasureNames();
 console.log("Trigger computed value:", possibleTreasures.value); // this seems to forcely trigger the computed value
 // your existing props
-const { showTreasureOrder, treasureOrderMap, showLandIdInUrl, showPrediction } = defineProps({
+const { showTreasureOrder, treasureOrderMap, showLandIdInUrl, showPrediction, interactive } = defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   treasureOrderMap:  { type: Array,   default: () => [] },
   showLandIdInUrl:   { type: Boolean, default: true },
   showPrediction:    { type: Boolean, default: false },
+  interactive:       { type: Boolean, default: true },
 })
 
 // init grid manager
@@ -211,6 +212,7 @@ const rowLabels = computed(() =>
 
 // click handler
 function onTileClick (event, index) {
+  if (!interactive) return
   const container   = event.currentTarget.closest('.contain-please')
   const containerR  = container.getBoundingClientRect()
   const tileR       = event.currentTarget.getBoundingClientRect()

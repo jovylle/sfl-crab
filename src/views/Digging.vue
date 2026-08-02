@@ -63,7 +63,8 @@
         :show-treasure-order="showTreasureOrder"
         :treasure-order-map="treasureOrderMap"
         :show-land-id-in-url="!hideLandIdInUrl"
-        :show-prediction="showPrediction"
+        :show-prediction="showPrediction && !activeHistoricalDate"
+        :interactive="!activeHistoricalDate"
       />
     </template>
 
@@ -120,6 +121,7 @@ import {
   setHistoricalPatternOverride,
   clearHistoricalPatternOverride,
 } from '@/composables/usePracticePatterns.js'
+import { fetchDigDay } from '@/services/digDayApiService.js'
 import { useDigDayStore } from '@/composables/useDigDayStore.js'
 import { useDigReplay } from '@/composables/useDigReplay.js'
 import { buildTreasureOrderMap } from '@/utils/buildDigTimeline.js'
@@ -172,6 +174,18 @@ const {
 } = useLandData(defaults)
 const hasDailyPatterns = computed(() => dailyPatternKeys.value.length > 0)
 
+// Historical date view (?date=YYYY-MM-DD) — declared here (ahead of useDigReplay
+// below) because Vue's watch() reads its source synchronously at setup time even
+// without `immediate: true`, so effectiveDesert's dependencies must already exist.
+const activeHistoricalDate = ref(null)
+const historicalGrid = ref(null)
+
+const effectiveDesert = computed(() =>
+  activeHistoricalDate.value !== null
+    ? { digging: { grid: historicalGrid.value || [] } }
+    : desert.value
+)
+
 const { markedIndexes: markedPatternIndexes } = usePatternMarks(landId)
 const markedPatternIndexList = computed(() => [...markedPatternIndexes.value])
 const completedPatternIndexList = computed(() => [
@@ -210,15 +224,13 @@ const {
   stepNext,
   togglePlay: toggleReplayPlay,
   pause: pauseReplay,
-} = useDigReplay(landId, desert)
+} = useDigReplay(landId, effectiveDesert)
 
 const marksGuideBanner = ref(null)
 let marksFromLinkApplied = false
 let replayFromLinkOpened = false
 
-// Historical date view (?date=YYYY-MM-DD)
 const todayUTC = new Date().toISOString().slice(0, 10)
-const activeHistoricalDate = ref(null)
 
 const historicalDateBanner = computed(() => {
   const d = activeHistoricalDate.value
@@ -248,17 +260,35 @@ async function applyHistoricalDate (dateStr) {
   if (!dateStr || !UTC_DATE_RE.test(dateStr) || dateStr >= todayUTC) {
     clearHistoricalPatternOverride()
     activeHistoricalDate.value = null
+    historicalGrid.value = null
     return
   }
-  try {
-    const { refreshPracticePatterns } = usePracticePatterns()
-    const result = await refreshPracticePatterns({ date: dateStr })
+  activeHistoricalDate.value = dateStr
+  const { refreshPracticePatterns } = usePracticePatterns()
+  const [patternsResult, digDayResult] = await Promise.allSettled([
+    refreshPracticePatterns({ date: dateStr }),
+    fetchDigDay(landId, dateStr),
+  ])
+  if (patternsResult.status === 'fulfilled') {
+    const result = patternsResult.value
     setHistoricalPatternOverride({ date: result.date || dateStr, patterns: result.patterns || [] })
     activeHistoricalDate.value = result.date || dateStr
-  } catch (err) {
-    console.warn('Historical patterns fetch failed:', err)
+  } else {
+    console.warn('Historical patterns fetch failed:', patternsResult.reason)
     clearHistoricalPatternOverride()
-    activeHistoricalDate.value = null
+  }
+  if (digDayResult.status === 'fulfilled') {
+    const remote = digDayResult.value
+    const flatTiles = []
+    for (const step of (remote?.digs || [])) {
+      for (const tile of (step.tiles || [])) {
+        flatTiles.push({ x: tile.x, y: tile.y, items: tile.items ? { ...tile.items } : {} })
+      }
+    }
+    historicalGrid.value = flatTiles
+  } else {
+    console.warn('Historical dig day fetch failed:', digDayResult.reason)
+    historicalGrid.value = []
   }
 }
 
@@ -322,7 +352,7 @@ watch(canReplay, (ok) => {
 }, { immediate: true })
 
 watch(
-  () => desert.value.digging?.grid,
+  () => effectiveDesert.value.digging?.grid,
   rawGrid => {
     if (!rawGrid) return
     const flatGrid = rawGrid.flat(Infinity)
@@ -335,7 +365,7 @@ const treasureOrderMap = computed(() => {
   const total = grid.tiles.value.length
   if (!total) return []
   const gridSize = Math.sqrt(total)
-  const rawGrid = desert.value.digging?.grid || []
+  const rawGrid = effectiveDesert.value.digging?.grid || []
   return buildTreasureOrderMap(rawGrid, gridSize)
 })
 
@@ -379,5 +409,6 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   clearHistoricalPatternOverride()
+  historicalGrid.value = null
 })
 </script>
