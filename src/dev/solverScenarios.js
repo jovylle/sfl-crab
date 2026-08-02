@@ -391,4 +391,53 @@ export const SOLVER_SCENARIOS = [
       { idx: 19, property: 'guaranteed', expected: true, label: 'instance B Starfish (idx 19) forced post-fix' },
     ],
   },
+
+  {
+    id: 'pass23-remainingcount-plus-stale-ambiguous',
+    name: 'Pass 2/3 remainingCount + stale-ambiguous override (land 4485248732423974, 2026-08-01)',
+    // ARTEFACT_SEVENTEEN/FIFTEEN/EIGHTEEN all share both plot names (seasonal
+    // artefact + Camel Bone), so none is ever statically `confinedTo`. Two
+    // bugs pre-fix: (1) Pass 2/3 confirmations never decremented
+    // remainingCount, so G9 (idx 86) was never guaranteed at all; (2) C1
+    // (idx 2) got marked ambiguous by an early, since-eliminated candidate
+    // disagreement and stayed stuck that way forever (ambiguousIdx was a
+    // one-way ratchet). See tests/solver.scenarios.test.js for the full
+    // regression (also asserts guaranteedFormationCounts).
+    grid: [
+      { x: 8, y: 8, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 1, y: 8, items: { Crab: 1 } },
+      { x: 2, y: 8, items: { 'Cockle Shell': 1 } },
+      { x: 3, y: 9, items: { 'Cockle Shell': 1 } },
+      { x: 1, y: 1, items: { 'Camel Bone': 1 } },
+      { x: 2, y: 1, items: { 'Camel Bone': 1 } },
+      { x: 1, y: 0, items: { 'Salt Dino Egg': 1 } },
+      { x: 8, y: 1, items: { Sand: 2 } },
+      { x: 5, y: 1, items: { Sand: 2 } },
+      { x: 8, y: 4, items: { Crab: 1 } },
+      { x: 7, y: 4, items: { Crab: 1 } },
+      { x: 8, y: 5, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 5, items: { 'Cockle Shell': 1 } },
+      { x: 9, y: 6, items: { 'Salt Dino Egg': 1 } },
+      { x: 1, y: 3, items: { Crab: 1 } },
+      { x: 1, y: 4, items: { Sand: 2 } },
+      { x: 2, y: 3, items: { Wood: 1 } },
+      { x: 3, y: 3, items: { 'Wooden Compass': 1 } },
+      { x: 4, y: 7, items: { Sand: 2 } },
+      { x: 5, y: 5, items: { Crab: 1 } },
+      { x: 4, y: 5, items: { Hieroglyph: 1 } },
+    ],
+    patterns: [
+      'ARTEFACT_SEVENTEEN', 'ARTEFACT_FIFTEEN', 'ARTEFACT_EIGHTEEN',
+      'HIEROGLYPH', 'COCKLE', 'COCKLE', 'WOODEN_COMPASS',
+    ],
+    assertions: [
+      { idx: 2, property: 'guaranteed', expected: true, label: 'C1 (idx 2) forced Camel Bone' },
+      { idx: 2, property: 'slug', expected: 'camel_bone', label: 'C1 slug = camel_bone' },
+      { idx: 86, property: 'guaranteed', expected: true, label: 'G9 (idx 86) forced Camel Bone' },
+      { idx: 86, property: 'slug', expected: 'camel_bone', label: 'G9 slug = camel_bone' },
+      { idx: 59, property: 'guaranteed', expected: true, label: 'J6 (idx 59) sanity anchor Camel Bone' },
+      { idx: 59, property: 'slug', expected: 'camel_bone', label: 'J6 slug = camel_bone' },
+    ],
+  },
 ]
