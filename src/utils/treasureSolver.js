@@ -192,6 +192,27 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     }
   }
 
+  // Record the cells of a placement KNOWN to be the one true confirmed
+  // instance (i.e. the sole candidate/survivor, always paired with a
+  // recordConfirmedInstance call) — as opposed to intersectCandidates, which
+  // may be merging several STILL-LIVE alternatives that haven't been
+  // eliminated yet. Bypasses (and overrides) `ambiguousIdx`: an earlier pass
+  // may have provisionally called a cell ambiguous because, at the time, a
+  // competing candidate for a DIFFERENT anchor also touched it and disagreed
+  // on the name — but once a candidate is eliminated (its shape's
+  // remainingCount hits 0 or it's excluded by committedCellOrigin), that
+  // disagreement is moot. A confirmed instance's names are ground truth and
+  // can never later contradict themselves (committedCellOrigin locks an idx
+  // to its first-confirmed origin forever), so overriding a stale ambiguous
+  // mark here is always safe.
+  const recordConfirmedPlots = (plots) => {
+    for (const [idx, name] of plots) {
+      guaranteed.add(idx)
+      ambiguousIdx.delete(idx)
+      guaranteedNames.set(idx, name)
+    }
+  }
+
   // Shape bookkeeping for single-instance reasoning (Passes 2 & 3). Depends
   // only on patternKeys/DIGGING_FORMATIONS, not on reveals, so it's computed
   // once outside the iterative loop below.
@@ -218,21 +239,85 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     }
   }
   // A name is "confined to key" iff, among present shapes, only `key` owns it.
+  // Static by name only — does NOT account for a same-name sibling shape
+  // having already been fully consumed (remainingCount 0). See
+  // `revealIsExclusiveTo` below for the dynamic version Pass 2/3 actually use.
   const confinedTo = (name, key) => {
     const keys = nameToKeys.get(normName(name))
     return keys && keys.size === 1 && keys.has(key)
   }
 
+  // Every still-live candidate placement (any shape with remainingCount > 0)
+  // that could explain revealed/pseudo-revealed treasure `tName` at `tIdx`.
+  // Hoisted above the iterative loop (rather than redefined each pass) so
+  // Pass 2/3's dynamic-confinement check below can call it too. Reads
+  // `remainingCount`/`committedCellOrigin` by closure — both are declared
+  // further down in this function but never invoked until inside the
+  // iterative loop, by which point they're initialized (same pattern already
+  // relied on by `enumerateSingleInstanceSurvivors` referencing
+  // `committedCellOrigin`).
+  const computeCandidates = (tIdx, tName) => {
+    const origin = committedCellOrigin.get(tIdx)
+    if (origin) return [origin]
+
+    const tx = tIdx % gridSize
+    const ty = Math.floor(tIdx / gridSize)
+    const candidates = []
+    for (const { key, formation } of shapes) {
+      if ((remainingCount.get(key) ?? 0) === 0) continue
+      for (const anchor of formation) {
+        if (!namesMatch(anchor.name, tName)) continue
+        const ox = tx - anchor.x
+        const oy = ty - anchor.y
+        const plots = buildPlacement(formation, ox, oy)
+        if (!plots) continue
+        // Cross-check for single-remaining-instance shapes: every revealed
+        // treasure whose name is confined to this key — and not already
+        // attributed to a previously committed (consumed) instance — must be
+        // covered by this candidate. There is no other instance left to explain
+        // uncovered reveals, so any candidate that misses one is impossible.
+        if ((remainingCount.get(key) ?? 0) === 1) {
+          const hasUncovered = [...revealedTreasureName].some(
+            ([rIdx, rName]) =>
+              confinedTo(rName, key) &&
+              !committedCellOrigin.has(rIdx) &&
+              !plots.has(rIdx),
+          )
+          if (hasUncovered) continue
+        }
+        candidates.push({ key, plots })
+      }
+    }
+    return candidates
+  }
+
+  // Dynamic (per-reveal) confinement: true iff, given the board's CURRENT
+  // state (including sibling shapes of the same name already consumed this
+  // run), `key` is the ONLY shape that can explain this specific reveal.
+  // Strictly more precise than `confinedTo` (which only ever looks at static
+  // name ownership and can never notice a sibling shape running out) — e.g.
+  // three formations sharing "Camel Bone"/seasonal-artefact names are never
+  // `confinedTo` any one of them, but once two of the three are pinned to
+  // their true placements, a reveal that only the third's remaining
+  // candidates can cover becomes dynamically exclusive to it. Used by Pass 2/3
+  // (not by computeCandidates' own internal cross-check above, to avoid
+  // unbounded recursion re-deriving the very candidates being computed).
+  const revealIsExclusiveTo = (idx, name, key) => {
+    if (committedCellOrigin.has(idx)) return false
+    const cands = computeCandidates(idx, name)
+    return cands.length > 0 && cands.every(c => c.key === key)
+  }
+
   // Enumerate every still-legal placement of a single-instance formation
   // `key`, against whatever `revealedTreasureName` holds at call time. If a
-  // revealed (or pseudo-revealed) treasure name is confined to this shape,
-  // anchor on it — cheap and exact (Pass 2's approach). Otherwise fall back
-  // to full-board enumeration (Pass 3's approach). Shared by Pass 2, Pass 3,
-  // and the whole-pattern-guarantee finalization below.
+  // revealed (or pseudo-revealed) treasure name is (dynamically) confined to
+  // this shape, anchor on it — cheap and exact (Pass 2's approach). Otherwise
+  // fall back to full-board enumeration (Pass 3's approach). Shared by
+  // Pass 2, Pass 3, and the whole-pattern-guarantee finalization below.
   const enumerateSingleInstanceSurvivors = (key) => {
     const formation = DIGGING_FORMATIONS[key]
     const confined = [...revealedTreasureName].filter(
-      ([idx, name]) => confinedTo(name, key) && !committedCellOrigin.has(idx),
+      ([idx, name]) => revealIsExclusiveTo(idx, name, key),
     )
 
     if (confined.length) {
@@ -336,41 +421,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     // Why sound: a single-candidate anchor means exactly one placement is legal
     // for that revealed treasure — all its cells are certain. Promoting them
     // before Phase B is equivalent to the end-of-iteration promotion, just earlier.
-    // Returns [{key, plots}] — only formations with remainingCount > 0.
-    const computeCandidates = (tIdx, tName) => {
-      const origin = committedCellOrigin.get(tIdx)
-      if (origin) return [origin]
-
-      const tx = tIdx % gridSize
-      const ty = Math.floor(tIdx / gridSize)
-      const candidates = []
-      for (const { key, formation } of shapes) {
-        if ((remainingCount.get(key) ?? 0) === 0) continue
-        for (const anchor of formation) {
-          if (!namesMatch(anchor.name, tName)) continue
-          const ox = tx - anchor.x
-          const oy = ty - anchor.y
-          const plots = buildPlacement(formation, ox, oy)
-          if (!plots) continue
-          // Cross-check for single-remaining-instance shapes: every revealed
-          // treasure whose name is confined to this key — and not already
-          // attributed to a previously committed (consumed) instance — must be
-          // covered by this candidate. There is no other instance left to explain
-          // uncovered reveals, so any candidate that misses one is impossible.
-          if ((remainingCount.get(key) ?? 0) === 1) {
-            const hasUncovered = [...revealedTreasureName].some(
-              ([rIdx, rName]) =>
-                confinedTo(rName, key) &&
-                !committedCellOrigin.has(rIdx) &&
-                !plots.has(rIdx),
-            )
-            if (hasUncovered) continue
-          }
-          candidates.push({ key, plots })
-        }
-      }
-      return candidates
-    }
+    // (computeCandidates itself is hoisted above the loop — see its definition
+    // near enumerateSingleInstanceSurvivors — since Pass 2/3's dynamic
+    // confinement check needs to call it too.)
 
     // Phase A: immediately promote single-candidate anchors.
     // Only actual reveals (not pseudo-reveals) source instance-consumption locks —
@@ -386,7 +439,11 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       const isNewInstance = recordConfirmedInstance(key, plots)
       // Guarantee immediately — Phase B won't see this anchor if the instance
       // is consumed below (count drops to 0), so we can't rely on Phase B.
-      intersectCandidates([plots])
+      // recordConfirmedPlots (not intersectCandidates): this IS the one true
+      // confirmed instance, so its names are ground truth even if an earlier
+      // pass this same iteration had provisionally flagged one of these cells
+      // ambiguous against a since-eliminated alternative.
+      recordConfirmedPlots(plots)
       // Consume the instance only when the anchor is a real dug tile AND this is
       // the first confirmation of this specific instance.
       if (!pseudoRevealed.has(tIdx) && isNewInstance) {
@@ -425,38 +482,63 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
             iterChanged = true
           }
         }
+        recordConfirmedPlots(plots)
+      } else {
+        intersectCandidates(candidates.map(c => c.plots))
       }
-      intersectCandidates(candidates.map(c => c.plots))
     }
 
     // ── Pass 2: single-instance forcing ─────────────────────────────────
     // When exactly one formation of a shape is on the board, every revealed
-    // treasure whose name is owned ONLY by that shape (among shapes present)
-    // must belong to that single instance. Enumerating the instance's legal
-    // placements that cover all such reveals and intersecting them pins the
-    // in-between tiles even when nothing adjacent has been dug.
+    // treasure that (dynamically — see revealIsExclusiveTo) can ONLY be
+    // explained by that shape must belong to that single instance.
+    // Enumerating the instance's legal placements that cover all such
+    // reveals and intersecting them pins the in-between tiles even when
+    // nothing adjacent has been dug.
     for (const key of presentKeys) {
       if (remainingCount.get(key) !== 1) continue
-      const hasConfinedReveal = [...revealedTreasureName].some(([, name]) => confinedTo(name, key))
+      const hasConfinedReveal = [...revealedTreasureName].some(([idx, name]) => revealIsExclusiveTo(idx, name, key))
       if (!hasConfinedReveal) continue
 
       const survivors = enumerateSingleInstanceSurvivors(key)
       if (!survivors.length) continue // inconsistent data — skip safely
-      intersectCandidates(survivors)
+      // A single survivor pins this shape's one remaining instance, exactly
+      // like Phase A/B's single-candidate anchors — must consume its
+      // remainingCount slot too, or shapes sharing its treasure names (e.g.
+      // three artefact formations sharing "Camel Bone") keep seeing it as a
+      // live competing hypothesis forever (see the Phase B regression this
+      // mirrors, in the 2026-07-27 snapshot test above).
+      if (survivors.length === 1) {
+        const isNewInstance = recordConfirmedInstance(key, survivors[0])
+        if (isNewInstance) {
+          const rem = remainingCount.get(key) ?? 0
+          if (rem > 0) { remainingCount.set(key, rem - 1); iterChanged = true }
+        }
+        recordConfirmedPlots(survivors[0])
+      } else {
+        intersectCandidates(survivors)
+      }
     }
 
     // ── Pass 3: pure-elimination ─────────────────────────────────────────
-    // For a single-instance formation with no confined-name reveal to anchor
-    // on, enumerate EVERY legal placement across the whole board. If sand,
-    // crab, edges, and (from prior iterations) pseudo-reveals rule out all
-    // but one, that lone survivor's cells are guaranteed.
+    // For a single-instance formation with no (dynamically) confined-name
+    // reveal to anchor on, enumerate EVERY legal placement across the whole
+    // board. If sand, crab, edges, and (from prior iterations) pseudo-reveals
+    // rule out all but one, that lone survivor's cells are guaranteed.
     for (const key of presentKeys) {
       if (remainingCount.get(key) !== 1) continue
-      const hasConfinedReveal = [...revealedTreasureName].some(([, n]) => confinedTo(n, key))
+      const hasConfinedReveal = [...revealedTreasureName].some(([idx, n]) => revealIsExclusiveTo(idx, n, key))
       if (hasConfinedReveal) continue // Pass 2 already covers this shape with a tighter candidate set
 
       const allPlacements = enumerateSingleInstanceSurvivors(key)
-      if (allPlacements.length === 1) intersectCandidates(allPlacements)
+      if (allPlacements.length === 1) {
+        const isNewInstance = recordConfirmedInstance(key, allPlacements[0])
+        if (isNewInstance) {
+          const rem = remainingCount.get(key) ?? 0
+          if (rem > 0) { remainingCount.set(key, rem - 1); iterChanged = true }
+        }
+        recordConfirmedPlots(allPlacements[0])
+      }
     }
 
     // ── Pass 4: crab-satisfaction forcing ────────────────────────────────
