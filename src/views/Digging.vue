@@ -31,6 +31,13 @@
         </router-link>
       </div>
       <div
+        v-if="historicalNoDataNote"
+        class="alert alert-info text-sm py-2 px-3 mb-2 shadow-sm"
+        role="status"
+      >
+        <span class="flex-1">{{ historicalNoDataNote }}</span>
+      </div>
+      <div
         v-if="marksGuideBanner"
         class="alert alert-info text-sm py-2 px-3 mb-2 shadow-sm"
         role="status"
@@ -238,6 +245,13 @@ const historicalDateBanner = computed(() => {
   return `Viewing ${formatDateLabel(d)}, ${d.slice(0, 4)} — patterns may differ from today.`
 })
 
+const historicalNoDataNote = computed(() => {
+  const d = activeHistoricalDate.value
+  if (!d) return null
+  if (!Array.isArray(historicalGrid.value) || historicalGrid.value.length > 0) return null
+  return `No dig data was saved for ${formatDateLabel(d)}, ${d.slice(0, 4)}.`
+})
+
 const prevDateQuery = computed(() => {
   const d = activeHistoricalDate.value
   if (!d) return null
@@ -356,7 +370,7 @@ watch(
   rawGrid => {
     if (!rawGrid) return
     const flatGrid = rawGrid.flat(Infinity)
-    grid.update(flatGrid)
+    grid.update(flatGrid, { applyHints: activeHistoricalDate.value === null })
   },
   { immediate: true }
 )
@@ -385,7 +399,10 @@ watch(
 
 onMounted(async () => {
   const dateParam = route.query.date
-  if (typeof dateParam === 'string' && UTC_DATE_RE.test(dateParam) && dateParam < todayUTC) {
+  const isHistoricalDate =
+    typeof dateParam === 'string' && UTC_DATE_RE.test(dateParam) && dateParam < todayUTC
+
+  if (isHistoricalDate) {
     await applyHistoricalDate(dateParam)
   } else {
     try {
@@ -398,7 +415,7 @@ onMounted(async () => {
 
   const routeLandId = route.params.landId
 
-  if (routeLandId) {
+  if (routeLandId && !isHistoricalDate) {
     const { shouldAutoFetch } = readLandCacheMeta(routeLandId)
     if (shouldAutoFetch) {
       const { reloadFromServer } = useLandSync({ landId: routeLandId })
