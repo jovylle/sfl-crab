@@ -165,10 +165,10 @@ const picker = ref(null)
 // revealed treasures, so a treasure from a completed formation must still be
 // able to anchor to its shape. Including all shapes only ever makes deductions
 // more conservative (never a wrong guarantee).
-const { patternKeys } = useLandData()
+const { solverPatternKeys } = useLandData()
 const { guaranteed, guaranteedSlugs } = usePredictionEngine(
   tiles,
-  patternKeys,
+  solverPatternKeys,
   toRef(() => showPrediction),
 )
 

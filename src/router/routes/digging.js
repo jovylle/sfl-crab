@@ -1,5 +1,6 @@
 import GuestDigging from '@/views/GuestDigging.vue'
 import Digging from '@/views/Digging.vue'
+import DiggingHistory from '@/views/DiggingHistory.vue'
 import LandDetails from '@/views/LandDetails.vue'
 import TodaysChecklist from '@/views/TodaysChecklist.vue'
 import PracticeDigging from '@/views/PracticeDigging.vue'
@@ -16,6 +17,19 @@ export const diggingRoutes = [
     path: '/:landId(\\d+)/digging',
     name: 'Digging',
     component: Digging,
+    meta: { public: true },
+    beforeEnter: (to) => {
+      const d = to.query.date
+      const todayUTC = new Date().toISOString().slice(0, 10)
+      if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && d < todayUTC) {
+        return { name: 'DiggingHistory', params: to.params, query: to.query }
+      }
+    },
+  },
+  {
+    path: '/:landId(\\d+)/digging/history',
+    name: 'DiggingHistory',
+    component: DiggingHistory,
     meta: { public: true },
   },
   {

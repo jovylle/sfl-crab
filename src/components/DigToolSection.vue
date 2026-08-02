@@ -176,7 +176,7 @@ defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'update:showP
 function clearLandId () {
   const test = isTestServer.value
   const onDigging =
-    route.name === 'Digging'
+    ['Digging', 'DiggingHistory'].includes(route.name)
   router.push(
     resolveLandRoute(onDigging ? 'guestDigging' : 'detailsNoId', { test }),
   )

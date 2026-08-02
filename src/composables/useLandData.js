@@ -40,6 +40,11 @@ export function useLandData (defaults = {}) {
   const inventory = computed(() => landData.value.visitedFarmState?.inventory || {})
   const desert = computed(() => landData.value.visitedFarmState?.desert || {})
   const patternKeys = computed(() => desert.value.digging?.patterns || [])
+  const solverPatternKeys = computed(() =>
+    historicalPatternOverride.value?.patterns?.length
+      ? historicalPatternOverride.value.patterns
+      : desert.value.digging?.patterns || []
+  )
   const completedPatternKeys = computed(
     () => desert.value.digging?.completedPatterns || [],
   )
@@ -88,6 +93,7 @@ export function useLandData (defaults = {}) {
     inventory,
     desert,
     patternKeys,
+    solverPatternKeys,
     completedPatternKeys,
     dailyPatternKeys,
     dailyPatternDate,

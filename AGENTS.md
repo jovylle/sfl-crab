@@ -101,7 +101,7 @@ npx vite build                                # ~8s; also catches template/compi
 npx vite preview --port 4319 --strictPort     # serves dist/ with SPA fallback
 ```
 
-Routes: `/`, `/digging`, `/practice`, `/:landId/digging`, `/:landId/practice`.
+Routes: `/`, `/digging`, `/practice`, `/:landId/digging`, `/:landId/digging/history`, `/:landId/practice`.
 
 - **`vite preview` does NOT run the Netlify functions** (`/api/*` 404). "Today's Patterns" then falls back to a Random Round — fine for verifying client behavior. For function-backed flows use `npm run dev` (netlify dev).
 - **Digging a tile is two clicks + delay**: first click arms confirm, second digs after `DIG_DELAY_MS` (350ms). When scripting: click a `.tile` twice, then wait ~500ms.
