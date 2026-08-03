@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Project } from 'ts-morph'
-import { writeFileSync, mkdirSync } from 'fs'
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -81,34 +81,58 @@ function extractGameConstants() {
   return constants
 }
 
+// Helper function to get timestamp from existing file or create new one
+function getTimestamp(filePath, newData, dataKey) {
+  try {
+    if (existsSync(filePath)) {
+      const existing = JSON.parse(readFileSync(filePath, 'utf-8'))
+      if (JSON.stringify(existing[dataKey]) === JSON.stringify(newData)) {
+        return existing.lastUpdated
+      }
+    }
+  } catch (error) {
+    // If we can't read/parse existing file, just use new timestamp
+  }
+  return new Date().toISOString()
+}
+
 // Generate JSON files
 function generateJsonFiles() {
-  const timestamp = new Date().toISOString()
-  
+  // Extract data first
+  const prices = extractTreasurePrices()
+  const constants = extractGameConstants()
+
+  // Determine timestamps based on whether data actually changed
+  const treasurePricesPath = join(outputDir, 'treasurePrices.json')
+  const treasurePricesTimestamp = getTimestamp(treasurePricesPath, prices, 'prices')
+
+  const gameConstantsPath = join(outputDir, 'gameConstants.json')
+  const gameConstantsTimestamp = getTimestamp(gameConstantsPath, constants, 'constants')
+
   // Treasure prices
   const treasurePrices = {
-    lastUpdated: timestamp,
+    lastUpdated: treasurePricesTimestamp,
     source: 'https://github.com/sunflower-land/sunflower-land/blob/main/src/features/game/types/treasure.ts',
     version: '1.0.0',
-    prices: extractTreasurePrices()
+    prices: prices
   }
 
   // Game constants
   const gameConstants = {
-    lastUpdated: timestamp,
+    lastUpdated: gameConstantsTimestamp,
     source: 'https://github.com/sunflower-land/sunflower-land',
     version: '1.0.0',
-    constants: extractGameConstants()
+    constants: constants
   }
 
   // Write files
   writeFileSync(
-    join(outputDir, 'treasurePrices.json'),
+    treasurePricesPath,
     JSON.stringify(treasurePrices, null, 2)
   )
 
   writeFileSync(
-    join(outputDir, 'gameConstants.json'),
+    gameConstantsPath,
     JSON.stringify(gameConstants, null, 2)
   )
 
