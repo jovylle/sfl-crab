@@ -48,7 +48,7 @@ const {
   dailyPatternKeys: patternKeys,
   dailyPatternDate,
   completedPatternKeys,
-  patternKeys: authoritativePatternKeys,
+  solverPatternKeys,
 } = useLandData()
 
 const { markedIndexes, toggleMark } = usePatternMarks(landId)
@@ -60,14 +60,14 @@ const serverCompletedIndexes = computed(() =>
 const markedIndexList = computed(() => [...markedIndexes.value])
 const completedIndexList = computed(() => [...serverCompletedIndexes.value])
 
-// Second, independent solver instance — solves against the authoritative
-// (server-derived) pattern list, same as Grid.vue's own instance, since
+// Second, independent solver instance — solves against solverPatternKeys
+// (historical-aware, same source Grid.vue's own instance uses), since
 // dailyPatternKeys (the cached "Today's Treasures" list) can occasionally be
 // stale relative to it (see isPatternDateStale below).
 const { tiles } = useGridManager(landId)
 const { guaranteedFormationCounts } = usePredictionEngine(
   tiles,
-  authoritativePatternKeys,
+  solverPatternKeys,
   toRef(() => props.showPrediction),
 )
 

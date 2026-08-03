@@ -43,12 +43,14 @@ export function useGridManager (rawLandId, gridSize = 10) {
     applySavedHints()
 
     // on API update: rebuild engine + reapply storage
-    function update (apiGrid) {
+    function update (apiGrid, { applyHints = true } = {}) {
       const before = engine.tiles.value.map(isRevealed)
 
       engine.updateGridFromData(apiGrid)
-      storage.load()
-      applySavedHints()
+      if (applyHints) {
+        storage.load()
+        applySavedHints()
+      }
 
       // Diff old vs new to find freshly-revealed tiles (false → true).
       if (hasLoadedOnce) {

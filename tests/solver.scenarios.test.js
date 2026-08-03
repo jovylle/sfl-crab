@@ -595,6 +595,91 @@ describe('Edge cases', () => {
     expect(guaranteedFormationCounts.get('ARTEFACT_SIXTEEN')).toBe(1)
     expect(guaranteedFormationCounts.get('ARTEFACT_TWENTY')).toBe(1)
   })
+
+  it('regression — Pass 2/3 confirmations must ALSO consume remainingCount, and a confirmed instance must override a stale ambiguous mark (land 4485248732423974, 2026-08-01 snapshot)', () => {
+    // ARTEFACT_SEVENTEEN, ARTEFACT_FIFTEEN, and ARTEFACT_EIGHTEEN all share
+    // both plot names (seasonal artefact + Camel Bone), so — like the
+    // 2026-07-27 snapshot above — none of them is ever `confinedTo` by the
+    // static, name-only definition (all three own both names). Ground truth
+    // (verified independently by brute-force enumeration of every globally
+    // consistent placement) fully pins all three instances. Two distinct bugs
+    // pre-fix:
+    //
+    //  1. Pass 2/3 never consumed remainingCount on confirmation (only Phase
+    //     A/B did — mirroring the 07-27 fix, just one pass deeper). Once
+    //     ARTEFACT_EIGHTEEN is pinned via Pass 1 Phase A/B intersection at C2
+    //     (idx 12, cells {2,3,12,13} vs {1,2,11,12} both touch idx 2/12) and
+    //     later via Pass 2's dynamic-confinement anchor (idx 11 and idx 12
+    //     are BOTH exclusively explainable by EIGHTEEN once SEVENTEEN is
+    //     consumed), Pass 2 confirmed it but left remainingCount at 1 — so
+    //     ARTEFACT_FIFTEEN's own SDE anchor at H9 (idx 87) kept seeing a
+    //     phantom competing EIGHTEEN candidate forever, and G9 (idx 86) was
+    //     never guaranteed at all.
+    //
+    //  2. Even after fixing (1), C1 (idx 2) stayed marked ambiguous forever:
+    //     Phase B's very first intersection of idx 12's two THEN-still-live
+    //     candidates (EIGHTEEN@{2,3,12,13} predicting idx 2 = the seasonal
+    //     artefact, vs the eventual-true EIGHTEEN@{1,2,11,12} predicting
+    //     idx 2 = Camel Bone) disagreed on idx 2's name and flagged it
+    //     ambiguous — and `recordName`'s ambiguousIdx set is a one-way
+    //     ratchet, so Pass 2's later, fully-authoritative single-survivor
+    //     confirmation of idx 2 = Camel Bone was silently dropped.
+    const grid = [
+      { x: 8, y: 8, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 1, y: 8, items: { Crab: 1 } },
+      { x: 2, y: 8, items: { 'Cockle Shell': 1 } },
+      { x: 3, y: 9, items: { 'Cockle Shell': 1 } },
+      { x: 1, y: 1, items: { 'Camel Bone': 1 } },
+      { x: 2, y: 1, items: { 'Camel Bone': 1 } },
+      { x: 1, y: 0, items: { 'Salt Dino Egg': 1 } },
+      { x: 8, y: 1, items: { Sand: 2 } },
+      { x: 5, y: 1, items: { Sand: 2 } },
+      { x: 8, y: 4, items: { Crab: 1 } },
+      { x: 7, y: 4, items: { Crab: 1 } },
+      { x: 8, y: 5, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 5, items: { 'Cockle Shell': 1 } },
+      { x: 9, y: 6, items: { 'Salt Dino Egg': 1 } },
+      { x: 1, y: 3, items: { Crab: 1 } },
+      { x: 1, y: 4, items: { Sand: 2 } },
+      { x: 2, y: 3, items: { Wood: 1 } },
+      { x: 3, y: 3, items: { 'Wooden Compass': 1 } },
+      { x: 4, y: 7, items: { Sand: 2 } },
+      { x: 5, y: 5, items: { Crab: 1 } },
+      { x: 4, y: 5, items: { Hieroglyph: 1 } },
+    ]
+    const patterns = [
+      'ARTEFACT_SEVENTEEN', 'ARTEFACT_FIFTEEN', 'ARTEFACT_EIGHTEEN',
+      'HIEROGLYPH', 'COCKLE', 'COCKLE', 'WOODEN_COMPASS',
+    ]
+    const tiles = gridArrayToTiles(grid, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, patterns, G)
+    printSolverResult(tiles, guaranteed, guaranteedSlugs, patterns, G)
+
+    // C1 (idx 2): ARTEFACT_EIGHTEEN's forced Camel Bone cell — must be
+    // unambiguous, not just guaranteed-with-unknown-name.
+    expect(guaranteed.has(2), 'C1 (idx 2) — blocked/ambiguous by the bug pre-fix').toBe(true)
+    expect(guaranteedSlugs.get(2)).toBe('camel_bone')
+
+    // G9 (idx 86): ARTEFACT_FIFTEEN's forced Camel Bone cell, anchored below
+    // H9's revealed Salt Dino Egg — never guaranteed at all pre-fix.
+    expect(guaranteed.has(86), 'G9 (idx 86) — never guaranteed by the bug pre-fix').toBe(true)
+    expect(guaranteedSlugs.get(86)).toBe('camel_bone')
+
+    // J6 (idx 59): ARTEFACT_SEVENTEEN's forced Camel Bone cell (unaffected by
+    // either bug, included as a sanity anchor).
+    expect(guaranteed.has(59)).toBe(true)
+    expect(guaranteedSlugs.get(59)).toBe('camel_bone')
+
+    // All three single-instance artefact formations individually confirmed,
+    // plus the other single-instance shapes on this board.
+    expect(guaranteedFormationCounts.get('ARTEFACT_SEVENTEEN')).toBe(1)
+    expect(guaranteedFormationCounts.get('ARTEFACT_FIFTEEN')).toBe(1)
+    expect(guaranteedFormationCounts.get('ARTEFACT_EIGHTEEN')).toBe(1)
+    expect(guaranteedFormationCounts.get('HIEROGLYPH')).toBe(1)
+    expect(guaranteedFormationCounts.get('COCKLE')).toBe(1)
+    expect(guaranteedFormationCounts.get('WOODEN_COMPASS')).toBe(1)
+  })
 })
 
 // ── Instance-consumption cascade — land 1405000790165644 ─────────────────────

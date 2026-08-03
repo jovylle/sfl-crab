@@ -53,6 +53,7 @@ Assembled in `src/router/index.js` as `[...diggingRoutes, ...authRoutes, ...publ
 | `/` | `Home` | redirect → `/digging` |
 | `/digging` | `GuestDigging` | `GuestDigging.vue` |
 | `/:landId(\d+)/digging` | `Digging` | `Digging.vue` |
+| `/:landId(\d+)/digging/history` | `DiggingHistory` | `DiggingHistory.vue` |
 | `/:landId(\d+)` | `DiggingAsHome` | redirect → `/:landId/digging` (keeps query + hash) |
 | `/details` | `LandDetailsNoId` | `LandDetails.vue` |
 | `/:landId(\d+)/details` | `LandDetailsWithId` | `LandDetails.vue` |
@@ -60,6 +61,8 @@ Assembled in `src/router/index.js` as `[...diggingRoutes, ...authRoutes, ...publ
 | `/:landId(\w+)/todays-checklist` | `TodaysChecklistWithId` | `TodaysChecklist.vue` |
 | `/practice` | `Practice` | `PracticeDigging.vue` |
 | `/:landId(\d+)/practice` | `PracticeWithId` | `PracticeDigging.vue` |
+
+`Digging.vue` is the live/interactive digging page (today only) with dig streak, free-digs-remaining, and live API sync. `DiggingHistory.vue` is a read-only historical viewer reached via `beforeEnter` redirect from old `?date=YYYY-MM-DD` query params on the `Digging` route (or direct navigation) — it displays the past-date dig grid, solver "guaranteed treasure" predictions, and dig-replay, but not live-only stats.
 
 ### Auth routes (`src/router/routes/auth.js`)
 | Path | Name | Renders |
@@ -139,7 +142,7 @@ Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, tes
 |---|---|
 | `useGridEngine.js` ⭐ | Core 10×10 grid + auto neighbor-hint propagation |
 | `useGridManager.js` | User marks / manual hint cycling |
-| `useLandData.js` ⭐ | Central land-data store + localStorage cache |
+| `useLandData.js` ⭐ | Central land-data store + localStorage cache; `solverPatternKeys` is the historical-aware solver-input source shared by Grid.vue/TodayPatterns.vue on both digging pages |
 | `useLandSync.js` | Refresh cooldowns, `bypassCache` |
 | `useDigDayStore.js` | Hub dig-day sync (debounce/ETag/merge) — see [DIG_DAY_SYNC.md](./DIG_DAY_SYNC.md) |
 | `usePracticeEngine.js` / `usePracticePatterns.js` | Practice mode grid generation + daily patterns |
