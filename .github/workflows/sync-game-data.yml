@@ -40,6 +40,9 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "🤖 Auto-sync: Update game data [$(date -u '+%Y-%m-%d %H:%M UTC')]"
             git push
+            # Also fast-forward the development branch so beta never lags a season.
+            # Rejected (non-fast-forward) if dev has unmerged work -> run fails loudly.
+            git push origin HEAD:development
           fi
       
       - run: rm -rf temp/

@@ -56,6 +56,9 @@ jobs:
           git add -A
           git commit -m "chore: Sync artefact data from SFL repo [$(date +'%Y-%m-%d')]"
           git push
+          # Also fast-forward the development branch so beta never lags a season.
+          # Rejected (non-fast-forward) if dev has unmerged work -> run fails loudly.
+          git push origin HEAD:development
       
       - name: No changes detected
         if: steps.git-check.outputs.changed != 'true'
