@@ -1,4 +1,10 @@
 // src/dev/solverScenarios.js
+import { getCurrentSeasonalArtefact } from '@/data/game/seasonalArtefacts.js'
+
+// The seasonal artefact's name rotates every season; boards below reference
+// it by name so this regression suite stays valid across season changes.
+const SEASONAL = getCurrentSeasonalArtefact()
+
 export const SOLVER_SCENARIOS = [
   {
     id: 'pass1-vase',
@@ -405,20 +411,20 @@ export const SOLVER_SCENARIOS = [
     // regression (also asserts guaranteedFormationCounts).
     grid: [
       { x: 8, y: 8, items: { 'Camel Bone': 1 } },
-      { x: 7, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 7, y: 8, items: { [SEASONAL]: 1 } },
       { x: 1, y: 8, items: { Crab: 1 } },
       { x: 2, y: 8, items: { 'Cockle Shell': 1 } },
       { x: 3, y: 9, items: { 'Cockle Shell': 1 } },
       { x: 1, y: 1, items: { 'Camel Bone': 1 } },
       { x: 2, y: 1, items: { 'Camel Bone': 1 } },
-      { x: 1, y: 0, items: { 'Salt Dino Egg': 1 } },
+      { x: 1, y: 0, items: { [SEASONAL]: 1 } },
       { x: 8, y: 1, items: { Sand: 2 } },
       { x: 5, y: 1, items: { Sand: 2 } },
       { x: 8, y: 4, items: { Crab: 1 } },
       { x: 7, y: 4, items: { Crab: 1 } },
       { x: 8, y: 5, items: { 'Camel Bone': 1 } },
       { x: 7, y: 5, items: { 'Cockle Shell': 1 } },
-      { x: 9, y: 6, items: { 'Salt Dino Egg': 1 } },
+      { x: 9, y: 6, items: { [SEASONAL]: 1 } },
       { x: 1, y: 3, items: { Crab: 1 } },
       { x: 1, y: 4, items: { Sand: 2 } },
       { x: 2, y: 3, items: { Wood: 1 } },
