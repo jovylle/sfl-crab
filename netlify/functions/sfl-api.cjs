@@ -111,7 +111,7 @@ exports.handler = async (event) => {
     logSflApi({ env, path: apiPath, landId, status: cached.statusCode, cache: 'hit' })
     return {
       statusCode: cached.statusCode,
-      headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=60' },
+      headers: corsHeaders,
       body: cached.body,
     }
   }
