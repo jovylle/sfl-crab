@@ -1,7 +1,7 @@
 <template>
   <button
     :disabled="isLoading || isCooldown || isHistoricalView"
-    @click="reloadFromServer"
+    @click="() => reloadFromServer({ bypassCache: true })"
     class="refresh-btn btn btn-primary btn-sm sm:btn-md text-xs sm:text-sm text-nowrap text-base-100"
   >
     <span v-if="isLoading" class="loading">⏳</span>
