@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - uses: actions/setup-node@v4
         with:
@@ -40,9 +41,27 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "🤖 Auto-sync: Update game data [$(date -u '+%Y-%m-%d %H:%M UTC')]"
             git push
-            # Also fast-forward the development branch so beta never lags a season.
-            # Rejected (non-fast-forward) if dev has unmerged work -> run fails loudly.
-            git push origin HEAD:development
           fi
       
+      - name: Mirror data files to development branch
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git fetch origin development
+          # Guard: never overwrite local dev edits to data files. If development
+          # has commits touching these paths that master doesn't, skip + warn.
+          if [ -n "$(git log HEAD..origin/development --oneline -- src/data/game/)" ]; then
+            echo "::warning::development has local changes under src/data/game/ not on master - skipping mirror"
+            exit 0
+          fi
+          SYNC_SHA=$(git rev-parse HEAD)
+          git checkout -B sync-dev origin/development
+          git checkout "$SYNC_SHA" -- src/data/game/
+          if ! git diff --cached --quiet; then
+            git commit -m "🤖 Mirror game data from master ($(git rev-parse --short "$SYNC_SHA"))"
+            git push origin sync-dev:development
+          else
+            echo "development data already up to date"
+          fi
+
       - run: rm -rf temp/
