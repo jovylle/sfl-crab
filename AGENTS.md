@@ -11,6 +11,7 @@ Read in this order; each doc is kept accurate. If anything here conflicts with o
 | **AGENTS.md** (this file) | Dev commands, conventions, env, API-proxy quirks, dead-code register |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture: directories, routes, startup, data flow, composables/services, grid-builders, entrypoints, `src_other` |
 | [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) | The 10×10 grid engine: tiles, hints, formations, practice mode |
+| [docs/API_LAYER.md](docs/API_LAYER.md) | **Request pipeline + caching policy for the SFL farm API** — read before touching anything that fetches land data |
 | [docs/DIG_DAY_SYNC.md](docs/DIG_DAY_SYNC.md) | Dig-day Hub sync: debounce, ETag, merge-by-seq, the layers |
 | [docs/HUB_CONSUMPTION_SPEC.md](docs/HUB_CONSUMPTION_SPEC.md) | Hub-side ETag/idempotency contract |
 | [netlify/functions/README.md](netlify/functions/README.md) | Per-function reference for the `.cjs` proxies |
@@ -133,7 +134,8 @@ Both sync workflows commit + push to `master`, then **mirror the data files to `
 
 ## API proxy details
 
-- `sfl-api.cjs` has a 60s in-memory cache for 200 responses. Bypass with `x-sfl-bypass-cache: 1` header or `?bypassCache=1` — the app sends this on every land sync.
+- `sfl-api.cjs` has a 60s in-memory cache for 200 responses. Bypass with `x-sfl-bypass-cache: 1` header or `?bypassCache=1` — the app sends this **only** on explicit user refreshes and env switches (see [docs/API_LAYER.md](docs/API_LAYER.md)); auto loads go through the proxy cache.
+- **All land-data requests go through `src/services/landFetchCoordinator.js`** (single-flight, 5-min localStorage freshness, cooldown). Never call `fetchLandDataFromServer()` from a component.
 - `/visit/*` often returns 401 for third-party tools. The app uses `/community/farms/*` as primary and `/visit/*` as fallback only.
 - Prod/test API switching is communicated via `x-sfl-api-env` header. Land data cache keys are prefixed per-environment (`landData_` vs `landData_test_`).
 - Practice patterns are CDN-cached until UTC midnight (`CDN-Cache-Control` headers).
