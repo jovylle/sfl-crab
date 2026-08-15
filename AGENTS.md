@@ -123,11 +123,13 @@ Routes: `/`, `/digging`, `/practice`, `/:landId/digging`, `/:landId/digging/hist
 ## Auto-generated data (do not edit)
 
 `src/data/game/` files are synced from the Sunflower Land repo by CI:
-- `treasurePrices.json` / `gameConstants.json` — `npm run sync-game-data` (daily CI)
+- `treasurePrices.json` / `gameConstants.json` — `npm run sync-game-data` (weekly CI, Sundays 00:00 UTC)
 - `seasonalArtefacts.js` — `npm run sync-artefact` (monthly CI)
 - `diggingFormations.js` — imported from game data
 
 Three GitHub Actions auto-commit to the repo: `sync-game-data.yml`, `sync-artefact.yml`, `warm-daily-cache.yml`.
+
+Both sync workflows commit + push to `master`, then **mirror the data files to `development`** via a file-level checkout (`src/data/game/`, plus `public/world/` for artefact) — no fast-forward requirement, no merge conflicts, so beta never drifts a season behind. The mirror is skipped with a warning if `development` has local edits to those paths that `master` doesn't have. Result: prod (`master`) and beta (`development`) stay on identical game data.
 
 ## API proxy details
 

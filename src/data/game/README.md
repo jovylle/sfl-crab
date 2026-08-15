@@ -9,8 +9,9 @@ Auto-synced daily from https://github.com/sunflower-land/sunflower-land
 - `diggingFormations.js` - Treasure pattern formations (manually extracted from SFL repo)
 
 ## Updates
-- **Automatic**: Daily at 00:00 UTC via GitHub Actions
+- **Automatic**: Weekly (Sundays 00:00 UTC) via the `sync-game-data` GitHub Action; seasonal artefacts monthly (1st–3rd) via `sync-artefact`
 - **Manual**: Run `npm run sync-game-data`
+- **Both branches**: syncs commit to `master` and are mirrored to `development` automatically (file-level copy of `src/data/game/` + `public/world/`), so prod and beta always carry identical game data
 
 ## Format
 ```json
