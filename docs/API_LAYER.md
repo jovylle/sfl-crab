@@ -28,7 +28,8 @@ landSyncService / landApiService (src/services/*.js)   ← pure fetch, error map
    │  prod → test env fallback, 429 message mapping
    ▼
 Netlify proxy  sfl-api.cjs (netlify/functions/sfl-api.cjs)   ← server-side key,
-   │  60s in-memory cache, bypassable via x-sfl-bypass-cache
+   │  60s in-memory cache, bypassable via x-sfl-bypass-cache;
+   │  responds Cache-Control: no-store → no browser/CDN HTTP caching
    ▼
 Sunflower Land public API (api.sunflower-land.com | api-dev.sunflower-land.com)
 ```
@@ -59,10 +60,20 @@ ETag + freshness cache + force flag. See [DIG_DAY_SYNC.md](./DIG_DAY_SYNC.md).
 | Coordinator single-flight | in-flight Promise per `env:landId` | duration of request | — (shared by design) |
 | localStorage cache (`landData_<env>_<id>`) | `{ date, fetchedAt, visitedFarmState }` | until UTC date changes; "fresh" while < `LAND_CACHE_FRESH_MS` (5 min) | `force: true` or `bypassCache: true` |
 | Cooldown (`landCooldownEnd_<env>_<id>`) | timestamp | 15s after success, 30s after failure | `force: true` only |
+| Browser HTTP cache | **disabled** — `sfl-api.cjs` sends `Cache-Control: no-store` on every response | never | — (by design; see golden rule 5) |
 
 Cache keys are env-prefixed (`landData_` vs `landData_test_`) so prod and test
 snapshots never mix — see `getLandDataStorageKey()` / `getLandCooldownStorageKey()`
 in `src/config/api.js`.
+
+**Netlify CDN / edge caching is deliberately NOT used for land data.** The only
+place edge caching exists is `practice-patterns.cjs` (`CDN-Cache-Control` until
+UTC midnight) — appropriate because daily patterns are immutable within a day.
+Land data is per-farm and changes as the player digs, so the 60s in-memory
+proxy cache is the outermost cache it gets. (History: the in-memory cache came
+first — `8254d9c` — and the bypass header `61272c1` exists because refreshes
+must stay fresh; the coordinator is what finally routes auto loads *through*
+the cache.)
 
 ## Policy table (`requestLandData(landId, { force, bypassCache })`)
 
@@ -103,3 +114,9 @@ only for explicit refreshes.
    neither checked nor set it, so repeated navigation fired unthrottled API calls.
 4. **Freshness is advisory unless enforced.** `landCache.js` computed
    `shouldAutoFetch` for years, but callers fired anyway. The coordinator enforces it.
+5. **"Refresh Data" never touches a cache.** The whole chain is cache-proof:
+   `bypassCache: true` skips the localStorage freshness check AND the proxy's
+   in-memory cache; `sfl-api.cjs` responds `Cache-Control: no-store` so the
+   browser HTTP cache can never serve land data; the button is disabled during
+   the 15s cooldown (no silent no-op). If a refresh ever shows data you've seen
+   before, that's a bug — every cache layer must be bypassable.
