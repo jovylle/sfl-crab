@@ -9,6 +9,7 @@ import { solveTreasures } from '@/utils/treasureSolver.js'
 import { gridArrayToTiles } from '@/utils/gridTileTransform.js'
 import { buildGuaranteedIndexes } from '@/utils/patternPreview.js'
 import { DIGGING_FORMATIONS } from '@/data/game/diggingFormations.js'
+import { getCurrentSeasonalArtefact } from '@/data/game/seasonalArtefacts.js'
 
 const G = 10
 
@@ -21,10 +22,18 @@ function label(idx) {
 }
 
 const SLUG_ABBR = {
-  camel_bone: 'CB', salt_dino_egg: 'SDE', cockle_shell: 'CK',
+  camel_bone: 'CB', cockle_shell: 'CK',
   clam_shell: 'CS', vase: 'V', hieroglyph: 'H', seaweed: 'SW',
   wooden_compass: 'WC', wood: 'WD', old_bottle: 'OB',
 }
+
+// The seasonal artefact's name/slug rotate every season (see
+// seasonalArtefacts.js). The artefact boards below reference it by name so
+// this suite stays green across season changes instead of hardcoding one
+// season's artefact (which breaks the moment CURRENT_SEASONAL_ARTEFACT moves).
+const SEASONAL = getCurrentSeasonalArtefact()
+const SEASONAL_SLUG = SEASONAL.toLowerCase().replace(/\s+/g, '_')
+SLUG_ABBR[SEASONAL_SLUG] = 'ART'
 
 function renderFormation(key) {
   const plots = DIGGING_FORMATIONS[key]
@@ -218,11 +227,11 @@ describe('Edge cases', () => {
       { x: 2, y: 1, items: { 'Camel Bone': 1 } },
       { x: 3, y: 2, items: { 'Camel Bone': 1 } },
       { x: 4, y: 2, items: { Crab: 1 } },
-      { x: 2, y: 2, items: { 'Salt Dino Egg': 1 } },
-      { x: 8, y: 1, items: { 'Salt Dino Egg': 1 } },
+      { x: 2, y: 2, items: { [SEASONAL]: 1 } },
+      { x: 8, y: 1, items: { [SEASONAL]: 1 } },
       { x: 8, y: 3, items: { Sand: 2 } },
       { x: 8, y: 6, items: { Crab: 1 } },
-      { x: 7, y: 6, items: { 'Salt Dino Egg': 1 } },
+      { x: 7, y: 6, items: { [SEASONAL]: 1 } },
       { x: 4, y: 8, items: { 'Clam Shell': 1 } },
       { x: 3, y: 7, items: { Crab: 1 } },
       { x: 4, y: 7, items: { Crab: 1 } },
@@ -340,7 +349,7 @@ describe('Edge cases', () => {
       { x: 0, y: 8, items: { Crab: 1 } },
       { x: 8, y: 2, items: { Vase: 1 } },
       { x: 7, y: 3, items: { Hieroglyph: 1 } },
-      { x: 7, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 7, y: 8, items: { [SEASONAL]: 1 } },
       { x: 3, y: 1, items: { Sand: 1 } },
       { x: 4, y: 3, items: { Sand: 1 } },
       { x: 2, y: 5, items: { 'Clam Shell': 1 } },
@@ -398,11 +407,11 @@ describe('Edge cases', () => {
       { x: 2, y: 1, items: { 'Camel Bone': 1 } },
       { x: 3, y: 2, items: { 'Camel Bone': 1 } },
       { x: 4, y: 2, items: { Crab: 1 } },
-      { x: 2, y: 2, items: { 'Salt Dino Egg': 1 } },
-      { x: 8, y: 1, items: { 'Salt Dino Egg': 1 } },
+      { x: 2, y: 2, items: { [SEASONAL]: 1 } },
+      { x: 8, y: 1, items: { [SEASONAL]: 1 } },
       { x: 8, y: 3, items: { Sand: 2 } },
       { x: 8, y: 6, items: { Crab: 1 } },
-      { x: 7, y: 6, items: { 'Salt Dino Egg': 1 } },
+      { x: 7, y: 6, items: { [SEASONAL]: 1 } },
       { x: 4, y: 8, items: { 'Clam Shell': 1 } },
       { x: 3, y: 7, items: { Crab: 1 } },
       { x: 4, y: 7, items: { Crab: 1 } },
@@ -549,13 +558,13 @@ describe('Edge cases', () => {
     const grid = [
       { x: 8, y: 8, items: { Sand: 2 } },
       { x: 1, y: 8, items: { 'Camel Bone': 1 } },
-      { x: 0, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 0, y: 8, items: { [SEASONAL]: 1 } },
       { x: 1, y: 1, items: { Crab: 1 } },
       { x: 1, y: 2, items: { 'Cockle Shell': 1 } },
       { x: 0, y: 1, items: { 'Cockle Shell': 1 } },
       { x: 8, y: 1, items: { Crab: 1 } },
       { x: 8, y: 2, items: { 'Camel Bone': 1 } },
-      { x: 7, y: 2, items: { 'Salt Dino Egg': 1 } },
+      { x: 7, y: 2, items: { [SEASONAL]: 1 } },
       { x: 5, y: 8, items: { Crab: 1 } },
       { x: 5, y: 7, items: { Vase: 1 } },
       { x: 3, y: 1, items: { Sand: 2 } },
@@ -565,7 +574,7 @@ describe('Edge cases', () => {
       { x: 4, y: 4, items: { 'Camel Bone': 1 } },
       { x: 3, y: 4, items: { Crab: 1 } },
       { x: 3, y: 3, items: { Crab: 1 } },
-      { x: 4, y: 3, items: { 'Salt Dino Egg': 1 } },
+      { x: 4, y: 3, items: { [SEASONAL]: 1 } },
       { x: 6, y: 6, items: { Crab: 1 } },
       { x: 5, y: 6, items: { 'Clam Shell': 1 } },
       { x: 4, y: 6, items: { 'Clam Shell': 1 } },
@@ -626,20 +635,20 @@ describe('Edge cases', () => {
     //     confirmation of idx 2 = Camel Bone was silently dropped.
     const grid = [
       { x: 8, y: 8, items: { 'Camel Bone': 1 } },
-      { x: 7, y: 8, items: { 'Salt Dino Egg': 1 } },
+      { x: 7, y: 8, items: { [SEASONAL]: 1 } },
       { x: 1, y: 8, items: { Crab: 1 } },
       { x: 2, y: 8, items: { 'Cockle Shell': 1 } },
       { x: 3, y: 9, items: { 'Cockle Shell': 1 } },
       { x: 1, y: 1, items: { 'Camel Bone': 1 } },
       { x: 2, y: 1, items: { 'Camel Bone': 1 } },
-      { x: 1, y: 0, items: { 'Salt Dino Egg': 1 } },
+      { x: 1, y: 0, items: { [SEASONAL]: 1 } },
       { x: 8, y: 1, items: { Sand: 2 } },
       { x: 5, y: 1, items: { Sand: 2 } },
       { x: 8, y: 4, items: { Crab: 1 } },
       { x: 7, y: 4, items: { Crab: 1 } },
       { x: 8, y: 5, items: { 'Camel Bone': 1 } },
       { x: 7, y: 5, items: { 'Cockle Shell': 1 } },
-      { x: 9, y: 6, items: { 'Salt Dino Egg': 1 } },
+      { x: 9, y: 6, items: { [SEASONAL]: 1 } },
       { x: 1, y: 3, items: { Crab: 1 } },
       { x: 1, y: 4, items: { Sand: 2 } },
       { x: 2, y: 3, items: { Wood: 1 } },
@@ -700,7 +709,7 @@ describe('Instance-consumption cascade — land 1405000790165644', () => {
     { x: 0, y: 8, items: { Crab: 1 } },
     { x: 8, y: 2, items: { Vase: 1 } },
     { x: 7, y: 3, items: { Hieroglyph: 1 } },
-    { x: 7, y: 8, items: { 'Salt Dino Egg': 1 } },
+    { x: 7, y: 8, items: { [SEASONAL]: 1 } },
     { x: 3, y: 1, items: { Sand: 1 } },
     { x: 4, y: 3, items: { Sand: 1 } },
     { x: 2, y: 5, items: { 'Clam Shell': 1 } },
@@ -729,7 +738,7 @@ describe('Instance-consumption cascade — land 1405000790165644', () => {
     expect(guaranteed.has(83), 'D9 camel_bone').toBe(true)
     expect(guaranteedSlugs.get(83)).toBe('camel_bone')
     expect(guaranteed.has(92), 'C10 salt_dino_egg').toBe(true)
-    expect(guaranteedSlugs.get(92)).toBe('salt_dino_egg')
+    expect(guaranteedSlugs.get(92)).toBe(SEASONAL_SLUG)
   })
 
   it('ARTE_23 locked to (5,7) by H9: guarantees F8/G8/H8/G9', () => {
@@ -747,7 +756,7 @@ describe('Instance-consumption cascade — land 1405000790165644', () => {
     const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, patterns, G)
     // F3=(5,2) idx 25 = SDE, G2=(6,1) idx 16 = CB, G3=(6,2) idx 26 = CB
     expect(guaranteed.has(25), 'F3 salt_dino_egg').toBe(true)
-    expect(guaranteedSlugs.get(25)).toBe('salt_dino_egg')
+    expect(guaranteedSlugs.get(25)).toBe(SEASONAL_SLUG)
     expect(guaranteed.has(16), 'G2 camel_bone').toBe(true)
     expect(guaranteedSlugs.get(16)).toBe('camel_bone')
     expect(guaranteed.has(26), 'G3 camel_bone').toBe(true)

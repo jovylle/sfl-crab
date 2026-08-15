@@ -24,6 +24,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -60,6 +61,27 @@ jobs:
       - name: No changes detected
         if: steps.git-check.outputs.changed != 'true'
         run: echo "No season updates detected. Everything is up to date!"
+
+      - name: Mirror data files to development branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin development
+          # Guard: never overwrite local dev edits to data files. If development
+          # has commits touching these paths that master doesn't, skip + warn.
+          if [ -n "$(git log HEAD..origin/development --oneline -- src/data/game/ public/world/)" ]; then
+            echo "::warning::development has local changes under src/data/game/ or public/world/ not on master - skipping mirror"
+            exit 0
+          fi
+          SYNC_SHA=$(git rev-parse HEAD)
+          git checkout -B sync-dev origin/development
+          git checkout "$SYNC_SHA" -- src/data/game/ public/world/
+          if ! git diff --cached --quiet; then
+            git commit -m "🤖 Mirror artefact data from master ($(git rev-parse --short "$SYNC_SHA"))"
+            git push origin sync-dev:development
+          else
+            echo "development data already up to date"
+          fi
 
 
 
