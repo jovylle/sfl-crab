@@ -12,6 +12,9 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { grid
   const guaranteedSlugs = ref(new Map())
   const guaranteedCandidates = ref(new Map())
   const guaranteedFormationCounts = ref(new Map())
+  const remainingCounts = ref(new Map())
+  const remainingRegions = ref(new Map())
+  const possibleTreasureCells = ref(new Set())
 
   const schedule = (typeof window !== 'undefined' && window.requestIdleCallback)
     ? window.requestIdleCallback.bind(window)
@@ -28,6 +31,9 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { grid
     guaranteedSlugs.value = result.guaranteedSlugs
     guaranteedCandidates.value = result.guaranteedCandidates
     guaranteedFormationCounts.value = result.guaranteedFormationCounts
+    remainingCounts.value = result.remainingCounts
+    remainingRegions.value = result.remainingRegions
+    possibleTreasureCells.value = result.possibleTreasureCells
   }
 
   function recompute() {
@@ -38,6 +44,9 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { grid
       guaranteedSlugs.value = new Map()
       guaranteedCandidates.value = new Map()
       guaranteedFormationCounts.value = new Map()
+      remainingCounts.value = new Map()
+      remainingRegions.value = new Map()
+      possibleTreasureCells.value = new Set()
       return
     }
 
@@ -63,5 +72,5 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { grid
     { immediate: true, deep: true }
   )
 
-  return { guaranteed, guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts }
+  return { guaranteed, guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts, remainingCounts, remainingRegions, possibleTreasureCells }
 }
