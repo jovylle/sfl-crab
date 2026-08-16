@@ -83,12 +83,12 @@ function flattenTile(tile) {
  * @param {(string[]|string)[]} tiles - grid cells of CSS class arrays
  * @param {string[]} patternKeys - formation multiset on the board
  * @param {number} gridSize - default 10
- * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedFormationCounts: Map<string,number>, partial: boolean }}
+ * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedCandidates: Map<number,string[]>, guaranteedFormationCounts: Map<string,number>, partial: boolean }}
  */
 export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   const guaranteed = new Set()
   if (!patternKeys?.length) {
-    return { guaranteed, guaranteedSlugs: new Map(), guaranteedFormationCounts: new Map(), partial: false }
+    return { guaranteed, guaranteedSlugs: new Map(), guaranteedCandidates: new Map(), guaranteedFormationCounts: new Map(), partial: false }
   }
 
   // ── Parse revealed state ────────────────────────────────────────────
@@ -164,13 +164,31 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // can no longer say WHICH treasure — so no image is shown).
   const guaranteedNames = new Map() // idx -> display name (unambiguous so far)
   const ambiguousIdx = new Set()
+  // Disputed names for guaranteed-but-ambiguous cells, unioned across every
+  // anchor/candidate that touched the cell (idx -> Set<slug>). Pure reporting:
+  // feeds the UI's "?" tooltip with the possible identities; never influences
+  // deduction. Cleared the moment the cell is ever confirmed (see
+  // recordConfirmedPlots), at which point its name is ground truth.
+  const ambiguousCandidates = new Map()
+
+  const markAmbiguous = (idx, names) => {
+    ambiguousIdx.add(idx)
+    guaranteedNames.delete(idx)
+    let set = ambiguousCandidates.get(idx)
+    if (!set) { set = new Set(); ambiguousCandidates.set(idx, set) }
+    for (const n of names) set.add(normName(n))
+  }
 
   const recordName = (idx, name) => {
-    if (ambiguousIdx.has(idx)) return
+    if (ambiguousIdx.has(idx)) {
+      // Keep accumulating the possible identities for reporting — a cell can
+      // be touched by several anchors, each adding a candidate name.
+      ambiguousCandidates.get(idx)?.add(normName(name))
+      return
+    }
     if (guaranteedNames.has(idx)) {
       if (!namesMatch(guaranteedNames.get(idx), name)) {
-        guaranteedNames.delete(idx)
-        ambiguousIdx.add(idx)
+        markAmbiguous(idx, [guaranteedNames.get(idx), name])
       }
     } else {
       guaranteedNames.set(idx, name)
@@ -188,7 +206,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       guaranteed.add(idx)
       const names = new Set(candidates.map(c => normName(c.get(idx))))
       if (names.size === 1) recordName(idx, first.get(idx))
-      else { guaranteedNames.delete(idx); ambiguousIdx.add(idx) }
+      else markAmbiguous(idx, names)
     }
   }
 
@@ -205,10 +223,22 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // can never later contradict themselves (committedCellOrigin locks an idx
   // to its first-confirmed origin forever), so overriding a stale ambiguous
   // mark here is always safe.
+  // Collects the placements of CONFIRMED instances (deduped by signature), so
+  // the global-consistency search (Pass 5) can treat them as fixed ground
+  // truth rather than re-solving them.
+  const confirmedPlacements = []
+  const confirmedPlacementSet = new Set()
+
   const recordConfirmedPlots = (plots) => {
+    const sig = placementSignature(plots)
+    if (!confirmedPlacementSet.has(sig)) {
+      confirmedPlacementSet.add(sig)
+      confirmedPlacements.push(plots)
+    }
     for (const [idx, name] of plots) {
       guaranteed.add(idx)
       ambiguousIdx.delete(idx)
+      ambiguousCandidates.delete(idx)
       guaranteedNames.set(idx, name)
     }
   }
@@ -308,6 +338,25 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     return cands.length > 0 && cands.every(c => c.key === key)
   }
 
+  // Enumerate every still-legal placement of `key` across the whole board
+  // (multi-remaining-instance shapes use this — the global-consistency search
+  // picks N pairwise non-overlapping placements from it).
+  const enumerateAllPlacements = (key) => {
+    const formation = DIGGING_FORMATIONS[key]
+    const minX = Math.min(...formation.map(p => p.x))
+    const maxX = Math.max(...formation.map(p => p.x))
+    const minY = Math.min(...formation.map(p => p.y))
+    const maxY = Math.max(...formation.map(p => p.y))
+    const allPlacements = []
+    for (let oy = -minY; oy <= gridSize - 1 - maxY; oy++) {
+      for (let ox = -minX; ox <= gridSize - 1 - maxX; ox++) {
+        const plots = buildPlacement(formation, ox, oy)
+        if (plots) allPlacements.push(plots)
+      }
+    }
+    return allPlacements
+  }
+
   // Enumerate every still-legal placement of a single-instance formation
   // `key`, against whatever `revealedTreasureName` holds at call time. If a
   // revealed (or pseudo-revealed) treasure name is (dynamically) confined to
@@ -335,19 +384,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       return survivors
     }
 
-    const minX = Math.min(...formation.map(p => p.x))
-    const maxX = Math.max(...formation.map(p => p.x))
-    const minY = Math.min(...formation.map(p => p.y))
-    const maxY = Math.max(...formation.map(p => p.y))
-
-    const allPlacements = []
-    for (let oy = -minY; oy <= gridSize - 1 - maxY; oy++) {
-      for (let ox = -minX; ox <= gridSize - 1 - maxX; ox++) {
-        const plots = buildPlacement(formation, ox, oy)
-        if (plots) allPlacements.push(plots)
-      }
-    }
-    return allPlacements
+    return enumerateAllPlacements(key)
   }
 
   // ── Iterative deduction ──────────────────────────────────────────────
@@ -575,6 +612,181 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       }
     }
 
+    // ── Pass 5: global-consistency name disambiguation ───────────────────
+    // The per-anchor local passes are sound but incomplete: a cell can be
+    // provably a treasure while its NAME is only provable via global
+    // constraints — every formation instance occurs exactly once, placements
+    // may not overlap, and every revealed treasure must be covered by exactly
+    // one placement. Live case: C4=CB + D5=OP are diagonal, so no straight-line
+    // artefact (FIFTEEN/TWENTY_FOUR) can cover both — only SEVENTEEN's L can —
+    // hence D4 is provably Camel Bone even though the local passes saw
+    // disagreeing candidates. For each disputed name, run a bounded exact
+    // search for a full consistent assignment in which the cell carries that
+    // name; names with NO consistent assignment are eliminated.
+    //
+    // Soundness: the real board's placement of every remaining instance is one
+    // of the enumerated legal placements, so "no consistent assignment with
+    // name n at cell X" ⇒ the real board does not name X=n ⇒ eliminating n is
+    // sound. The search checks placement legality (buildPlacement), non-overlap
+    // and reveal coverage; it deliberately ignores crab-satisfaction — a more
+    // permissive search can only KEEP names it shouldn't (cell stays
+    // ambiguous), never eliminate a real one. Budget exhaustion yields no
+    // conclusion (stays ambiguous — never a wrong name).
+    if (ambiguousCandidates.size) {
+      const groups = []
+      let groupsValid = true
+      for (const key of presentKeys) {
+        const need = remainingCount.get(key) ?? 0
+        if (need === 0) continue
+        const placements = need === 1
+          ? enumerateSingleInstanceSurvivors(key)
+          : enumerateAllPlacements(key)
+        if (!placements.length || placements.length < need) { groupsValid = false; break }
+        groups.push({ key, need, placements })
+      }
+      // Most-constrained first: fewest placement options → fewest branches.
+      groups.sort((a, b) => a.placements.length - b.placements.length)
+
+      const BUDGET = Symbol('budget')
+      const fixedCovered = new Set()
+      for (const plots of confirmedPlacements) {
+        for (const idx of plots.keys()) fixedCovered.add(idx)
+      }
+
+      // Find ANY full assignment (fixed placements + one non-overlapping
+      // placement per remaining instance) covering every revealed treasure
+      // cell. `extraReveals` adds a hypothetical reveal (cell → name) so we
+      // can test "could this cell be name n?". Returns true/false, or null on
+      // budget.
+      //
+      // Search strategy — backtrack over REVEALS, most-constrained first
+      // (a reveal with 1-2 covering placements prunes the tree far harder
+      // than a shape with 50 free placements), with sound reductions:
+      //  - a placement that CONTAINS a reveal cell but names it wrongly is
+      //    invalid (matters for the hypothetical extra reveals — the real
+      //    ones are already enforced by buildPlacement);
+      //  - shapes that end up covering no reveal ("floated") only need SOME
+      //    non-overlapping placement to exist — checked once at the leaf.
+      const search = (extraReveals) => {
+        const revealName = new Map(revealedTreasureName)
+        for (const [idx, name] of extraReveals) revealName.set(idx, name)
+
+        // Per-group precomputation: placement conflict flags (extra reveals
+        // only — regular ones are guaranteed clean by buildPlacement).
+        const groupPlacementOk = groups.map(g => g.placements.map(p => {
+          for (const [eIdx, eName] of extraReveals) {
+            const n = p.get(eIdx)
+            if (n !== undefined && !namesMatch(n, eName)) return false
+          }
+          return true
+        }))
+
+        // Options per reveal: which (group, placement) can cover it correctly.
+        const options = new Map()
+        for (const [idx, name] of revealName) {
+          if (fixedCovered.has(idx)) continue
+          const opts = []
+          for (let gi = 0; gi < groups.length; gi++) {
+            const { placements } = groups[gi]
+            for (let pi = 0; pi < placements.length; pi++) {
+              const n = placements[pi].get(idx)
+              if (n !== undefined && namesMatch(n, name) && groupPlacementOk[gi][pi]) {
+                opts.push([gi, pi])
+              }
+            }
+          }
+          options.set(idx, opts)
+        }
+
+        const slots = groups.map(g => g.need)
+        const placed = []
+        const occupied = new Set(fixedCovered)
+        const covered = new Set(fixedCovered)
+        let nodes = 0
+
+        const uncoveredReveals = () => {
+          const out = []
+          for (const idx of revealName.keys()) {
+            if (!covered.has(idx)) out.push(idx)
+          }
+          return out
+        }
+
+        const floatsOk = () => {
+          for (let gi = 0; gi < groups.length; gi++) {
+            if (slots[gi] === 0) continue
+            const { placements } = groups[gi]
+            let ok = false
+            for (let pi = 0; pi < placements.length; pi++) {
+              if (!groupPlacementOk[gi][pi]) continue
+              if (![...placements[pi].keys()].some(idx => occupied.has(idx))) { ok = true; break }
+            }
+            if (!ok) return false
+          }
+          return true
+        }
+
+        const bt = () => {
+          if (++nodes > 50000) throw BUDGET
+          const uncovered = uncoveredReveals()
+          if (!uncovered.length) return floatsOk()
+
+          // Most-constrained reveal first: fewest live options.
+          let best = null
+          for (const idx of uncovered) {
+            const live = options.get(idx).filter(([gi]) => slots[gi] > 0)
+            if (!live.length) return false // a reveal nobody can cover → dead end
+            if (!best || live.length < best.live.length) best = { idx, live }
+          }
+          const { idx, live } = best
+
+          for (const [gi, pi] of live) {
+            const p = groups[gi].placements[pi]
+            if ([...p.keys()].some(i => occupied.has(i))) continue
+            // Apply: occupy, cover, consume a slot of group gi.
+            const pKeys = [...p.keys()]
+            for (const i of pKeys) occupied.add(i)
+            for (const i of pKeys) covered.add(i)
+            slots[gi] -= 1
+            placed.push(p)
+            if (bt()) return true
+            placed.pop()
+            slots[gi] += 1
+            for (const i of pKeys) covered.delete(i)
+            for (const i of pKeys) occupied.delete(i)
+          }
+          return false
+        }
+
+        try { return bt() } catch (e) {
+          if (e === BUDGET) return null
+          throw e
+        }
+      }
+
+      const toResolve = [...ambiguousCandidates.keys()]
+      for (const idx of toResolve) {
+        const names = [...ambiguousCandidates.get(idx)]
+        const possible = []
+        let budgetHit = false
+        for (const n of names) {
+          const ok = search(new Map([[idx, n]]))
+          if (ok === true) possible.push(n)
+          else if (ok === null) { budgetHit = true; break }
+        }
+        if (budgetHit) continue // no conclusions this iteration — stay conservative
+        if (possible.length === 1) {
+          // Exactly one disputed name survives global consistency → provable.
+          guaranteedNames.set(idx, possible[0])
+          ambiguousCandidates.delete(idx)
+          ambiguousIdx.delete(idx)
+          iterChanged = true
+        }
+        // possible.length === 0 → the revealed state contradicts the game
+        // rules; keep ambiguous rather than manufacture a name.
+      }
+    }
+
     // Promote newly-guaranteed, unambiguously-named cells into
     // revealedTreasureName so the next iteration can use them as spatial
     // constraints for other formations (e.g. a single-instance shape whose
@@ -594,6 +806,14 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   const guaranteedSlugs = new Map()
   for (const [idx, name] of guaranteedNames) {
     guaranteedSlugs.set(idx, slugify(name))
+  }
+
+  // Disputed-name reporting for guaranteed-but-ambiguous cells (UI "?" tooltip):
+  // idx -> possible treasure slugs, unioned across every candidate that touched
+  // the cell. Absent for named cells. Read-only info — never used in deduction.
+  const guaranteedCandidates = new Map()
+  for (const [idx, names] of ambiguousCandidates) {
+    guaranteedCandidates.set(idx, [...names])
   }
 
   // ── Whole-pattern-guarantee finalization ────────────────────────────
@@ -624,5 +844,5 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     if (count > 0) guaranteedFormationCounts.set(key, count)
   }
 
-  return { guaranteed, guaranteedSlugs, guaranteedFormationCounts, partial: false }
+  return { guaranteed, guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts, partial: false }
 }

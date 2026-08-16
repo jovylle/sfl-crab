@@ -8,11 +8,15 @@ See `src/composables/useGridEngine.js` for the grid engine, `src/composables/use
 
 | Class | Meaning |
 |---|---|
-| `sand` | Empty/undisturbed tile |
-| `crab` | Crab tile — **always orthogonally adjacent to a treasure** |
-| `treasure actual-treasure` | Treasure tile — always surrounded by crabs |
+| `sand` | Empty tile — provably not a treasure |
+| `crab` | Crab tile — **always orthogonally adjacent to at least one treasure** |
+| `treasure actual-treasure` | Treasure tile — its in-bounds orthogonal neighbours are **treasures or crabs, never sand** |
 
-**The fundamental game rule**: every treasure has crabs in its 4 orthogonal neighbors (if within bounds). The hint system exploits this — if you see a crab, a treasure is adjacent. If you see multiple known crabs, their intersection is a guaranteed treasure location.
+**The fundamental game rules** (these are the invariants the solver exploits):
+
+1. **Treasure-neighbour rule**: every in-bounds orthogonal neighbour of a treasure is either a treasure (an adjacent plot of the same formation — e.g. the two `Vase` tiles of `HIEROGLYPH` touch) or a crab — **never sand or empty**. The practice engine encodes this directly: it auto-places crabs on *all unoccupied* orthogonal neighbours of placed treasures.
+2. **Crab-neighbour rule**: every crab has at least one treasure among its in-bounds orthogonal neighbours. This is the basis of the solver's crab-satisfaction forcing (Pass 4).
+3. Treasures only ever appear inside fixed formation shapes, placed by **translation only** (no rotation, no reflection) — see `src/data/game/diggingFormations.js`.
 
 Tiles also carry image classes like `tileImage:pearl`, `tileImage:crab`, `tileImage:sand` for rendering.
 
@@ -149,17 +153,26 @@ A toggleable auto-solver that computes **guaranteed treasure locations** from re
 
 Parses revealed state from tile classes (sand/crab/treasure + `tileImage:` name). Revealed treasure tiles store `treasure actual-treasure` as a single space-joined class, so tokens are flattened before matching.
 
-**Algorithm — local treasure-anchored deduction (three passes, iterated until stable):**
+**Algorithm — local, treasure-anchored deduction (five passes + finalization, iterated until stable):**
 
-- **Pass 1 — treasure-anchored**: for each revealed treasure T, enumerate every legal placement of any formation shape that could cover T (translation-only, no rotation/reflection; conflicts with revealed sand/crab/wrong-name tiles are ruled out immediately). Any cell that is a treasure-plot in *every* candidate placement is guaranteed.
-- **Pass 2 — single-instance forcing**: when exactly one instance of a formation is on the board and a revealed treasure name is owned only by that shape, enumerate all legal placements of that single instance and intersect them.
-- **Pass 3 — pure elimination**: for a single-instance formation with no name-confined reveal to anchor on, enumerate all legal placements across the whole board. If only one survives (ruled out by sand/crab/edges/pseudo-reveals), its cells are guaranteed.
-- **Pass 4 (crab-satisfaction forcing):** if a revealed crab has no known treasure neighbour and exactly one eligible candidate neighbour (not sand, not crab, not sand-adjacent), that neighbour is a guaranteed treasure.
-- **Propagation**: newly guaranteed cells with an unambiguous name are promoted to `revealedTreasureName` as *pseudo-reveals* so subsequent iterations can use them as spatial constraints for other formations. The loop repeats until nothing changes.
+- **Pass 1 — treasure-anchored** (two-phase): for each revealed treasure T, enumerate every legal placement of any formation shape that could cover T (translation-only, no rotation/reflection; a placement is rejected if a plot lands on revealed sand/crab, on a differently-named revealed treasure, or orthogonally adjacent to revealed sand — the treasure-neighbour rule). Any cell that is a treasure-plot in *every* candidate placement is guaranteed. *Phase A* immediately promotes anchors with exactly one candidate (their cells are certain, and confirming them tightens later anchors); *Phase B* recomputes all candidates with those promotions applied and intersects.
+- **Instance consumption**: when an anchor (or Pass 2/3 survivor) pins a shape to exactly one placement, that instance is *confirmed* — recorded by placement signature (dedup so two dug tiles of the same instance don't double-count) and its cell-origin is locked (`committedCellOrigin`), and the shape's remaining instance count (`remainingCount`) is decremented. Once a key reaches 0, no further placements of that shape are generated, which unblocks other anchors that were ambiguous only because of the now-committed instance. Pseudo-revealed cells never consume a slot.
+- **Pass 2 — single-instance forcing**: when exactly one instance of a shape remains and a revealed treasure is *dynamically confined* to it (only that shape can explain it, considering sibling shapes already consumed), enumerate the instance's legal placements that cover all such reveals and intersect them.
+- **Pass 3 — pure elimination**: for a single-remaining instance with no confined-name reveal to anchor on, enumerate every legal placement across the whole board. If only one survives (ruled out by sand/crab/edges/pseudo-reveals), its cells are guaranteed and the instance is consumed.
+- **Pass 4 — crab-satisfaction forcing**: if a revealed crab has no known treasure neighbour and exactly one eligible candidate neighbour (not sand, not crab, not treasure, not sand-adjacent), that neighbour is a guaranteed treasure (name unknown).
+- **Pass 5 — global-consistency name disambiguation**: the local passes are sound but incomplete — a cell can be provably a treasure while its NAME is only provable via global constraints (every formation instance occurs exactly once, placements may not overlap, and every revealed treasure must be covered by exactly one placement). Live case: C4=CB + D5=OP are diagonal, so no straight-line artefact can cover both — only SEVENTEEN's L fits, making D4 provably Camel Bone even though the local passes saw disagreeing candidates. For each guaranteed-but-ambiguous cell, Pass 5 runs a **bounded exact search** (backtracking over reveals, most-constrained first; 50k-node budget) asking "does a full consistent assignment exist where this cell carries name n?" for each disputed name. Names with no consistent assignment are eliminated; exactly one survivor is the proven name, which then propagates as a pseudo-reveal so the loop re-derives the rest. Budget exhaustion or zero survivors ⇒ stays ambiguous (never a wrong name). Sound because eliminating n only claims "no consistent assignment names this cell n" — and the real board's placement is always among the enumerated ones.
+- **Propagation**: newly guaranteed cells with an unambiguous name are promoted to `revealedTreasureName` as *pseudo-reveals* so subsequent iterations can use them as spatial constraints for other formations. Cells whose name is still disputed (Pass 5 couldn't eliminate down to one) stay guaranteed-but-ambiguous — index kept, no slug emitted, deliberately **not** promoted, since treating them as a specific treasure could wrongly eliminate another shape's real placement. The loop repeats until a full iteration changes nothing.
+- **Finalization — whole-pattern guarantee** (`guaranteedFormationCounts`): the number of *individually confirmed* instances per shape (distinct confirmed signatures), plus, for a shape with exactly one remaining instance whose lone survivor wasn't already confirmed, that instance. The UI checkmarks exactly that many of the shape's thumbnails (N-of-M, not all-or-nothing).
 
-**Why local instead of global backtracking search**: the global approach is exponential and, once capped, its solution set is incomplete — intersecting an incomplete set can wrongly guarantee a tile. The local method needs no cap and is always sound (never a false positive).
+**Why local passes + a bounded global judge**: unrestricted global backtracking is exponential and, once capped, incomplete — intersecting an incomplete solution set can wrongly guarantee a tile. So the primary passes stay local (never a false positive, no cap needed). Pass 5 is the exception, and it's safe for a different reason: it never *adds* a guarantee from a partial search — it only *eliminates* a candidate name when an exhaustive (budgeted) search proves no consistent assignment exists. An exhausted budget yields no conclusion, so even a hard board can only stay ambiguous, never wrong. Every claim — positive or negative — is proven against the revealed state + the game invariants, and the 800-board soundness oracle checks them against ground truth.
 
 The solve is synchronous and instant (no cap, no idle callback needed). It is called inside `usePredictionEngine.js` which wraps it in a `watchEffect` and debounces via `requestIdleCallback` for UI responsiveness.
+
+**Return shape** — `solveTreasures(tiles, patternKeys, gridSize)` returns:
+- `guaranteed: Set<idx>` — provably treasure (includes already-revealed treasure tiles; the UI filters them for display)
+- `guaranteedSlugs: Map<idx, slug>` — treasure image slug, present only when the name is unambiguous
+- `guaranteedCandidates: Map<idx, slug[]>` — for guaranteed-but-ambiguous cells, the disputed identities the solver is still weighing (feeds the UI "?" tooltip: "could be: camel bone, otter pebble"); cleared when a name is proven
+- `guaranteedFormationCounts: Map<key, count>` — whole-pattern guarantees (see finalization)
 
 ### Testing the solver
 

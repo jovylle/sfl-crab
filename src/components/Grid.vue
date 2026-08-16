@@ -53,7 +53,7 @@
         <span
           v-else-if="predictionUnknown(index)"
           class="prediction-unknown"
-          title="Guaranteed treasure — exact type unknown"
+          :title="predictionUnknownTitle(index)"
         >?</span>
 
         <!-- transient shovel dig reveal overlay for freshly-dug tiles.
@@ -166,7 +166,7 @@ const picker = ref(null)
 // able to anchor to its shape. Including all shapes only ever makes deductions
 // more conservative (never a wrong guarantee).
 const { solverPatternKeys } = useLandData()
-const { guaranteed, guaranteedSlugs } = usePredictionEngine(
+const { guaranteed, guaranteedSlugs, guaranteedCandidates } = usePredictionEngine(
   tiles,
   solverPatternKeys,
   toRef(() => showPrediction),
@@ -198,6 +198,19 @@ function predictionUnknown(index) {
   if (!guaranteed.value.has(index)) return false
   if (isRevealed(tiles.value[index])) return false
   return !guaranteedSlugs.value.has(index)
+}
+
+// Explainer tooltip for the "?" — lists the candidate identities the solver is
+// still weighing (e.g. "could be Camel Bone or Otter Pebble"), so an ambiguous
+// mark reads as a sound deduction instead of a mystery. Falls back to the old
+// generic text when the solver reports no candidates for the cell.
+function predictionUnknownTitle(index) {
+  const candidates = guaranteedCandidates.value.get(index)
+  if (candidates?.length) {
+    const names = candidates.map(s => s.replace(/_/g, ' ')).join(', ')
+    return `Guaranteed treasure — could be: ${names}`
+  }
+  return 'Guaranteed treasure — exact type unknown'
 }
 
 // static labels for overlays

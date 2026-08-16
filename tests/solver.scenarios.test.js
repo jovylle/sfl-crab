@@ -820,6 +820,120 @@ describe('Pass 4 — crab-satisfaction forcing', () => {
   })
 })
 
+// ── Guaranteed-but-ambiguous reporting (guaranteedCandidates) ─────────────────
+// A cell can be provably a treasure while its exact NAME stays underdetermined:
+// distinct legal placements that all cover it disagree on what it's called.
+// The solver reports the disputed identities (for the UI's "?" tooltip) without
+// ever guessing. Regression: the live land 4485248732423974 case — C4/D5 are
+// revealed (Camel Bone / Otter Pebble), and three artefact formations all have
+// a legal placement through C4-D4, disagreeing on D4.
+describe('guaranteedCandidates — disputed-name reporting', () => {
+  it('D4 is guaranteed but reports the two names still in dispute', () => {
+    // C4 (idx 32) = Camel Bone, D5 (idx 43) = Otter Pebble. Crabs at B4 and C3
+    // kill every OTHER placement that could explain C4 (the FIFTEEN/TWENTY_FOUR
+    // line-origins through B4, TWENTY_FOUR's C3 variant), leaving exactly three
+    // legal explanations of the C4-D4-D5 cluster:
+    //   FIFTEEN @ (2,3):     C4=CB, D4=OP, E4=CB
+    //   TWENTY_FOUR @ (2,3): C4=CB, D4=OP, E4=CB, C5=CB, E5=CB
+    //   SEVENTEEN @ (2,3):   C4=CB, D4=CB, D5=OP
+    // All three cover D4, but name it differently → guaranteed + ambiguous.
+    const tiles = makeTiles([
+      { x: 2, y: 3, items: { 'Camel Bone': 1 } },   // C4 (idx 32)
+      { x: 3, y: 4, items: { 'Otter Pebble': 1 } }, // D5 (idx 43)
+      { x: 1, y: 3, items: { Crab: 1 } },           // B4 (idx 31)
+      { x: 2, y: 2, items: { Crab: 1 } },           // C3 (idx 22)
+    ])
+    const { guaranteed, guaranteedSlugs, guaranteedCandidates } = solveTreasures(
+      tiles, ['ARTEFACT_FIFTEEN', 'ARTEFACT_TWENTY_FOUR', 'ARTEFACT_SEVENTEEN'], G,
+    )
+
+    // The unambiguous cells keep their names…
+    expect(guaranteedSlugs.get(32), 'C4 — all candidates agree Camel Bone').toBe('camel_bone')
+    expect(guaranteedSlugs.get(43), 'D5 — all candidates agree Otter Pebble').toBe('otter_pebble')
+
+    // …and D4 is guaranteed, nameless, with both disputed identities reported.
+    expect(guaranteed.has(33), 'D4 guaranteed treasure').toBe(true)
+    expect(guaranteedSlugs.has(33), 'D4 not in guaranteedSlugs').toBe(false)
+    const candidates = guaranteedCandidates.get(33) || []
+    expect([...candidates].sort()).toEqual(['camel bone', 'otter pebble'])
+
+    // Named cells must NOT appear in the candidates map (no stale ambiguity).
+    expect(guaranteedCandidates.has(32)).toBe(false)
+    expect(guaranteedCandidates.has(43)).toBe(false)
+  })
+
+  it('global consistency resolves D4 = Camel Bone (live land 4485248732423974 case)', () => {
+    // Same C4/D5/B4/C3 cluster as the ambiguous mini-board above, PLUS the
+    // third artefact cluster G9=Otter Pebble + H9=Camel Bone. Now the name is
+    // provable GLOBALLY, even though the local passes still see two legal
+    // explanations for D4:
+    //   - D4=Otter Pebble would force FIFTEEN(2,3) or TWENTY_FOUR(2,3) at
+    //     C4-D4-E4; the remaining shapes then cannot cover BOTH the D5 reveal
+    //     AND the G9/H9 cluster without overlapping or running out of
+    //     formations (each artefact occurs exactly once).
+    //   - D4=Camel Bone is satisfied by SEVENTEEN(2,3) (C4-D4-D5) with
+    //     FIFTEEN(6,1) at G2-H2-I2 and TWENTY_FOUR(5,8) at F9-G9-H9-F10-H10.
+    // So only the Camel Bone name survives a full-consistency check.
+    const tiles = makeTiles([
+      { x: 2, y: 3, items: { 'Camel Bone': 1 } },   // C4 (idx 32)
+      { x: 3, y: 4, items: { 'Otter Pebble': 1 } }, // D5 (idx 43)
+      { x: 1, y: 3, items: { Crab: 1 } },           // B4 (idx 31)
+      { x: 2, y: 2, items: { Crab: 1 } },           // C3 (idx 22)
+      { x: 6, y: 8, items: { 'Otter Pebble': 1 } }, // G9 (idx 86)
+      { x: 7, y: 8, items: { 'Camel Bone': 1 } },   // H9 (idx 87)
+    ])
+    const { guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts } = solveTreasures(
+      tiles, ['ARTEFACT_FIFTEEN', 'ARTEFACT_TWENTY_FOUR', 'ARTEFACT_SEVENTEEN'], G,
+    )
+
+    expect(guaranteedSlugs.get(33), 'D4 — provably Camel Bone via global consistency').toBe('camel_bone')
+    expect(guaranteedCandidates.has(33), 'D4 no longer disputed').toBe(false)
+    // The resolved name propagates: SEVENTEEN becomes whole-pattern-guaranteed.
+    expect(guaranteedFormationCounts.get('ARTEFACT_SEVENTEEN')).toBe(1)
+  })
+
+  it('confirmed instances clear the candidate report (stale ambiguity overridden)', () => {
+    // Same board as the 2026-08-01 regression: once a cell is pinned to a
+    // specific instance, its name is ground truth and any earlier dispute must
+    // vanish from the report.
+    const tiles = makeTiles([
+      { x: 8, y: 8, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 8, items: { [SEASONAL]: 1 } },
+      { x: 1, y: 8, items: { Crab: 1 } },
+      { x: 2, y: 8, items: { 'Cockle Shell': 1 } },
+      { x: 3, y: 9, items: { 'Cockle Shell': 1 } },
+      { x: 1, y: 1, items: { 'Camel Bone': 1 } },
+      { x: 2, y: 1, items: { 'Camel Bone': 1 } },
+      { x: 1, y: 0, items: { [SEASONAL]: 1 } },
+      { x: 8, y: 1, items: { Sand: 2 } },
+      { x: 5, y: 1, items: { Sand: 2 } },
+      { x: 8, y: 4, items: { Crab: 1 } },
+      { x: 7, y: 4, items: { Crab: 1 } },
+      { x: 8, y: 5, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 5, items: { 'Cockle Shell': 1 } },
+      { x: 9, y: 6, items: { [SEASONAL]: 1 } },
+      { x: 1, y: 3, items: { Crab: 1 } },
+      { x: 1, y: 4, items: { Sand: 2 } },
+      { x: 2, y: 3, items: { Wood: 1 } },
+      { x: 3, y: 3, items: { 'Wooden Compass': 1 } },
+      { x: 4, y: 7, items: { Sand: 2 } },
+      { x: 5, y: 5, items: { Crab: 1 } },
+      { x: 4, y: 5, items: { Hieroglyph: 1 } },
+    ])
+    const patterns = [
+      'ARTEFACT_SEVENTEEN', 'ARTEFACT_FIFTEEN', 'ARTEFACT_EIGHTEEN',
+      'HIEROGLYPH', 'COCKLE', 'COCKLE', 'WOODEN_COMPASS',
+    ]
+    const tilesArr = tiles
+    const { guaranteed, guaranteedSlugs, guaranteedCandidates } = solveTreasures(tilesArr, patterns, G)
+    expect(guaranteed.has(2), 'C1 (idx 2)').toBe(true)
+    expect(guaranteedSlugs.get(2)).toBe('camel_bone')
+    // Confirmed instance ⇒ name is ground truth ⇒ nothing disputed to report.
+    expect(guaranteedCandidates.has(2), 'C1 candidates cleared after confirmation').toBe(false)
+    expect(guaranteedCandidates.has(86), 'G9 candidates cleared after confirmation').toBe(false)
+  })
+})
+
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
 
 describe('SOLVER_SCENARIOS auto-generated regression suite', () => {
