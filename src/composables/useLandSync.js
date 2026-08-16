@@ -1,13 +1,16 @@
 // src/composables/useLandSync.js
+//
+// Thin UI wrapper over landFetchCoordinator. Owns the visible refresh state
+// (isLoading / isCooldown / remaining countdown); ALL network decisions live
+// in the coordinator (freshness, single-flight, cooldown, bypass policy).
+
 import { ref, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLandData } from '@/composables/useLandData'
-import { fetchLandData } from '@/services/landSyncService'
+import { requestLandData } from '@/services/landFetchCoordinator'
 import { getLandCooldownStorageKey } from '@/config/api.js'
 
 const instances = new Map()
-const SUCCESS_COOLDOWN_MS = 15_000
-const FAILURE_COOLDOWN_MS = 30_000
 
 export function useLandSync (opts = {}) {
   let landId
@@ -36,6 +39,7 @@ export function useLandSync (opts = {}) {
     }
 
     function startCountdown (endTime) {
+      clearInterval(intervalId)
       isCooldown.value = true
       intervalId = setInterval(() => {
         const msLeft = endTime - Date.now()
@@ -55,40 +59,39 @@ export function useLandSync (opts = {}) {
     onBeforeUnmount(() => clearInterval(intervalId))
 
     async function reloadFromServer (opts = {}) {
-      const { force = false, skipCooldown = false, landId: overrideLandId } = opts
+      const { force = false, bypassCache = false, landId: overrideLandId } = opts
       const targetLandId = overrideLandId || landId
       if (isLoading.value || (isCooldown.value && !force)) return
 
       isLoading.value = true
 
       try {
-        const fresh = await fetchLandData(targetLandId, { bypassCache: true })
+        const data = await requestLandData(targetLandId, { force, bypassCache })
         lastFetchFailed = false
-        landData.value = {
-          date: new Date().toISOString().slice(0, 10),
-          fetchedAt: Date.now(),
-          ...fresh,
+
+        // Suppressed (cooldown active, nothing new) — keep current data as-is.
+        if (!data) return
+
+        landData.value = data
+
+        const desertDigging = data.visitedFarmState?.desert?.digging
+        const username = data.visitedFarmState?.username
+        if (desertDigging) {
+          window.dispatchEvent(
+            new CustomEvent('landDataReady', {
+              detail: { desertDigging, username },
+            }),
+          )
         }
-
-        const desertDigging = fresh.visitedFarmState.desert.digging
-        const username = fresh.visitedFarmState.username
-
-        window.dispatchEvent(
-          new CustomEvent('landDataReady', {
-            detail: { desertDigging, username },
-          }),
-        )
       } catch (err) {
         lastFetchFailed = true
         alert(err.message || 'An unexpected error occurred while loading land data.')
       } finally {
         isLoading.value = false
-
-        if (!force && !skipCooldown && !isCooldown.value) {
-          const cooldownMs = lastFetchFailed ? FAILURE_COOLDOWN_MS : SUCCESS_COOLDOWN_MS
-          const endTime = Date.now() + cooldownMs
-          localStorage.setItem(cooldownKey, String(endTime))
-          startCountdown(endTime)
+        // Re-sync the cooldown UI from the coordinator's authoritative state.
+        const end = Number(localStorage.getItem(cooldownKey))
+        if (end > Date.now()) {
+          startCountdown(end)
         }
       }
     }

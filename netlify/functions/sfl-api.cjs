@@ -27,6 +27,14 @@ function resolveApiTarget (event) {
 
 const corsHeaders = {
   'Content-Type': 'application/json',
+  // Explicit no-store: land data is dynamic per-farm, and leaving this unset
+  // lets netlify dev's fastify static layer apply its default 1h browser cache
+  // (public, max-age=3600) locally — which makes the refresh button look broken
+  // (browser serves the old body). In prod it guarantees no browser/CDN caching;
+  // the only cache is this function's 60s in-memory responseCache, which the
+  // x-sfl-bypass-cache header controls. If edge caching is ever wanted, switch
+  // to CDN-Cache-Control + Vary (see practice-patterns.cjs).
+  'Cache-Control': 'no-store',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, x-sfl-api-env, x-sfl-bypass-cache',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',

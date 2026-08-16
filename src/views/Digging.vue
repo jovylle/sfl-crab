@@ -260,7 +260,7 @@ onMounted(async () => {
     const { shouldAutoFetch } = readLandCacheMeta(routeLandId)
     if (shouldAutoFetch) {
       const { reloadFromServer } = useLandSync({ landId: routeLandId })
-      reloadFromServer({ landId: routeLandId, skipCooldown: true })
+      reloadFromServer({ landId: routeLandId })
     }
   }
 })

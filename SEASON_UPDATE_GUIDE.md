@@ -8,20 +8,21 @@ Every few months, Sunflower Land releases a new chapter/season. This guide helps
 
 ### How It Works
 
-- **Automatic:** Runs on the 1st of every month at 00:00 UTC
+- **Automatic:** Runs on the 1st–3rd of every month at 00:00 UTC
 - **Manual Trigger:** You can also trigger it manually from GitHub Actions tab
 - **What It Does:**
   1. Fetches latest season data from SFL repository
   2. Updates `src/data/game/seasonalArtefacts.js` if changes detected
   3. Downloads new artifact `.webp` images to `public/world/`
-  4. Commits and pushes changes automatically to `development` branch
+  4. Commits and pushes the changes to `master`
+  5. **Mirrors the data files to `development`** via a file-level copy (no merge, no conflicts) so beta stays in sync
 
 ### Manual Trigger
 
 1. Go to: https://github.com/jovylle/sfl-crab/actions
-2. Select "Update Seasons Data" workflow
+2. Select the "Sync Artefact Data - v1.3" workflow
 3. Click "Run workflow" button
-4. Select branch (usually `development`)
+4. Select branch — leave it on the default (`master`). Do **not** pick `development`: the workflow commits to the branch it runs on, and running from `development` would skip `master` entirely.
 5. Click "Run workflow" green button
 
 ### Test Locally Before Deployment
@@ -184,9 +185,10 @@ git push
 ### GitHub Actions Workflow
 
 The automation is defined in `.github/workflows/sync-artefact.yml`:
-- Scheduled to run monthly
-- Can be triggered manually
-- Automatically commits changes if updates are found
+- Scheduled to run monthly (1st–3rd at 00:00 UTC)
+- Can be triggered manually (from `master` — see above)
+- Commits changes to `master`, then mirrors `src/data/game/` + `public/world/` to `development`
+- The mirror is a file-level copy (`git checkout <sync-sha> -- <paths>`), so it never creates merge conflicts; if `development` has local edits to the data paths that `master` doesn't have, the mirror is skipped with a warning instead of overwriting them
 
 ### Update Script
 
@@ -206,5 +208,5 @@ The script `scripts/sync-artefact.js`:
 
 ---
 
-**Last Updated:** November 2025
+**Last Updated:** August 2026
 

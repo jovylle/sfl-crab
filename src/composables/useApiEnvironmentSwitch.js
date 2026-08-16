@@ -28,7 +28,7 @@ export function useApiEnvironmentSwitch () {
     if (landId) {
       setTimeout(() => {
         const { reloadFromServer } = useLandSync({ landId })
-        reloadFromServer({ landId, force: true })
+        reloadFromServer({ landId, force: true, bypassCache: true })
       }, 100)
     }
   }

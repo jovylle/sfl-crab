@@ -233,7 +233,7 @@ import PracticePatterns from '@/components/PracticePatterns.vue'
 import InfoFooter from '@/components/InfoFooter.vue'
 import { submitPracticeRun, isPracticeSaveScoresEnabled, setPracticeSaveScoresEnabled, getNickname, setNickname } from '@/services/practiceHubService.js'
 import { fetchPracticeRun } from '@/services/practiceRunApiService.js'
-import { fetchLandDataFromServer } from '@/services/landApiService.js'
+import { requestLandData } from '@/services/landFetchCoordinator'
 import { getTodayUTC } from '@/utils/buildDigTimeline.js'
 import { buildPracticeDigTimeline } from '@/utils/buildPracticeDigTimeline.js'
 import { encodeBoard, decodeBoard } from '@/utils/practiceBoardCode.js'
@@ -592,7 +592,8 @@ async function startLandRound (landId) {
   todayRoundErrorMessage.value = ''
   lastRunId.value = null
   try {
-    const data = await fetchLandDataFromServer(landId)
+    const data = await requestLandData(landId)
+    if (!data) throw new Error('Land data is not available right now. Please try again shortly.')
     const patterns = data?.visitedFarmState?.desert?.digging?.patterns || []
     if (!patterns.length) throw new Error('No patterns found for that land.')
     isReplayMode.value = false

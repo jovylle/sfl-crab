@@ -35,6 +35,15 @@ export default defineConfig(({ mode }) => {
     }
   },
   server: {
+    // Listen on all interfaces so the dev server is reachable from other
+    // tailnet devices, e.g. http://minipc.bongo-major.ts.net:5173 (Vite
+    // proxies /api and /.netlify/functions to the local Netlify functions
+    // below, so the full stack works without exposing netlify dev itself).
+    host: true,
+    // Vite 6 blocks Host headers not in its allowlist (raw IPs pass, hostnames
+    // like the tailnet MagicDNS name get 403). This is a private dev server —
+    // allow any hostname. LAN .local names, tailnet names, whatever.
+    allowedHosts: true,
     proxy: {
       // Local Netlify functions (hub-auth not on remote beta site)
       '/api/hub-auth': {

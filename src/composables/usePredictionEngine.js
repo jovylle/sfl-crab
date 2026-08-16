@@ -10,6 +10,7 @@ import { solveTreasures } from '@/utils/treasureSolver.js'
 export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { gridSize = 10, syncRef = null } = {}) {
   const guaranteed = ref(new Set())
   const guaranteedSlugs = ref(new Map())
+  const guaranteedCandidates = ref(new Map())
   const guaranteedFormationCounts = ref(new Map())
 
   const schedule = (typeof window !== 'undefined' && window.requestIdleCallback)
@@ -25,6 +26,7 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { grid
     const result = solveTreasures(tilesRef.value, patternKeysRef.value, gridSize)
     guaranteed.value = result.guaranteed
     guaranteedSlugs.value = result.guaranteedSlugs
+    guaranteedCandidates.value = result.guaranteedCandidates
     guaranteedFormationCounts.value = result.guaranteedFormationCounts
   }
 
@@ -34,6 +36,7 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { grid
     if (!enabledRef.value) {
       guaranteed.value = new Set()
       guaranteedSlugs.value = new Map()
+      guaranteedCandidates.value = new Map()
       guaranteedFormationCounts.value = new Map()
       return
     }
@@ -60,5 +63,5 @@ export function usePredictionEngine(tilesRef, patternKeysRef, enabledRef, { grid
     { immediate: true, deep: true }
   )
 
-  return { guaranteed, guaranteedSlugs, guaranteedFormationCounts }
+  return { guaranteed, guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts }
 }

@@ -130,11 +130,13 @@ Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, tes
 
 ## Data flow (live land)
 
-1. **Fetch** — `landApiService.js` → `/.netlify/functions/sfl-api/community/farms/:id` → SFL API. The app sends `bypassCache` to skip the proxy's own 60s cache on manual syncs.
+> Full request pipeline + caching policy: see [API_LAYER.md](./API_LAYER.md).
+
+1. **Fetch** — every caller goes through `landFetchCoordinator.js` (`requestLandData()`), which applies single-flight, a 5-min localStorage freshness check, and the cooldown policy. It calls `landSyncService` → `landApiService.js` → `/.netlify/functions/sfl-api/community/farms/:id` → SFL API.
 2. **Response shape** — `{ visitedFarmState: { desert: { digging: { grid, patterns, completedPatterns } } } }`. Grid tiles are `{ x, y, items: { Crab | Sand | <TreasureName> }, dugAt, tool }`.
 3. **Store** — `useLandData.js` holds reactive land data + localStorage cache, keyed per land + API env, UTC-date-stamped (stale after the UTC date changes).
 4. **Render** — `useGridEngine.js` converts API tiles → CSS class arrays and rebuilds neighbor hints (`near-*`). See [GRID_MECHANICS.md](./GRID_MECHANICS.md).
-5. **Cooldowns** — 15s between successful refreshes, 30s after failures (`useLandSync.js`).
+5. **Cooldowns** — 15s between successful refreshes, 30s after failures, armed by the coordinator on every network hit (`useLandSync.js` only renders the countdown UI).
 
 ## Key composables
 
@@ -143,7 +145,7 @@ Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, tes
 | `useGridEngine.js` ⭐ | Core 10×10 grid + auto neighbor-hint propagation |
 | `useGridManager.js` | User marks / manual hint cycling |
 | `useLandData.js` ⭐ | Central land-data store + localStorage cache; `solverPatternKeys` is the historical-aware solver-input source shared by Grid.vue/TodayPatterns.vue on both digging pages |
-| `useLandSync.js` | Refresh cooldowns, `bypassCache` |
+| `useLandSync.js` | Refresh UI state (isLoading/isCooldown/countdown) — network decisions delegated to `landFetchCoordinator` |
 | `useDigDayStore.js` | Hub dig-day sync (debounce/ETag/merge) — see [DIG_DAY_SYNC.md](./DIG_DAY_SYNC.md) |
 | `usePracticeEngine.js` / `usePracticePatterns.js` | Practice mode grid generation + daily patterns |
 | `useHintsStorage.js` | Per-land per-UTC-day hint persistence |
@@ -156,7 +158,7 @@ Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, tes
 
 ## Services (`src/services/`)
 
-All hit the `/api/*` Netlify proxies. `landApiService.js`, `landSyncService.js`, `digDayApiService.js`, `hubAuthService.js`, `hubProfileService.js`, `practiceHubService.js`, `practicePatternService.js`, `practiceRunApiService.js`, `adminBlobService.js`. Hub calls attach `Authorization: Bearer <token>` via `src/features/hub/hubClient.js` when a session exists.
+All hit the `/api/*` Netlify proxies — per-service reference in [../src/services/README.md](../src/services/README.md). `landFetchCoordinator.js` ⭐ is the single door to the SFL farm API (single-flight, freshness, cooldown — see [API_LAYER.md](./API_LAYER.md)); `landApiService.js`, `landSyncService.js`, `digDayApiService.js`, `hubAuthService.js`, `hubProfileService.js`, `practiceHubService.js`, `practicePatternService.js`, `practiceRunApiService.js`, `adminBlobService.js`. Hub calls attach `Authorization: Bearer <token>` via `src/features/hub/hubClient.js` when a session exists.
 
 ## Grid builder utils (the 4 overlapping files)
 
@@ -193,6 +195,7 @@ Known non-functional or trap-laden spots. Documented so an AI doesn't waste time
 ## Related docs
 
 - [AGENTS.md](../AGENTS.md) — dev commands, conventions, env, API proxy quirks
+- [API_LAYER.md](./API_LAYER.md) — SFL farm API request pipeline + caching/cooldown policy
 - [GRID_MECHANICS.md](./GRID_MECHANICS.md) — grid engine, hints, formations, practice mode
 - [DIG_DAY_SYNC.md](./DIG_DAY_SYNC.md) — dig-day hub sync (debounce/ETag/merge)
 - [HUB_CONSUMPTION_SPEC.md](./HUB_CONSUMPTION_SPEC.md) — hub ETag/idempotency spec

@@ -67,7 +67,7 @@
           <span
             v-else-if="!tile && predictionUnknown(index)"
             class="prediction-unknown"
-            title="Guaranteed treasure — exact type unknown"
+            :title="predictionUnknownTitle(index)"
           >?</span>
 
           <!-- Confirm-dig: pulsing check waiting for second click -->
@@ -161,7 +161,7 @@ const solverTiles = computed(() =>
   })
 )
 
-const { guaranteed, guaranteedSlugs } = usePredictionEngine(
+const { guaranteed, guaranteedSlugs, guaranteedCandidates } = usePredictionEngine(
   solverTiles,
   toRef(props, 'patternKeys'),
   toRef(props, 'showPrediction'),
@@ -182,6 +182,17 @@ function predictionUnknown(index) {
   if (!props.showPrediction) return false
   if (!guaranteed.value.has(index)) return false
   return !guaranteedSlugs.value.has(index)
+}
+
+// Explainer tooltip for the "?" — lists the candidate identities the solver is
+// still weighing, so an ambiguous mark reads as a sound deduction instead of a
+// mystery. Falls back to the generic text when no candidates are reported.
+function predictionUnknownTitle(index) {
+  const candidates = guaranteedCandidates.value.get(index)
+  if (candidates?.length) {
+    return `Guaranteed treasure — could be: ${candidates.map(s => s.replace(/_/g, ' ')).join(', ')}`
+  }
+  return 'Guaranteed treasure — exact type unknown'
 }
 
 const emit = defineEmits(['dig', 'auto-finish'])
