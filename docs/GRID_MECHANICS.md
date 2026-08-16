@@ -173,6 +173,9 @@ The solve is synchronous and instant (no cap, no idle callback needed). It is ca
 - `guaranteedSlugs: Map<idx, slug>` — treasure image slug, present only when the name is unambiguous
 - `guaranteedCandidates: Map<idx, slug[]>` — for guaranteed-but-ambiguous cells, the disputed identities the solver is still weighing (feeds the UI "?" tooltip: "could be: camel bone, otter pebble"); cleared when a name is proven
 - `guaranteedFormationCounts: Map<key, count>` — whole-pattern guarantees (see finalization)
+- `remainingCounts: Map<key, n>` — instances still unconfirmed per shape (Layer 3 reporting; absent = fully proven)
+- `remainingRegions: Map<key, Set<idx>>` — for each shape with remaining instances, the union of its still-legal placements = the cells that can still host one of its treasures ("where can it still be?"); computed from the same survivor sets the solver reasons over, so it can never contradict the deduction
+- `possibleTreasureCells: Set<idx>` — union of every remaining region (a cell absent from this set is provably NOT an undiscovered treasure)
 
 ### Testing the solver
 

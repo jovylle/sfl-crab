@@ -44,6 +44,9 @@
         <p class="text-xs opacity-60">
           guaranteed: {{ liveResult.guaranteedCount }} cells
         </p>
+        <p class="text-xs opacity-60">
+          remaining: {{ liveResult.remainingSummary }}
+        </p>
       </div>
     </div>
 
@@ -70,6 +73,11 @@
         </div>
       </div>
 
+      <!-- Remaining-instance report (Layer 3) -->
+      <p class="text-xs opacity-60 mb-1">
+        remaining: {{ s.remainingSummary }}
+      </p>
+
       <!-- Assertions list -->
       <ul class="text-sm space-y-0.5">
         <li v-for="a in s.assertions" :key="a.label" :class="a.ok ? 'text-success' : 'text-error'">
@@ -86,6 +94,14 @@ import { ref, onMounted } from 'vue'
 import { solveTreasures } from '@/utils/treasureSolver.js'
 import { gridArrayToTiles } from '@/utils/gridTileTransform.js'
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
+import { SOLVER_SCENARIOS_MECHANICS } from '@/dev/solverScenariosMechanics.js'
+import { SOLVER_SCENARIOS_OVERLAP } from '@/dev/solverScenariosOverlap.js'
+
+const ALL_SCENARIOS = [
+  ...SOLVER_SCENARIOS,
+  ...SOLVER_SCENARIOS_MECHANICS,
+  ...SOLVER_SCENARIOS_OVERLAP,
+]
 
 const SLUG_ABBR = {
   camel_bone: 'CB', salt_dino_egg: 'SDE', cockle_shell: 'CK',
@@ -96,9 +112,18 @@ const SLUG_ABBR = {
 
 const G = 10
 
+function buildRemainingSummary(remainingCounts, remainingRegions) {
+  const parts = []
+  for (const [key, n] of remainingCounts) {
+    const regionSize = remainingRegions.get(key)?.size ?? 0
+    parts.push(`${key} ×${n}${regionSize ? ` (${regionSize} cells)` : ''}`)
+  }
+  return parts.length ? parts.join(', ') : 'none — all instances proven'
+}
+
 function evalScenario(scenario) {
   const tiles = gridArrayToTiles(scenario.grid, G)
-  const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, scenario.patterns, G)
+  const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, scenario.patterns, G)
 
   const cells = Array.from({ length: G * G }, (_, idx) => {
     const tileClasses = tiles[idx] || []
@@ -150,6 +175,7 @@ function evalScenario(scenario) {
     pass: assertions.every(a => a.ok),
     cells,
     assertions,
+    remainingSummary: buildRemainingSummary(remainingCounts, remainingRegions),
   }
 }
 
@@ -204,12 +230,13 @@ async function loadLiveLand() {
     const rawGrid = digging.grid || []
     const patterns = digging.patterns || []
     const tiles = gridArrayToTiles(rawGrid, G)
-    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, patterns, G)
+    const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, patterns, G)
     liveResult.value = {
       id,
       patterns,
       cells: buildCells(tiles, guaranteed, guaranteedSlugs),
       guaranteedCount: guaranteed.size,
+      remainingSummary: buildRemainingSummary(remainingCounts, remainingRegions),
     }
   } catch (err) {
     liveError.value = err?.message || 'Failed to load land data.'
@@ -220,6 +247,6 @@ async function loadLiveLand() {
 
 const results = ref([])
 onMounted(() => {
-  results.value = SOLVER_SCENARIOS.map(evalScenario)
+  results.value = ALL_SCENARIOS.map(evalScenario)
 })
 </script>
