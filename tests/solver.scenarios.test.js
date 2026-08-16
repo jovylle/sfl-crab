@@ -935,9 +935,17 @@ describe('guaranteedCandidates — disputed-name reporting', () => {
 })
 
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
+import { SOLVER_SCENARIOS_MECHANICS } from '@/dev/solverScenariosMechanics.js'
+import { SOLVER_SCENARIOS_OVERLAP } from '@/dev/solverScenariosOverlap.js'
+
+const ALL_SCENARIOS = [
+  ...SOLVER_SCENARIOS,
+  ...SOLVER_SCENARIOS_MECHANICS,
+  ...SOLVER_SCENARIOS_OVERLAP,
+]
 
 describe('SOLVER_SCENARIOS auto-generated regression suite', () => {
-  for (const s of SOLVER_SCENARIOS) {
+  for (const s of ALL_SCENARIOS) {
     if (!s.assertions || s.assertions.length === 0) continue
     it(s.name, () => {
       const tiles = gridArrayToTiles(s.grid, G)
@@ -950,4 +958,77 @@ describe('SOLVER_SCENARIOS auto-generated regression suite', () => {
       }
     })
   }
+})
+
+describe('Layer 3 — remaining-instance reporting', () => {
+  it('reports the one unconfirmed COCKLE and its exact survivor region', () => {
+    // Duplicate COCKLEs: instance A pinned to the corner (cells 0,11,22), the
+    // other's diagonal can still be (3,3),(4,4),(5,5) — union {33,44,55,66,77}.
+    const tiles = makeTiles([
+      { x: 0, y: 0, items: { 'Cockle Shell': 1 } },
+      { x: 5, y: 5, items: { 'Cockle Shell': 1 } },
+    ])
+    const { remainingCounts, remainingRegions, possibleTreasureCells } = solveTreasures(tiles, ['COCKLE', 'COCKLE'], G)
+
+    expect(remainingCounts.get('COCKLE')).toBe(1)
+    expect(remainingCounts.size).toBe(1)
+    const region = remainingRegions.get('COCKLE')
+    expect([...region].sort((a, b) => a - b)).toEqual([33, 44, 55, 66, 77])
+    // The confirmed instance A cells (0,11,22) are NOT part of the remaining region.
+    for (const idx of [0, 11, 22]) expect(region.has(idx)).toBe(false)
+    expect(possibleTreasureCells.size).toBe(region.size)
+  })
+
+  it('reports nothing remaining when every instance is proven', () => {
+    // ONE fully confirmed at (0,3)-(0,5); THREE confirmed at (7,7). Layer 1
+    // keeps THREE's single-tile placement from being stolen by ONE's cells.
+    const tiles = makeTiles([
+      { x: 0, y: 3, items: { [SEASONAL]: 1 } },
+      { x: 0, y: 4, items: { 'Camel Bone': 1 } },
+      { x: 0, y: 5, items: { 'Camel Bone': 1 } },
+      { x: 7, y: 7, items: { [SEASONAL]: 1 } },
+    ])
+    const { remainingCounts, possibleTreasureCells } = solveTreasures(tiles, ['ARTEFACT_ONE', 'ARTEFACT_THREE'], G)
+
+    expect(remainingCounts.size).toBe(0)
+    expect(possibleTreasureCells.size).toBe(0)
+  })
+
+  it('bounds the unfound OLD_BOTTLE to the 9 cells of its four candidate placements', () => {
+    // M15 board: HIEROGLYPH / COCKLE / WOODEN_COMPASS all confirmed, OLD_BOTTLE
+    // still 4-way around the single (4,4) reveal. Survivor union = 9 cells.
+    const tiles = makeTiles([
+      { x: 1, y: 2, items: { Hieroglyph: 1 } },
+      { x: 4, y: 4, items: { 'Old Bottle': 1 } },
+      { x: 6, y: 0, items: { 'Cockle Shell': 1 } },
+      { x: 0, y: 6, items: { Wood: 1 } },
+      { x: 1, y: 6, items: { 'Wooden Compass': 1 } },
+    ])
+    const { remainingCounts, remainingRegions } = solveTreasures(
+      tiles, ['HIEROGLYPH', 'OLD_BOTTLE', 'COCKLE', 'WOODEN_COMPASS'], G,
+    )
+
+    expect(remainingCounts.size).toBe(1)
+    expect(remainingCounts.get('OLD_BOTTLE')).toBe(1)
+    const region = remainingRegions.get('OLD_BOTTLE')
+    expect([...region].sort((a, b) => a - b)).toEqual([33, 34, 35, 43, 44, 45, 53, 54, 55])
+  })
+
+  it('reports both instances of an unpinned duplicate formation (full-board region)', () => {
+    // M16 board: two COCKLEs, nothing confirmed. Region = union of every legal
+    // diagonal placement. A diagonal needs the same offset for x and y, so
+    // only cells where x and y are far apart in the wrong direction are
+    // unreachable: (8,0),(9,0),(9,1),(0,8),(1,9),(0,9) — 6 cells.
+    const tiles = makeTiles([
+      { x: 1, y: 1, items: { 'Cockle Shell': 1 } },
+      { x: 6, y: 1, items: { 'Cockle Shell': 1 } },
+    ])
+    const { remainingCounts, remainingRegions } = solveTreasures(tiles, ['COCKLE', 'COCKLE'], G)
+
+    expect(remainingCounts.get('COCKLE')).toBe(2)
+    const region = remainingRegions.get('COCKLE')
+    expect(region.size).toBe(94)
+    for (const idx of [8, 9, 19, 80, 90, 91]) expect(region.has(idx)).toBe(false)
+    for (const idx of [55, 11, 16]) expect(region.has(idx)).toBe(true)
+  })
 })
