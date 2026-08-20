@@ -55,21 +55,33 @@ function legalOrigins(formation) {
 // Returns { tiles, patternKeys, truth } where truth = Set<idx> of all treasure
 // positions — the ground truth for the soundness check.
 
-function generateBoard(rng, numFormations) {
-  // Pick unique formation keys
+function generateBoard(rng, numFormations, opts = {}) {
+  // Pick keys: when opts.dupKey is set, that key appears TWICE and the rest are
+  // unique — exercising the duplicate-instance path the old generator never hit
+  // (the class that produced the double-consumption regressions).
   const keys = []
   const available = [...STABLE_KEYS]
-  for (let i = 0; i < numFormations && available.length; i++) {
+  if (opts.dupKey) {
+    const di = available.indexOf(opts.dupKey)
+    if (di >= 0) available.splice(di, 1)
+    else opts.dupKey = null
+  }
+  const uniqueNeeded = numFormations - (opts.dupKey ? 2 : 0)
+  for (let i = 0; i < uniqueNeeded && available.length; i++) {
     const j = Math.floor(rng() * available.length)
     keys.push(available[j])
     available.splice(j, 1)
+  }
+  if (opts.dupKey) {
+    keys.push(opts.dupKey)
+    keys.push(opts.dupKey)
   }
 
   // Place each formation at a random non-overlapping legal position
   const truth = new Set()
   const truthName = new Map() // idx -> plot name
   const placements = []
-  const keyToPlots = new Map() // key -> Map<idx, name> for this board's real placement
+  const keyToPlots = new Map() // key -> Map<idx, name>[] (one entry per real instance)
 
   for (const key of keys) {
     const formation = DIGGING_FORMATIONS[key]
@@ -87,7 +99,8 @@ function generateBoard(rng, numFormations) {
         truthName.set(idx, name)
       }
       placements.push(plots)
-      keyToPlots.set(key, plots)
+      if (!keyToPlots.has(key)) keyToPlots.set(key, [])
+      keyToPlots.get(key).push(plots)
       placed = true
       break
     }
@@ -137,14 +150,14 @@ function generateBoard(rng, numFormations) {
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
-function runSoundnessCheck(seeds, numFormations) {
+function runSoundnessCheck(seeds, numFormations, opts) {
   const failures = []
   const formationFailures = []
   let skipped = 0
 
   for (const seed of seeds) {
     const rng = makePrng(seed)
-    const board = generateBoard(rng, numFormations)
+    const board = generateBoard(rng, numFormations, opts)
     if (!board) { skipped++; continue }
 
     const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(board.tiles, board.patternKeys, G)
@@ -161,22 +174,32 @@ function runSoundnessCheck(seeds, numFormations) {
     }
 
     // Pattern-level soundness: every key the solver claims is
-    // whole-pattern-guaranteed must have EVERY cell of its real (ground-truth)
-    // placement already in `guaranteed`, with a matching name where the solver
-    // reports one. This generator only ever picks unique keys, so `keyToPlots`
-    // unambiguously identifies "this formation's real placement".
+    // whole-pattern-guaranteed must have its REAL (ground-truth) placements
+    // covered — for a unique key, that single placement must be fully in
+    // `guaranteed` with matching names; for a duplicated key, the number of
+    // fully-covered real placements must be >= the claimed count (N confirmed
+    // instances are N distinct real instances, and each confirmed instance's
+    // cells are exactly one real placement's cells). `keyToPlots` now holds an
+    // array per key (one entry per real instance).
     for (const key of guaranteedFormationCounts.keys()) {
-      const plots = board.keyToPlots.get(key)
-      for (const [idx, name] of plots) {
-        const label = String.fromCharCode(65 + (idx % G)) + (Math.floor(idx / G) + 1)
-        if (!guaranteed.has(idx)) {
-          formationFailures.push({ seed, key, idx, label, reason: 'cell not in guaranteed' })
-          continue
-        }
-        const guessedName = guaranteedSlugs.get(idx)
-        const expectedSlug = name.toLowerCase().replace(/\s+/g, '_')
-        if (guessedName && guessedName !== expectedSlug) {
-          formationFailures.push({ seed, key, idx, label, reason: `named "${guessedName}", expected "${expectedSlug}"` })
+      const realPlaces = board.keyToPlots.get(key) || []
+      const fullyCovered = realPlaces.filter(plots =>
+        [...plots.keys()].every(idx => guaranteed.has(idx)),
+      ).length
+      const claimed = guaranteedFormationCounts.get(key)
+      if (fullyCovered < claimed) {
+        formationFailures.push({ seed, key, idx: -1, label: '(whole pattern)', reason: `claims ${claimed} instance(s) but only ${fullyCovered} real placement(s) fully covered` })
+        continue
+      }
+      for (const plots of realPlaces) {
+        for (const [idx, name] of plots) {
+          if (!guaranteed.has(idx)) continue // unclaimed cell is fine (incomplete, not unsound)
+          const label = String.fromCharCode(65 + (idx % G)) + (Math.floor(idx / G) + 1)
+          const guessedName = guaranteedSlugs.get(idx)
+          const expectedSlug = name.toLowerCase().replace(/\s+/g, '_')
+          if (guessedName && guessedName !== expectedSlug) {
+            formationFailures.push({ seed, key, idx, label, reason: `named "${guessedName}", expected "${expectedSlug}"` })
+          }
         }
       }
     }
@@ -214,5 +237,15 @@ describe('Soundness oracle — every guaranteed cell must be a real treasure', (
   it('no false positives across 100 random 3-formation boards', () => {
     const seeds = Array.from({ length: 100 }, (_, i) => i + 2001)
     expectNoFailures(runSoundnessCheck(seeds, 3))
+  })
+})
+
+describe('Soundness oracle — duplicate-key boards', () => {
+  it('no false positives across 100 boards with one formation placed twice', () => {
+    // 3 formations = one duplicated key + one unique (dupKey occupies 2 slots).
+    const seeds = Array.from({ length: 100 }, (_, i) => i + 3001)
+    for (const dupKey of ['COCKLE', 'OLD_BOTTLE', 'HIEROGLYPH']) {
+      expectNoFailures(runSoundnessCheck(seeds, 3, { dupKey }))
+    }
   })
 })
