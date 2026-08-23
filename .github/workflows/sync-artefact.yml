@@ -73,8 +73,7 @@ jobs:
           git push origin "HEAD:refs/heads/$BRANCH"
           PR_URL=$(gh pr create --base master --head "$BRANCH" \
             --title "🤖 Sync artefact data [$(date +'%Y-%m-%d')]" \
-            --body "Automated sync from the Sync Artefact Data workflow. Data-only change to \`src/data/game/\` + \`public/world/\`." \
-            --json url --jq .url)
+            --body "Automated sync from the Sync Artefact Data workflow. Data-only change to \`src/data/game/\` + \`public/world/\`.")
           echo "PR created: $PR_URL"
           for i in $(seq 1 10); do
             MS=$(gh pr view "$PR_URL" --json mergeStateStatus --jq .mergeStateStatus)
@@ -91,13 +90,20 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin development
+          SYNC_SHA=$(git rev-parse HEAD)
+          # If dev's data already matches the sync commit, nothing to do. This
+          # avoids false-positive guard skips when dev holds mirror commits
+          # with identical content (e.g. a date-stamp refresh).
+          if git diff --quiet origin/development "$SYNC_SHA" -- src/data/game/ public/world/; then
+            echo "development data already up to date"
+            exit 0
+          fi
           # Guard: never overwrite local dev edits to data files. If development
           # has commits touching these paths that master doesn't, skip + warn.
-          if [ -n "$(git log HEAD..origin/development --oneline -- src/data/game/ public/world/)" ]; then
+          if [ -n "$(git log "$SYNC_SHA"..origin/development --oneline -- src/data/game/ public/world/)" ]; then
             echo "::warning::development has local changes under src/data/game/ or public/world/ not on master - skipping mirror"
             exit 0
           fi
-          SYNC_SHA=$(git rev-parse HEAD)
           git checkout -B sync-dev origin/development
           git checkout "$SYNC_SHA" -- src/data/game/ public/world/
           if ! git diff --cached --quiet; then
