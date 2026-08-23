@@ -316,7 +316,13 @@ async function main() {
     
     let hasChanges = false;
     
-    if (currentContent !== newContent) {
+    // Ignore the "Last updated:" date comment when comparing - it changes every
+    // run, causing a spurious no-op commit on each sync (churn). The date is
+    // only refreshed when the actual season data changes.
+    const stripLastUpdated = (content) =>
+      content.replace(/\/\/ Last updated: \d{4}-\d{2}-\d{2}\n/, '');
+    
+    if (stripLastUpdated(currentContent) !== stripLastUpdated(newContent)) {
       console.log('🆕 Season data has changed! Updating local file...');
       fs.writeFileSync(LOCAL_ARTIFACTS_FILE, newContent);
       console.log(`✅ Updated ${LOCAL_ARTIFACTS_FILE}\n`);

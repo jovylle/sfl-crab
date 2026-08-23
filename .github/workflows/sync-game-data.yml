@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # Allow the workflow to push commits
+  contents: write  # Allow the workflow to push commits and sync branches
+  pull-requests: write  # Allow the workflow to open and merge the sync PR
 
 jobs:
   sync-data:
@@ -36,6 +37,7 @@ jobs:
       - run: node scripts/parse-treasure-data.js
       
       - name: Commit if changed
+        id: commit
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -43,10 +45,33 @@ jobs:
           
           if ! git diff --staged --quiet; then
             git commit -m "🤖 Auto-sync: Update game data [$(date -u '+%Y-%m-%d %H:%M UTC')]"
-            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
-      
+
+      - name: Open and merge PR to master
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          # master requires PRs (repo ruleset "no direct pushses").
+          BRANCH="sync-game-data-${{ github.run_id }}"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          PR_URL=$(gh pr create --base master --head "$BRANCH" \
+            --title "🤖 Auto-sync: Update game data [$(date -u '+%Y-%m-%d %H:%M UTC')]" \
+            --body "Automated sync from the Sync Sunflower Land Game Data workflow. Data-only change to \`src/data/game/\`." \
+            --json url --jq .url)
+          echo "PR created: $PR_URL"
+          for i in $(seq 1 10); do
+            MS=$(gh pr view "$PR_URL" --json mergeStateStatus --jq .mergeStateStatus)
+            [ "$MS" = "MERGEABLE" ] && break
+            echo "PR mergeStateStatus=$MS, retrying... ($i/10)"
+            sleep 5
+          done
+          gh pr merge "$PR_URL" --merge --delete-branch
+          echo "✅ Master updated via PR $PR_URL"
+
       - name: Mirror data files to development branch
+        if: always()
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"

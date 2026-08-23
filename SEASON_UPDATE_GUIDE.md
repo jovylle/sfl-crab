@@ -20,7 +20,7 @@ Every few months, Sunflower Land releases a new chapter/season. This guide helps
 ### Manual Trigger
 
 1. Go to: https://github.com/jovylle/sfl-crab/actions
-2. Select the "Sync Artefact Data - v1.4" workflow
+2. Select the "Sync Artefact Data - v1.5" workflow
 3. Click "Run workflow" button
 4. Select branch — the dropdown only picks which branch's copy of the workflow runs; the workflow itself always checks out and pushes to `master` (pinned in the checkout step), so beta-safe: any branch works, the default is fine.
 5. Click "Run workflow" green button
@@ -187,7 +187,8 @@ git push
 The automation is defined in `.github/workflows/sync-artefact.yml`:
 - Scheduled to run monthly (1st–3rd at 00:00 UTC)
 - Can be triggered manually (from `master` — see above)
-- Commits changes to `master`, then mirrors `src/data/game/` + `public/world/` to `development`
+- Commits changes, opens a PR to `master` and merges it automatically (a repo ruleset requires PRs for `master`)
+- Then mirrors `src/data/game/` + `public/world/` to `development`
 - The mirror is a file-level copy (`git checkout <sync-sha> -- <paths>`), so it never creates merge conflicts; if `development` has local edits to the data paths that `master` doesn't have, the mirror is skipped with a warning instead of overwriting them
 
 ### Update Script
