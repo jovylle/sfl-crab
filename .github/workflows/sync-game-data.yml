@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Pin to master: same rationale as sync-artefact - a manual dispatch
+          # from `development` must not redirect the sync to dev and skip master.
+          ref: master
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
       

@@ -20,9 +20,9 @@ Every few months, Sunflower Land releases a new chapter/season. This guide helps
 ### Manual Trigger
 
 1. Go to: https://github.com/jovylle/sfl-crab/actions
-2. Select the "Sync Artefact Data - v1.3" workflow
+2. Select the "Sync Artefact Data - v1.4" workflow
 3. Click "Run workflow" button
-4. Select branch — leave it on the default (`master`). Do **not** pick `development`: the workflow commits to the branch it runs on, and running from `development` would skip `master` entirely.
+4. Select branch — the dropdown only picks which branch's copy of the workflow runs; the workflow itself always checks out and pushes to `master` (pinned in the checkout step), so beta-safe: any branch works, the default is fine.
 5. Click "Run workflow" green button
 
 ### Test Locally Before Deployment
