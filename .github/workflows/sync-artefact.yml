@@ -67,6 +67,8 @@ jobs:
 
       - name: Open and merge PR to master
         if: steps.git-check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # master requires PRs (repo ruleset "no direct pushses").
           BRANCH="sync-artefact-${{ github.run_id }}"
