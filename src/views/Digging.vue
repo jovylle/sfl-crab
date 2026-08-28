@@ -31,7 +31,14 @@
     </template>
 
     <template #grid>
+      <SflGateEmptyState
+        v-if="isVipGateError"
+        :error-message="landSyncError?.message || ''"
+        :is-loading="isLandSyncLoading"
+        :on-retry="retryLandLoad"
+      />
       <Grid
+        v-else
         :show-treasure-order="showTreasureOrder"
         :treasure-order-map="treasureOrderMap"
         :show-land-id-in-url="!hideLandIdInUrl"
@@ -85,6 +92,7 @@ import Grid           from '@/components/Grid.vue'
 import TodayPatterns  from '@/components/TodayPatterns.vue'
 import DigStats       from '@/components/DigStats.vue'
 import InfoFooter     from '@/components/InfoFooter.vue'
+import SflGateEmptyState from '@/components/SflGateEmptyState.vue'
 import { useLandData }    from '@/composables/useLandData'
 import { useGridManager } from '@/composables/useGridManager'
 import { useLandSync } from '@/composables/useLandSync'
@@ -104,6 +112,11 @@ import { readLandCacheMeta } from '@/utils/landCache.js'
 const route = useRoute()
 const router = useRouter()
 const landId = route.params.landId || 'guest'
+const landSync = useLandSync({ landId })
+const landSyncError = computed(() => landSync.lastError.value)
+const isVipGateError = computed(() => landSync.lastErrorIsVipGate.value)
+const isLandSyncLoading = computed(() => landSync.isLoading.value)
+function retryLandLoad () { landSync.reloadFromServer({ landId, bypassCache: true }) }
 const showTreasureOrder = useLocalStorage(
   `showTreasureOrder-${landId}`, false
 )
@@ -259,8 +272,7 @@ onMounted(async () => {
   if (routeLandId) {
     const { shouldAutoFetch } = readLandCacheMeta(routeLandId)
     if (shouldAutoFetch) {
-      const { reloadFromServer } = useLandSync({ landId: routeLandId })
-      reloadFromServer({ landId: routeLandId })
+      landSync.reloadFromServer({ landId: routeLandId })
     }
   }
 })

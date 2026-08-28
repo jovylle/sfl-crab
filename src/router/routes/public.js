@@ -48,5 +48,11 @@ export const publicRoutes = [
     component: () => import('@/views/SolverDebug.vue'),
     meta: { public: true, hideChrome: true },
   },
+  {
+    path: '/status',
+    name: 'ApiStatus',
+    component: () => import('@/views/ApiStatus.vue'),
+    meta: { public: true },
+  },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
