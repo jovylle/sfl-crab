@@ -1,14 +1,16 @@
 // src/composables/useLandSync.js
 //
 // Thin UI wrapper over landFetchCoordinator. Owns the visible refresh state
-// (isLoading / isCooldown / remaining countdown); ALL network decisions live
-// in the coordinator (freshness, single-flight, cooldown, bypass policy).
-
-import { ref, onBeforeUnmount } from 'vue'
+// (isLoading / isCooldown / remaining countdown + lastError); ALL network
+// decisions live in the coordinator (freshness, single-flight, cooldown,
+// bypass policy). VIP-gate errors are surfaced as reactive state, not alert().
+//
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLandData } from '@/composables/useLandData'
 import { requestLandData } from '@/services/landFetchCoordinator'
 import { getLandCooldownStorageKey } from '@/config/api.js'
+import { isVipGateError } from '@/services/landApiService.js'
 
 const instances = new Map()
 
@@ -24,10 +26,11 @@ export function useLandSync (opts = {}) {
 
   if (!instances.has(landId)) {
     const { landData } = useLandData()
-
     const isLoading = ref(false)
     const isCooldown = ref(false)
     const remaining = ref(0)
+    const lastError = ref(null)
+    const lastErrorIsVipGate = computed(() => isVipGateError(lastError.value))
     let intervalId
     let lastFetchFailed = false
 
@@ -58,13 +61,17 @@ export function useLandSync (opts = {}) {
 
     onBeforeUnmount(() => clearInterval(intervalId))
 
+    function clearError () {
+      lastError.value = null
+    }
+
     async function reloadFromServer (opts = {}) {
       const { force = false, bypassCache = false, landId: overrideLandId } = opts
       const targetLandId = overrideLandId || landId
       if (isLoading.value || (isCooldown.value && !force)) return
 
       isLoading.value = true
-
+      lastError.value = null
       try {
         const data = await requestLandData(targetLandId, { force, bypassCache })
         lastFetchFailed = false
@@ -73,7 +80,6 @@ export function useLandSync (opts = {}) {
         if (!data) return
 
         landData.value = data
-
         const desertDigging = data.visitedFarmState?.desert?.digging
         const username = data.visitedFarmState?.username
         if (desertDigging) {
@@ -85,7 +91,11 @@ export function useLandSync (opts = {}) {
         }
       } catch (err) {
         lastFetchFailed = true
-        alert(err.message || 'An unexpected error occurred while loading land data.')
+        lastError.value = err
+        // Keep non-gate errors quiet too — UI will render them; no alert() popups.
+        if (!isVipGateError(err)) {
+          console.warn('[landSync] fetch failed:', err.message)
+        }
       } finally {
         isLoading.value = false
         // Re-sync the cooldown UI from the coordinator's authoritative state.
@@ -96,7 +106,7 @@ export function useLandSync (opts = {}) {
       }
     }
 
-    instances.set(landId, { isLoading, isCooldown, remaining, reloadFromServer })
+    instances.set(landId, { isLoading, isCooldown, remaining, lastError, lastErrorIsVipGate, reloadFromServer, clearError })
   }
 
   return instances.get(landId)

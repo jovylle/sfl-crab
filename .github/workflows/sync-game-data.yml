@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # Allow the workflow to push commits
+  contents: write  # Allow the workflow to push commits and sync branches
+  pull-requests: write  # Allow the workflow to open and merge the sync PR
 
 jobs:
   sync-data:
@@ -14,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Pin to master: same rationale as sync-artefact - a manual dispatch
+          # from `development` must not redirect the sync to dev and skip master.
+          ref: master
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
       
@@ -33,6 +37,7 @@ jobs:
       - run: node scripts/parse-treasure-data.js
       
       - name: Commit if changed
+        id: commit
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -40,21 +45,52 @@ jobs:
           
           if ! git diff --staged --quiet; then
             git commit -m "🤖 Auto-sync: Update game data [$(date -u '+%Y-%m-%d %H:%M UTC')]"
-            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
-      
+
+      - name: Open and merge PR to master
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # master requires PRs (repo ruleset "no direct pushses").
+          BRANCH="sync-game-data-${{ github.run_id }}"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          PR_URL=$(gh pr create --base master --head "$BRANCH" \
+            --title "🤖 Auto-sync: Update game data [$(date -u '+%Y-%m-%d %H:%M UTC')]" \
+            --body "Automated sync from the Sync Sunflower Land Game Data workflow. Data-only change to \`src/data/game/\`.")
+          echo "PR created: $PR_URL"
+          for i in $(seq 1 10); do
+            MS=$(gh pr view "$PR_URL" --json mergeStateStatus --jq .mergeStateStatus)
+            [ "$MS" = "MERGEABLE" ] && break
+            echo "PR mergeStateStatus=$MS, retrying... ($i/10)"
+            sleep 5
+          done
+          gh pr merge "$PR_URL" --merge --delete-branch
+          echo "✅ Master updated via PR $PR_URL"
+
       - name: Mirror data files to development branch
+        if: always()
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git fetch origin development
+          SYNC_SHA=$(git rev-parse HEAD)
+          # If dev's data already matches the sync commit, nothing to do. This
+          # avoids false-positive guard skips when dev holds mirror commits
+          # with identical content (e.g. a date-stamp refresh).
+          if git diff --quiet origin/development "$SYNC_SHA" -- src/data/game/; then
+            echo "development data already up to date"
+            exit 0
+          fi
           # Guard: never overwrite local dev edits to data files. If development
           # has commits touching these paths that master doesn't, skip + warn.
-          if [ -n "$(git log HEAD..origin/development --oneline -- src/data/game/)" ]; then
+          if [ -n "$(git log "$SYNC_SHA"..origin/development --oneline -- src/data/game/)" ]; then
             echo "::warning::development has local changes under src/data/game/ not on master - skipping mirror"
             exit 0
           fi
-          SYNC_SHA=$(git rev-parse HEAD)
           git checkout -B sync-dev origin/development
           git checkout "$SYNC_SHA" -- src/data/game/
           if ! git diff --cached --quiet; then

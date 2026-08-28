@@ -7,6 +7,7 @@
     <div
       class="flex flex-col min-h-screen p-4 md:p-6 w-full max-w-screen-xl mx-auto text-center "
     >
+      <SflApiGateBanner v-if="!hideChrome" />
       <!-- Tabs -->
       <div
         v-if="!hideChrome"
@@ -61,6 +62,7 @@ import { useRoute } from 'vue-router'
 import MainDrawer from '@/components/MainDrawer.vue'
 import EndSection from '@/components/EndSection.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+import SflApiGateBanner from '@/components/SflApiGateBanner.vue'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { isTestApiEnvironment } from '@/config/api.js'
 

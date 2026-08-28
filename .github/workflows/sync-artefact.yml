@@ -1,4 +1,4 @@
-name: Sync Artefact Data - v1.3
+name: Sync Artefact Data - v1.5
 
 on:
   # Run on the 1st, 2nd, and 3rd of every month at 00:00 UTC
@@ -9,10 +9,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # Allow the workflow to push commits
+  contents: write  # Allow the workflow to push commits and sync branches
+  pull-requests: write  # Allow the workflow to open and merge the sync PR
 
 env:
-  SYNC_ARTIFACT_VERSION: "1.3"
+  SYNC_ARTIFACT_VERSION: "1.5"
 
 jobs:
   sync-artefact:
@@ -22,7 +23,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          # Pin to master: the sync must land on the prod branch. `github.ref`
+          # follows the branch picked in the manual-trigger dropdown, and a
+          # manual run from `development` would commit to dev and skip master.
+          ref: master
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
       
@@ -49,31 +53,59 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: Commit and push changes
+      - name: Commit changes
         if: steps.git-check.outputs.changed == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "chore: Sync artefact data from SFL repo [$(date +'%Y-%m-%d')]"
-          git push
       
       - name: No changes detected
         if: steps.git-check.outputs.changed != 'true'
         run: echo "No season updates detected. Everything is up to date!"
 
+      - name: Open and merge PR to master
+        if: steps.git-check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # master requires PRs (repo ruleset "no direct pushses").
+          BRANCH="sync-artefact-${{ github.run_id }}"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          PR_URL=$(gh pr create --base master --head "$BRANCH" \
+            --title "🤖 Sync artefact data [$(date +'%Y-%m-%d')]" \
+            --body "Automated sync from the Sync Artefact Data workflow. Data-only change to \`src/data/game/\` + \`public/world/\`.")
+          echo "PR created: $PR_URL"
+          for i in $(seq 1 10); do
+            MS=$(gh pr view "$PR_URL" --json mergeStateStatus --jq .mergeStateStatus)
+            [ "$MS" = "MERGEABLE" ] && break
+            echo "PR mergeStateStatus=$MS, retrying... ($i/10)"
+            sleep 5
+          done
+          gh pr merge "$PR_URL" --merge --delete-branch
+          echo "✅ Master updated via PR $PR_URL"
+
       - name: Mirror data files to development branch
+        if: always()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin development
+          SYNC_SHA=$(git rev-parse HEAD)
+          # If dev's data already matches the sync commit, nothing to do. This
+          # avoids false-positive guard skips when dev holds mirror commits
+          # with identical content (e.g. a date-stamp refresh).
+          if git diff --quiet origin/development "$SYNC_SHA" -- src/data/game/ public/world/; then
+            echo "development data already up to date"
+            exit 0
+          fi
           # Guard: never overwrite local dev edits to data files. If development
           # has commits touching these paths that master doesn't, skip + warn.
-          if [ -n "$(git log HEAD..origin/development --oneline -- src/data/game/ public/world/)" ]; then
+          if [ -n "$(git log "$SYNC_SHA"..origin/development --oneline -- src/data/game/ public/world/)" ]; then
             echo "::warning::development has local changes under src/data/game/ or public/world/ not on master - skipping mirror"
             exit 0
           fi
-          SYNC_SHA=$(git rev-parse HEAD)
           git checkout -B sync-dev origin/development
           git checkout "$SYNC_SHA" -- src/data/game/ public/world/
           if ! git diff --cached --quiet; then

@@ -2,6 +2,8 @@
   <footer class="site-footer-bar py-4 text-center text-sm text-base-content/70">
     <p class="mb-2">Free digging tool for Sunflower Land players</p>
     <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+      <router-link to="/status" class="link link-primary font-medium">API Status</router-link>
+      <span class="text-base-content/30" aria-hidden="true">·</span>
       <a
         :href="KOFI_URL"
         target="_blank"

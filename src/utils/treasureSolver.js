@@ -83,7 +83,7 @@ function flattenTile(tile) {
  * @param {(string[]|string)[]} tiles - grid cells of CSS class arrays
  * @param {string[]} patternKeys - formation multiset on the board
  * @param {number} gridSize - default 10
- * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedCandidates: Map<number,string[]>, guaranteedFormationCounts: Map<string,number>, partial: boolean }}
+ * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedCandidates: Map<number,string[]>, guaranteedFormationCounts: Map<string,number>, remainingCounts: Map<string,number>, remainingRegions: Map<string,Set<number>>, possibleTreasureCells: Set<number>, partial: boolean }}
  */
 export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   const guaranteed = new Set()
@@ -131,7 +131,16 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
   // adjacent to a revealed sand tile (and that neighbor isn't itself a plot of
   // this same placement), the placement cannot be real. This only ever removes
   // impossible candidates, so it can never drop the real placement.
-  const buildPlacement = (formation, ox, oy) => {
+  //
+  // Soundness of the committed-cell exclusion (Layer 1): the real board has
+  // exactly ONE item per cell — two formation instances can never share a
+  // treasure cell. A cell already proven to belong to a CONFIRMED instance
+  // (committedCellOrigin) therefore cannot host a plot of any other instance —
+  // including another instance of the SAME shape. Most artefact formations
+  // share the names "Camel Bone"/seasonal-artefact, so without this check a
+  // same-name overlapping candidate survives and bloats the candidate set,
+  // hiding guarantees the intersection would otherwise prove.
+  const buildPlacement = (key, formation, ox, oy) => {
     const plots = new Map()
     for (const p of formation) {
       const x = ox + p.x
@@ -141,6 +150,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       if (revealedSand.has(idx) || revealedCrab.has(idx)) return null
       const rn = revealedTreasureName.get(idx)
       if (rn !== undefined && !namesMatch(rn, p.name)) return null
+      if (committedCellOrigin.has(idx)) return null
       plots.set(idx, p.name)
     }
     // Sand-adjacency: no plot may sit orthogonally next to revealed sand.
@@ -299,7 +309,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
         if (!namesMatch(anchor.name, tName)) continue
         const ox = tx - anchor.x
         const oy = ty - anchor.y
-        const plots = buildPlacement(formation, ox, oy)
+        const plots = buildPlacement(key, formation, ox, oy)
         if (!plots) continue
         // Cross-check for single-remaining-instance shapes: every revealed
         // treasure whose name is confined to this key — and not already
@@ -350,7 +360,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     const allPlacements = []
     for (let oy = -minY; oy <= gridSize - 1 - maxY; oy++) {
       for (let ox = -minX; ox <= gridSize - 1 - maxX; ox++) {
-        const plots = buildPlacement(formation, ox, oy)
+        const plots = buildPlacement(key, formation, ox, oy)
         if (plots) allPlacements.push(plots)
       }
     }
@@ -376,7 +386,7 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       const survivors = []
       for (const anchor of formation) {
         if (!namesMatch(anchor.name, aName)) continue
-        const plots = buildPlacement(formation, ax - anchor.x, ay - anchor.y)
+        const plots = buildPlacement(key, formation, ax - anchor.x, ay - anchor.y)
         if (!plots) continue
         const coversAll = confined.every(([cIdx, cName]) => namesMatch(plots.get(cIdx), cName))
         if (coversAll) survivors.push(plots)
@@ -844,5 +854,36 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
     if (count > 0) guaranteedFormationCounts.set(key, count)
   }
 
-  return { guaranteed, guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts, partial: false }
+  // ── Layer 3: remaining-instance reporting ────────────────────────────
+  // Pure reporting — never feeds deduction. For every shape with unconfirmed
+  // instances left, HOW MANY remain and WHICH cells can still host one of
+  // them. A region is the union of all still-legal placements (buildPlacement
+  // already excludes sand/crab/name-mismatch/committed cells), so a cell
+  // absent from every region is provably NOT an undiscovered treasure — the
+  // complement of `guaranteed`. This answers "what's still out there, and
+  // where can it still be?" for the UI.
+  const remainingCounts = new Map()
+  const remainingRegions = new Map()
+  for (const key of presentKeys) {
+    const rem = remainingCount.get(key) ?? 0
+    if (rem === 0) continue
+    remainingCounts.set(key, rem)
+    // Tighter survivor set when a single instance remains (Pass 2/3
+    // semantics), full-board enumeration otherwise — same sets the solver
+    // itself reasons over, so the report can never contradict the deduction.
+    const placements = rem === 1
+      ? enumerateSingleInstanceSurvivors(key)
+      : enumerateAllPlacements(key)
+    const region = new Set()
+    for (const p of placements) {
+      for (const idx of p.keys()) region.add(idx)
+    }
+    remainingRegions.set(key, region)
+  }
+  const possibleTreasureCells = new Set()
+  for (const region of remainingRegions.values()) {
+    for (const idx of region) possibleTreasureCells.add(idx)
+  }
+
+  return { guaranteed, guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts, remainingCounts, remainingRegions, possibleTreasureCells, partial: false }
 }
