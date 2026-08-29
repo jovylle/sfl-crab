@@ -5,11 +5,11 @@
       <div class="text-5xl leading-none" aria-hidden="true">⛏️</div>
       <h2 class="card-title text-xl">Live digging data unavailable</h2>
       <p class="text-sm text-base-content/80 max-w-prose">
-        Sunflower Land recently updated Community API keys to require
-        <strong>VIP Access + Bumpkin Level 50</strong>. Our shared server key doesn't meet that,
+        Sunflower Land recently updated Community API keys so the <strong>tool's key</strong> must
+        belong to an account with <strong>VIP Access + Bumpkin Level 50</strong>. Our hosted server key doesn't meet that,
         so <code class="text-xs bg-base-200 px-1 py-0.5 rounded">api.sunflower-land.com</code>
         returns <span class="font-mono text-xs">“VIP access and a Bumpkin of level 50 or higher”</span>
-        for every farm. This affects all third-party tools, not just d1g.uk.
+        for every farm — <strong>regardless of your own farm's VIP or level</strong>. This affects all third-party tools, not just d1g.uk.
       </p>
       <p class="text-sm text-base-content/70 max-w-prose">
         We're currently in contact with the Sunflower Land team asking for help restoring access for community tools.
