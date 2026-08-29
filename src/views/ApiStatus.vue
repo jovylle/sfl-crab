@@ -13,11 +13,12 @@
         </div>
         <p class="text-sm text-base-content/80">
           Sunflower Land recently tightened Community API keys.
-          Every key now needs <strong>VIP Access + Bumpkin Level 50</strong> on the account that owns the key.
+          Every key now needs <strong>VIP Access + Bumpkin Level 50</strong> on the <em>key owner's</em> account.
           <code class="text-xs bg-base-200 px-1 rounded">d1g.uk</code>'s shared server key (<code class="text-xs">SFL_API_KEY</code> in
           <code class="text-xs">netlify/functions/sfl-api.cjs</code> → <code class="text-xs">x-api-key</code> → <code class="text-xs">api.sunflower-land.com</code>)
-          doesn't meet that, so every live farm fetch now returns the error above.
-          This is a <strong>policy gate</strong>, not a quota/429 or downtime — and it affects all third-party tools, not just d1g.uk.
+          doesn't meet that, so every live farm fetch now returns the error above
+          — <strong>regardless of your own farm's VIP or level</strong>.
+          This is a <strong>policy gate on the tool's key</strong>, not your account, and it affects all third-party tools, not just d1g.uk.
         </p>
         <div class="alert alert-info text-sm py-3">
           <span>We're currently asking the Sunflower Land team for help restoring access for community tools. While this isn't resolved yet, you can keep digging with <strong>other digging tools</strong> in the meantime — or <a href="#self-host" class="link link-primary font-medium">self-host your own copy of d1g.uk</a> with your own API key (guide below).</span>
