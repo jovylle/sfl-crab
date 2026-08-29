@@ -5,20 +5,23 @@
       <div class="card-body gap-4">
         <div class="flex flex-wrap items-center gap-2">
           <span class="badge badge-warning badge-sm">Incident</span>
-          <span class="text-xs text-base-content/60">Since 27 Aug 2026 · SFL Community API gate</span>
+          <span class="text-xs text-base-content/60">SFL Community API gate · Live farm fetch paused</span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-bold">API Status — Live farm loading paused</h1>
         <div class="alert alert-warning text-sm py-3">
           <span class="font-mono text-xs bg-base-100/70 px-2 py-1 rounded">A community API key requires VIP access and a Bumpkin of level 50 or higher</span>
         </div>
         <p class="text-sm text-base-content/80">
-          On <strong>27 August 2026</strong> Sunflower Land tightened Community API keys.
+          Sunflower Land recently tightened Community API keys.
           Every key now needs <strong>VIP Access + Bumpkin Level 50</strong> on the account that owns the key.
           <code class="text-xs bg-base-200 px-1 rounded">d1g.uk</code>'s shared server key (<code class="text-xs">SFL_API_KEY</code> in
           <code class="text-xs">netlify/functions/sfl-api.cjs</code> → <code class="text-xs">x-api-key</code> → <code class="text-xs">api.sunflower-land.com</code>)
           doesn't meet that, so every live farm fetch now returns the error above.
           This is a <strong>policy gate</strong>, not a quota/429 or downtime — and it affects all third-party tools, not just d1g.uk.
         </p>
+        <div class="alert alert-info text-sm py-3">
+          <span>We're currently asking the Sunflower Land team for help restoring access for community tools. While this isn't resolved yet, you can keep digging with <strong>other digging tools</strong> in the meantime — or <a href="#self-host" class="link link-primary font-medium">self-host your own copy of d1g.uk</a> with your own API key (guide below).</span>
+        </div>
         <div class="flex flex-wrap gap-2">
           <router-link to="/practice" class="btn btn-primary btn-sm">Try Practice Mode</router-link>
           <router-link to="/digging" class="btn btn-outline btn-sm">Back to Digging</router-link>
@@ -58,21 +61,21 @@
         <h2 class="card-title">🕐 Timeline</h2>
         <ul class="timeline timeline-vertical text-sm">
           <li>
-            <div class="timeline-start timeline-box text-xs">~27 Aug 2026</div>
+            <div class="timeline-start timeline-box text-xs">Recently</div>
             <div class="timeline-middle"><span class="badge badge-warning badge-xs">●</span></div>
-            <div class="timeline-end timeline-box">SFL ships VIP+50 gate on Community keys — shared key starts returning <span class="font-mono text-xs">VIP access…</span> for every farm.</div>
+            <div class="timeline-end timeline-box">SFL updated Community keys to require VIP + Level 50 — shared key starts returning <span class="font-mono text-xs">VIP access…</span> for every farm.</div>
             <hr />
           </li>
           <li>
-            <div class="timeline-start timeline-box text-xs">28 Aug 2026</div>
+            <div class="timeline-start timeline-box text-xs">Now</div>
             <div class="timeline-middle"><span class="badge badge-info badge-xs">●</span></div>
-            <div class="timeline-end timeline-box"><code>d1g.uk</code> ships status page + banner + graceful empty state. Live fetch stays paused; solver/manual/practice remain.</div>
+            <div class="timeline-end timeline-box"><code>d1g.uk</code> is reaching out to the SFL team for help. Live fetch stays paused; solver / manual / practice remain. Self-host guide below for VIP/50 players.</div>
             <hr />
           </li>
           <li>
             <div class="timeline-start timeline-box text-xs">Next</div>
             <div class="timeline-middle"><span class="badge badge-ghost badge-xs">○</span></div>
-            <div class="timeline-end timeline-box text-base-content/60">Talking to SFL about a community tier. Until then, VIP/50 players can self-host with their own key (below).</div>
+            <div class="timeline-end timeline-box text-base-content/60">If SFL ships a community tier or restores access, we'll update this page and re-enable live loading.</div>
           </li>
         </ul>
         <p class="text-xs text-base-content/60 mt-2">Searchable error string to grep: <code class="bg-base-200 px-1 rounded">VIP access and a Bumpkin of level 50</code></p>

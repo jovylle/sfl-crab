@@ -8,11 +8,11 @@
   >
     <span class="text-lg leading-none shrink-0" aria-hidden="true">⛏️</span>
     <span class="flex-1 min-w-0">
-      <span class="font-semibold">Live farm loading is paused</span>
-      <span class="hidden sm:inline"> — Sunflower Land now requires VIP + Level 50 for API access.</span>
-      <span class="sm:hidden"> — VIP + Level 50 required.</span>
-      <span class="hidden md:inline"> Practice &amp; manual mode still work.</span>
-      <router-link to="/status" class="link link-primary font-medium ml-1 whitespace-nowrap">Learn more →</router-link>
+      <span class="font-semibold">Live digging unavailable</span>
+      <span class="hidden sm:inline"> — API requirement prevents connection to the game server.</span>
+      <span class="sm:hidden"> — can't connect to game server.</span>
+      <span class="hidden md:inline"> We're reaching out to the SFL team.</span>
+      <router-link to="/status" class="link link-primary font-medium ml-1 whitespace-nowrap">Status →</router-link>
     </span>
     <router-link to="/status" class="btn btn-ghost btn-xs shrink-0 hidden sm:inline-flex">Self-host</router-link>
     <button
