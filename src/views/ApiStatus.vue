@@ -4,29 +4,22 @@
     <div class="card bg-base-100 shadow-md">
       <div class="card-body gap-4">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="badge badge-warning badge-sm">Incident</span>
-          <span class="text-xs text-base-content/60">SFL Community API gate · Live farm fetch paused</span>
+          <span class="badge badge-success badge-sm">Operational</span>
+          <span class="text-xs text-base-content/60">SFL Community API · Live farm fetch active</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-bold">API Status — Live farm loading paused</h1>
-        <div class="alert alert-warning text-sm py-3">
-          <span class="font-mono text-xs bg-base-100/70 px-2 py-1 rounded">A community API key requires VIP access and a Bumpkin of level 50 or higher</span>
+        <h1 class="text-2xl sm:text-3xl font-bold">API Status — Live farm loading operational</h1>
+        <div class="alert alert-success text-sm py-3">
+          <span>✅ <strong>Live digging is back.</strong> Our server API key has been whitelisted — <code class="text-xs bg-base-100/70 px-1 rounded">/:landId/digging</code> loads directly from <code class="text-xs">api.sunflower-land.com</code> again.</span>
         </div>
         <p class="text-sm text-base-content/80">
-          Sunflower Land recently tightened Community API keys.
-          Every key now needs <strong>VIP Access + Bumpkin Level 50</strong> on the <em>key owner's</em> account.
-          <code class="text-xs bg-base-200 px-1 rounded">d1g.uk</code>'s shared server key (<code class="text-xs">SFL_API_KEY</code> in
-          <code class="text-xs">netlify/functions/sfl-api.cjs</code> → <code class="text-xs">x-api-key</code> → <code class="text-xs">api.sunflower-land.com</code>)
-          doesn't meet that, so every live farm fetch now returns the error above
-          — <strong>regardless of your own farm's VIP or level</strong>.
-          This is a <strong>policy gate on the tool's key</strong>, not your account, and it affects all third-party tools, not just d1g.uk.
+          Sunflower Land tightened Community API keys to require <strong>VIP Access + Bumpkin Level 50</strong> on the
+          <em>key owner's</em> account. That temporarily gated our shared server key (<code class="text-xs">SFL_API_KEY</code> in
+          <code class="text-xs">netlify/functions/sfl-api.cjs</code>). The key is now whitelisted, so live fetches work
+          for all farms again. If you hit the gate error on self-hosted deploys, see the self-host guide below.
         </p>
-        <div class="alert alert-info text-sm py-3">
-          <span>We're currently asking the Sunflower Land team for help restoring access for community tools. While this isn't resolved yet, you can keep digging with <strong>other digging tools</strong> in the meantime — or <a href="#self-host" class="link link-primary font-medium">self-host your own copy of d1g.uk</a> with your own API key (guide below).</span>
-        </div>
         <div class="flex flex-wrap gap-2">
-          <router-link to="/practice" class="btn btn-primary btn-sm">Try Practice Mode</router-link>
-          <router-link to="/digging" class="btn btn-outline btn-sm">Back to Digging</router-link>
-          <a href="#self-host" class="btn btn-ghost btn-sm">Self-host with your own key ↓</a>
+          <router-link to="/digging" class="btn btn-primary btn-sm">Go to Digging</router-link>
+          <router-link to="/practice" class="btn btn-outline btn-sm">Practice Mode</router-link>
         </div>
       </div>
     </div>
@@ -34,25 +27,25 @@
     <div class="grid md:grid-cols-2 gap-6">
       <div class="card bg-base-100 shadow">
         <div class="card-body">
-          <h2 class="card-title text-lg">✅ What still works</h2>
+          <h2 class="card-title text-lg">✅ What works</h2>
           <ul class="list-disc list-inside text-sm space-y-1 text-base-content/80">
+            <li><strong>Live auto-load by Land ID</strong> — <code class="text-xs">/:landId/digging</code> pulls today's desert from SFL</li>
             <li><strong>Practice Mode</strong> — full simulator with deterministic boards</li>
             <li><strong>Manual hint entry</strong> — click tiles to cycle sand / crab / treasure hints</li>
-            <li><strong>Shared board links</strong> — <code class="text-xs">?board=</code> and <code class="text-xs">?marks=</code> links are self-contained</li>
+            <li><strong>Shared board links</strong> — <code class="text-xs">?board=</code> and <code class="text-xs">?marks=</code> links</li>
             <li><strong>History &amp; solver</strong> — paste any board, solver still proves safe digs</li>
-            <li><strong>Dig-day Hub</strong> — practice &amp; sharing flows unaffected</li>
           </ul>
         </div>
       </div>
-      <div class="card bg-base-100 shadow border border-warning/20">
+      <div class="card bg-base-100 shadow">
         <div class="card-body">
-          <h2 class="card-title text-lg">🚫 What doesn't</h2>
-          <ul class="list-disc list-inside text-sm space-y-1 text-base-content/80">
-            <li><strong>Live auto-load by Land ID</strong> — <code class="text-xs">/:landId/digging</code> can't pull today's desert from SFL</li>
-            <li><strong>Refresh from server</strong> — the refresh button hits the same gate</li>
-            <li>Both <code class="text-xs">/community/farms/:id</code> and <code class="text-xs">/visit/:id</code> are gated — fallback doesn't help</li>
-          </ul>
-          <p class="text-xs text-base-content/60 mt-2">Practice patterns + guest digging never hit the SFL API, so they're untouched.</p>
+          <h2 class="card-title text-lg">ℹ️ If you see the VIP gate error</h2>
+          <p class="text-sm text-base-content/70">
+            <span class="font-mono text-xs bg-base-200 px-1 rounded">VIP access and a Bumpkin of level 50</span> means the
+            <em>API key's</em> account lacks VIP/50. On <code class="text-xs">d1g.uk</code> this is resolved.
+            On a self-host it means your <code class="text-xs">SFL_API_KEY</code> needs VIP + Level 50.
+          </p>
+          <p class="text-xs text-base-content/60 mt-2">Both <code class="text-xs">/community/farms/:id</code> and <code class="text-xs">/visit/:id</code> share the same gate — fallback doesn't bypass it.</p>
         </div>
       </div>
     </div>
@@ -64,19 +57,14 @@
           <li>
             <div class="timeline-start timeline-box text-xs">Recently</div>
             <div class="timeline-middle"><span class="badge badge-warning badge-xs">●</span></div>
-            <div class="timeline-end timeline-box">SFL updated Community keys to require VIP + Level 50 — shared key starts returning <span class="font-mono text-xs">VIP access…</span> for every farm.</div>
+            <div class="timeline-end timeline-box">SFL updated Community keys to require VIP + Level 50 — shared key started returning <span class="font-mono text-xs">VIP access…</span> for every farm.</div>
             <hr />
           </li>
           <li>
             <div class="timeline-start timeline-box text-xs">Now</div>
-            <div class="timeline-middle"><span class="badge badge-info badge-xs">●</span></div>
-            <div class="timeline-end timeline-box"><code>d1g.uk</code> is reaching out to the SFL team for help. Live fetch stays paused; solver / manual / practice remain. Self-host guide below for VIP/50 players.</div>
+            <div class="timeline-middle"><span class="badge badge-success badge-xs">●</span></div>
+            <div class="timeline-end timeline-box"><strong>Whitelisted &amp; operational</strong> — live fetch restored on <code>d1g.uk</code>. Solver / manual / practice remain. Self-host still requires VIP/50 on your own key.</div>
             <hr />
-          </li>
-          <li>
-            <div class="timeline-start timeline-box text-xs">Next</div>
-            <div class="timeline-middle"><span class="badge badge-ghost badge-xs">○</span></div>
-            <div class="timeline-end timeline-box text-base-content/60">If SFL ships a community tier or restores access, we'll update this page and re-enable live loading.</div>
           </li>
         </ul>
         <p class="text-xs text-base-content/60 mt-2">Searchable error string to grep: <code class="bg-base-200 px-1 rounded">VIP access and a Bumpkin of level 50</code></p>
@@ -87,8 +75,9 @@
       <div class="card-body gap-4">
         <h2 class="card-title text-xl">🔑 Self-host with your own API key</h2>
         <p class="text-sm text-base-content/80">
-          If <em>you</em> have <strong>VIP + Level 50</strong>, you can run your own copy of <code class="text-xs">d1g.uk</code> with your own key — no code change needed.
+          Power users can run their own copy of <code class="text-xs">d1g.uk</code> with their own key — no code change needed.
           <code class="text-xs">sfl-api.cjs</code> just reads <code class="text-xs">SFL_API_KEY</code> from the environment.
+          Your key's account must have <strong>VIP + Level 50</strong> unless whitelisted.
         </p>
 
         <div class="steps steps-vertical sm:steps-horizontal w-full text-xs">
@@ -117,12 +106,8 @@
           </div>
           <div>
             <h3 class="font-semibold">4. Verify</h3>
-            <p class="text-base-content/70">Open <code class="text-xs">https://&lt;your-site&gt;/&lt;yourLandId&gt;/digging</code> — the grid should load. If it still shows the gate error, the key's account isn't VIP/50.</p>
+            <p class="text-base-content/70">Open <code class="text-xs">https://&lt;your-site&gt;/&lt;yourLandId&gt;/digging</code> — the grid should load. If it still shows the gate error, the key's account isn't VIP/50 or not whitelisted.</p>
           </div>
-        </div>
-
-        <div class="alert alert-info text-xs py-2">
-          <span>Don't have VIP/50? Practice Mode + manual board entry still give you the full solver — no API needed. Share boards via <code>?board=</code> links.</span>
         </div>
 
         <p class="text-xs text-base-content/50">Not affiliated with Thought Farm / Sunflower Land. Game assets belong to their owners.</p>
@@ -130,12 +115,11 @@
     </div>
 
     <p class="text-center text-xs text-base-content/40">
-      Keep this page bookmarked — we'll update it if SFL ships a community tier.
+      Live digging is operational.
       <router-link to="/" class="link link-hover ml-1">← Home</router-link>
     </p>
   </div>
 </template>
-
 <script setup>
 // no logic — static status page
 </script>
