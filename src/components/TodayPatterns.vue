@@ -69,6 +69,7 @@ const { guaranteedFormationCounts } = usePredictionEngine(
   tiles,
   solverPatternKeys,
   toRef(() => props.showPrediction),
+  { completedPatternKeysRef: completedPatternKeys },
 )
 
 const guaranteedIndexList = computed(() => [
