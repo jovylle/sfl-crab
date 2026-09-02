@@ -83,9 +83,10 @@ function flattenTile(tile) {
  * @param {(string[]|string)[]} tiles - grid cells of CSS class arrays
  * @param {string[]} patternKeys - formation multiset on the board
  * @param {number} gridSize - default 10
+ * @param {string[]} completedPatternKeys - optional multiset of already-completed formation keys (from API desert.digging.completedPatterns). When provided, those instances are pre-committed if their plots are fully revealed, so they don't linger as competing hypotheses for undug cells (e.g. FOURTEEN completed at C4/C6 frees TWENTY_ONE to be provably at G8).
  * @returns {{ guaranteed: Set<number>, guaranteedSlugs: Map<number,string>, guaranteedCandidates: Map<number,string[]>, guaranteedFormationCounts: Map<string,number>, remainingCounts: Map<string,number>, remainingRegions: Map<string,Set<number>>, possibleTreasureCells: Set<number>, partial: boolean }}
  */
-export function solveTreasures(tiles, patternKeys, gridSize = 10) {
+export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatternKeys = []) {
   const guaranteed = new Set()
   if (!patternKeys?.length) {
     return { guaranteed, guaranteedSlugs: new Map(), guaranteedCandidates: new Map(), guaranteedFormationCounts: new Map(), partial: false }
@@ -453,6 +454,80 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10) {
       if (!committedCellOrigin.has(idx)) committedCellOrigin.set(idx, { key, plots })
     }
     return isNewInstance
+  }
+
+  // ── Pre-commit completed formations ──────────────────────────────────
+  // A completed formation's instance is fully dug (every plot is a revealed
+  // treasure with the matching name). If we leave its key in the live pool,
+  // its placement lingers as a spurious competing hypothesis for undug
+  // cells — e.g. G8=OT has FOURTEEN@(6,7) vs TWENTY_ONE@(6,7) as equal
+  // candidates, so the intersection is only G8 and I8/G9/H9 stay hidden.
+  // But FOURTEEN is in completedPatterns and its true placement C4/C6 is
+  // already fully revealed; it should be locked and its remainingCount
+  // consumed before any deduction, freeing TWENTY_ONE to be the sole
+  // candidate for G8 and thus guaranteeing I8/G9/H9.
+  //
+  // We pre-commit one fully-revealed placement per completed occurrence
+  // (multiset-aware), picking the first non-overlapping legal placement whose
+  // every plot is already a revealed treasure with the correct name. This is
+  // sound because a completed instance's plots are by definition all dug.
+  if (completedPatternKeys?.length) {
+    const needed = new Map()
+    for (const k of completedPatternKeys) needed.set(k, (needed.get(k) ?? 0) + 1)
+    // Only consider completed keys that are actually present on the board
+    for (const [key, count] of needed) {
+      if (!shapeCount.has(key)) continue
+      const formation = DIGGING_FORMATIONS[key]
+      if (!Array.isArray(formation) || !formation.length) continue
+      let committed = 0
+      // Enumerate all origins for this key
+      const minX = Math.min(...formation.map(p => p.x))
+      const maxX = Math.max(...formation.map(p => p.x))
+      const minY = Math.min(...formation.map(p => p.y))
+      const maxY = Math.max(...formation.map(p => p.y))
+      const candidates = []
+      for (let oy = -minY; oy <= gridSize - 1 - maxY; oy++) {
+        for (let ox = -minX; ox <= gridSize - 1 - maxX; ox++) {
+          const plots = buildPlacement(key, formation, ox, oy)
+          if (!plots) continue
+          // Fully revealed? every plot already dug with correct name
+          let fullyRevealed = true
+          for (const [idx, name] of plots) {
+            const rn = revealedTreasureName.get(idx)
+            if (rn === undefined || !namesMatch(rn, name)) { fullyRevealed = false; break }
+          }
+          if (fullyRevealed) candidates.push({ ox, oy, plots })
+        }
+      }
+      // Commit up to `count` non-overlapping candidates, preferring those that
+      // cover the most reveals (deterministic). For the usual 0/1 case this
+      // is a single pick.
+      for (const c of candidates) {
+        if (committed >= count) break
+        if ([...c.plots.keys()].some(idx => committedCellOrigin.has(idx))) continue
+        const sig = placementSignature(c.plots)
+        const already = confirmedInstances.get(key)?.has(sig)
+        if (already) continue
+        const isNew = recordConfirmedInstance(key, c.plots)
+        if (isNew) {
+          const rem = remainingCount.get(key) ?? 0
+          if (rem > 0) remainingCount.set(key, rem - 1)
+        }
+        recordConfirmedPlots(c.plots)
+        committed++
+      }
+      // Fallback: if no fully-revealed placement was found for some completed
+      // occurrences (API lag or seasonal name rotation), just consume the
+      // remaining count for the un-pinned completions so the key doesn't
+      // pollute undug reasoning. Handles partial commits (e.g. 2 needed, 1
+      // pinned → still need to consume 1 more). Trusts API completedPatterns
+      // as authoritative; conservative alternative would be to leave the key
+      // live (fewer guarantees but never a false positive).
+      if (committed < count) {
+        const rem = remainingCount.get(key) ?? 0
+        remainingCount.set(key, Math.max(0, rem - (count - committed)))
+      }
+    }
   }
 
   let iterChanged = true

@@ -91,7 +91,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { solveTreasures } from '@/utils/treasureSolver.js'
+import { solveTreasures, computeActivePatternKeys } from '@/utils/treasureSolver.js'
 import { gridArrayToTiles } from '@/utils/gridTileTransform.js'
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
 import { SOLVER_SCENARIOS_MECHANICS } from '@/dev/solverScenariosMechanics.js'
@@ -229,11 +229,15 @@ async function loadLiveLand() {
     const digging = data?.farm?.desert?.digging || data?.desert?.digging || {}
     const rawGrid = digging.grid || []
     const patterns = digging.patterns || []
+    const completedPatterns = digging.completedPatterns || []
+    const activePatterns = computeActivePatternKeys(patterns, completedPatterns)
     const tiles = gridArrayToTiles(rawGrid, G)
-    const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, patterns, G)
+    const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, patterns, G, completedPatterns)
     liveResult.value = {
       id,
       patterns,
+      completedPatterns,
+      activePatterns,
       cells: buildCells(tiles, guaranteed, guaranteedSlugs),
       guaranteedCount: guaranteed.size,
       remainingSummary: buildRemainingSummary(remainingCounts, remainingRegions),

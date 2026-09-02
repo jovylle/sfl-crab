@@ -161,15 +161,17 @@ const newlyDug = grid.newlyDug
 const picker = ref(null)
 
 // ── Prediction engine ──
-// Pass the FULL board multiset (not minus-completed): the solver anchors on
-// revealed treasures, so a treasure from a completed formation must still be
-// able to anchor to its shape. Including all shapes only ever makes deductions
-// more conservative (never a wrong guarantee).
-const { solverPatternKeys } = useLandData()
+// Pass FULL patterns + completedPatterns to solver; the solver pre-commits
+// fully-revealed completed instances (e.g. FOURTEEN at C4/C6) so they don't
+// linger as spurious competitors for undug cells. This makes G8=OT + H8=CB
+// provably ARTEFACT_TWENTY_ONE (its only competitor FOURTEEN is already
+// committed), thus I8/G9/H9 become guaranteed.
+const { solverPatternKeys, completedPatternKeys } = useLandData()
 const { guaranteed, guaranteedSlugs, guaranteedCandidates } = usePredictionEngine(
   tiles,
   solverPatternKeys,
   toRef(() => showPrediction),
+  { completedPatternKeysRef: completedPatternKeys },
 )
 
 // Feed the guaranteed set into the engine as a treasure mask so a crab adjacent
