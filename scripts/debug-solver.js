@@ -29,7 +29,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 register(pathToFileURL(path.join(__dirname, 'lib', 'resolve-alias-loader.mjs')).href, import.meta.url)
 
 const { gridArrayToTiles } = await import('@/utils/gridTileTransform.js')
-const { solveTreasures } = await import('@/utils/treasureSolver.js')
+const { solveTreasures, computeActivePatternKeys } = await import('@/utils/treasureSolver.js')
 
 const GRID_SIZE = 10
 const colLabels = Array.from({ length: GRID_SIZE }, (_, i) => String.fromCharCode(65 + i)) // A-J
@@ -54,7 +54,9 @@ function loadSnapshot (filePath) {
   const flatGrid = (digging.grid || []).flat(Infinity)
   const tiles = gridArrayToTiles(flatGrid, GRID_SIZE)
   const patternKeys = digging.patterns || []
-  return { tiles, patternKeys }
+  const completedPatternKeys = digging.completedPatterns || []
+  const activePatternKeys = computeActivePatternKeys(patternKeys, completedPatternKeys)
+  return { tiles, patternKeys, completedPatternKeys, activePatternKeys }
 }
 
 /** 'treasure' | 'sand' | 'crab' | 'undug' */
@@ -122,11 +124,13 @@ function printBoard (tiles, guaranteed, guaranteedSlugs) {
 }
 
 function runSingle (filePath) {
-  const { tiles, patternKeys } = loadSnapshot(filePath)
-  const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, patternKeys, GRID_SIZE)
+  const { tiles, patternKeys, completedPatternKeys, activePatternKeys } = loadSnapshot(filePath)
+  const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(tiles, patternKeys, GRID_SIZE, completedPatternKeys)
 
   console.log(`\n=== ${filePath} ===`)
-  console.log(`Patterns on board: ${patternKeys.length ? patternKeys.join(', ') : '(none)'}\n`)
+  console.log(`Patterns on board: ${patternKeys.length ? patternKeys.join(', ') : '(none)'}`)
+  if (completedPatternKeys.length) console.log(`Completed: ${completedPatternKeys.join(', ')}`)
+  console.log(`Active (solver input): ${activePatternKeys.length ? activePatternKeys.join(', ') : '(none)'}\n`)
   printBoard(tiles, guaranteed, guaranteedSlugs)
 
   console.log(`\nGuaranteed (${guaranteed.size}):`)
@@ -148,7 +152,7 @@ function runSingle (filePath) {
 function runDiff (earlierPath, laterPath) {
   const earlier = loadSnapshot(earlierPath)
   const later = loadSnapshot(laterPath)
-  const { guaranteed, guaranteedSlugs } = solveTreasures(earlier.tiles, earlier.patternKeys, GRID_SIZE)
+  const { guaranteed, guaranteedSlugs } = solveTreasures(earlier.tiles, earlier.patternKeys, GRID_SIZE, earlier.completedPatternKeys)
 
   console.log(`\n=== Soundness check: ${earlierPath} → ${laterPath} ===`)
   console.log(`Guaranteed cells to verify: ${guaranteed.size}\n`)

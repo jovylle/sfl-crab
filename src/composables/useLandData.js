@@ -9,6 +9,7 @@ import {
   usePracticePatterns,
 } from '@/composables/usePracticePatterns.js'
 import { getLandDataStorageKey } from '@/config/api.js'
+import { computeActivePatternKeys } from '@/utils/treasureSolver.js'
 
 export function useLandData (defaults = {}) {
   const route = useRoute()
@@ -47,6 +48,9 @@ export function useLandData (defaults = {}) {
   )
   const completedPatternKeys = computed(
     () => desert.value.digging?.completedPatterns || [],
+  )
+  const activePatternKeys = computed(() =>
+    computeActivePatternKeys(solverPatternKeys.value, completedPatternKeys.value),
   )
   const dailyPatternKeys = computed(() => {
     if (historicalPatternOverride.value?.patterns?.length) {
@@ -95,6 +99,7 @@ export function useLandData (defaults = {}) {
     patternKeys,
     solverPatternKeys,
     completedPatternKeys,
+    activePatternKeys,
     dailyPatternKeys,
     dailyPatternDate,
   }
