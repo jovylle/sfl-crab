@@ -1032,3 +1032,54 @@ describe('Layer 3 — remaining-instance reporting', () => {
     for (const idx of [55, 11, 16]) expect(region.has(idx)).toBe(true)
   })
 })
+
+describe('Completed-pattern pre-commit (live 4485248732423974 — G8 artefact21)', () => {
+  // ARTEFACT_FOURTEEN = [{0,0,SEASONAL},{0,2,CB}], completed at C4/C6.
+  // ARTEFACT_TWENTY_ONE = [{0,0,SEASONAL},{1,0,CB},{2,0,CB},{0,1,CB},{1,1,CB}].
+  // G8 (6,7) = SEASONAL + H8 (7,7) = Camel Bone. Without the completed signal
+  // G8 has two equal candidates (FOURTEEN@(6,7) vs TWENTY_ONE@(6,7)), so the
+  // intersection is only G8 and I8/G9/H9 stay hidden. Pre-committing the
+  // fully-revealed FOURTEEN@(2,3) leaves TWENTY_ONE as the sole candidate.
+  const dug = [
+    { x: 2, y: 3, items: { [SEASONAL]: 1 } }, // C4
+    { x: 2, y: 5, items: { 'Camel Bone': 1 } }, // C6
+    { x: 6, y: 7, items: { [SEASONAL]: 1 } }, // G8
+    { x: 7, y: 7, items: { 'Camel Bone': 1 } }, // H8
+  ]
+  const patterns = ['ARTEFACT_FOURTEEN', 'ARTEFACT_TWENTY_ONE']
+  const I8 = 7 * G + 8, G9 = 8 * G + 6, H9 = 8 * G + 7
+
+  it('leaves I8/G9/H9 hidden when completedPatterns is not passed (old behaviour)', () => {
+    const tiles = makeTiles(dug)
+    const { guaranteed } = solveTreasures(tiles, patterns, G)
+
+    for (const idx of [I8, G9, H9]) {
+      expect(guaranteed.has(idx), `expected ${label(idx)} NOT guaranteed`).toBe(false)
+    }
+  })
+
+  it('guarantees I8/G9/H9 as Camel Bone once FOURTEEN is marked completed', () => {
+    const tiles = makeTiles(dug)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts, remainingCounts } =
+      solveTreasures(tiles, patterns, G, ['ARTEFACT_FOURTEEN'])
+
+    for (const idx of [I8, G9, H9]) {
+      expect(guaranteed.has(idx), `expected ${label(idx)} guaranteed`).toBe(true)
+      expect(guaranteedSlugs.get(idx)).toBe('camel_bone')
+    }
+    expect(guaranteedSlugs.get(7 * G + 6)).toBe(SEASONAL_SLUG) // G8 stays the artefact
+    expect(guaranteedFormationCounts.get('ARTEFACT_FOURTEEN')).toBe(1)
+    expect(guaranteedFormationCounts.get('ARTEFACT_TWENTY_ONE')).toBe(1)
+    expect(remainingCounts.size).toBe(0)
+  })
+
+  it('consumes only one slot of a duplicated completed formation', () => {
+    const tiles = makeTiles(dug.slice(0, 2)) // just C4 + C6
+    const { guaranteedFormationCounts, remainingCounts } = solveTreasures(
+      tiles, ['ARTEFACT_FOURTEEN', 'ARTEFACT_FOURTEEN'], G, ['ARTEFACT_FOURTEEN'],
+    )
+
+    expect(guaranteedFormationCounts.get('ARTEFACT_FOURTEEN')).toBe(1)
+    expect(remainingCounts.get('ARTEFACT_FOURTEEN')).toBe(1)
+  })
+})
