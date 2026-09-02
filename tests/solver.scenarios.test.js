@@ -949,7 +949,7 @@ describe('SOLVER_SCENARIOS auto-generated regression suite', () => {
     if (!s.assertions || s.assertions.length === 0) continue
     it(s.name, () => {
       const tiles = gridArrayToTiles(s.grid, G)
-      const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, s.patterns, G)
+      const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, s.patterns, G, s.completed)
       for (const a of s.assertions) {
         if (a.property === 'guaranteed')
           expect(guaranteed.has(a.idx), a.label).toBe(a.expected)

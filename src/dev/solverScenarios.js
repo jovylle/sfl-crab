@@ -446,4 +446,26 @@ export const SOLVER_SCENARIOS = [
       { idx: 59, property: 'slug', expected: 'camel_bone', label: 'J6 slug = camel_bone' },
     ],
   },
+  {
+    id: 'completed-precommit-g8',
+    name: 'Completed pre-commit — G8 artefact21 (live 4485248732423974)',
+    // ARTEFACT_FOURTEEN completed at C4/C6; G8 (seasonal) + H8 (Camel Bone)
+    // dug. Without the completed signal G8 has two equal candidates and
+    // I8/G9/H9 stay hidden; with it they are guaranteed Camel Bone.
+    grid: [
+      { x: 2, y: 3, items: { [SEASONAL]: 1 } },
+      { x: 2, y: 5, items: { 'Camel Bone': 1 } },
+      { x: 6, y: 7, items: { [SEASONAL]: 1 } },
+      { x: 7, y: 7, items: { 'Camel Bone': 1 } },
+    ],
+    patterns: ['ARTEFACT_FOURTEEN', 'ARTEFACT_TWENTY_ONE'],
+    completed: ['ARTEFACT_FOURTEEN'],
+    assertions: [
+      { idx: 78, property: 'guaranteed', expected: true, label: 'I8 (idx 78) guaranteed Camel Bone' },
+      { idx: 86, property: 'guaranteed', expected: true, label: 'G9 (idx 86) guaranteed Camel Bone' },
+      { idx: 87, property: 'guaranteed', expected: true, label: 'H9 (idx 87) guaranteed Camel Bone' },
+      { idx: 87, property: 'slug', expected: 'camel_bone', label: 'H9 (idx 87) slug = camel_bone' },
+      { idx: 76, property: 'guaranteed', expected: true, label: 'G8 (idx 76) guaranteed artefact' },
+    ],
+  },
 ]

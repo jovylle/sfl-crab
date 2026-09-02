@@ -123,7 +123,7 @@ function buildRemainingSummary(remainingCounts, remainingRegions) {
 
 function evalScenario(scenario) {
   const tiles = gridArrayToTiles(scenario.grid, G)
-  const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, scenario.patterns, G)
+  const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, scenario.patterns, G, scenario.completed)
 
   const cells = Array.from({ length: G * G }, (_, idx) => {
     const tileClasses = tiles[idx] || []
