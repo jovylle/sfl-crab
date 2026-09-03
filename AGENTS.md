@@ -13,6 +13,7 @@ Read in this order; each doc is kept accurate. If anything here conflicts with o
 | [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) | The 10×10 grid engine: tiles, hints, formations, practice mode |
 | [docs/API_LAYER.md](docs/API_LAYER.md) | **Request pipeline + caching policy for the SFL farm API** — read before touching anything that fetches land data |
 | [docs/DIG_DAY_SYNC.md](docs/DIG_DAY_SYNC.md) | Dig-day Hub sync: debounce, ETag, merge-by-seq, the layers |
+| [docs/SOLVER.md](docs/SOLVER.md) | Treasure-solver algorithm, improvement log, testing |
 | [docs/HUB_CONSUMPTION_SPEC.md](docs/HUB_CONSUMPTION_SPEC.md) | Hub-side ETag/idempotency contract |
 | [netlify/functions/README.md](netlify/functions/README.md) | Per-function reference for the `.cjs` proxies |
 | [src/data/game/README.md](src/data/game/README.md) | Auto-synced game data files |
