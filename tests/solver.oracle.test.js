@@ -61,6 +61,11 @@ function generateBoard(rng, numFormations, opts = {}) {
   // (the class that produced the double-consumption regressions).
   const keys = []
   const available = [...STABLE_KEYS]
+  if (opts.fullDay) {
+    // Real day-set: all 7 dailies + one duplicate = 8 patterns.
+    const dk = opts.dupKey && STABLE_KEYS.includes(opts.dupKey) ? opts.dupKey : 'HIEROGLYPH'
+    keys.push(...STABLE_KEYS, dk)
+  } else {
   if (opts.dupKey) {
     const di = available.indexOf(opts.dupKey)
     if (di >= 0) available.splice(di, 1)
@@ -76,6 +81,7 @@ function generateBoard(rng, numFormations, opts = {}) {
     keys.push(opts.dupKey)
     keys.push(opts.dupKey)
   }
+  } // end non-fullDay key picking
 
   // Place each formation at a random non-overlapping legal position
   const truth = new Set()
@@ -123,9 +129,16 @@ function generateBoard(rng, numFormations, opts = {}) {
   // Build the tiles array
   const rawTiles = Array.from({ length: G*G }, () => [])
 
+  // Completed-pattern case: fully reveal one instance so it can go through
+  // the completedPatterns pre-commit path like a real finished formation.
+  const forceReveal = new Set()
+  if (opts.completeKey && keyToPlots.has(opts.completeKey)) {
+    for (const idx of keyToPlots.get(opts.completeKey)[0].keys()) forceReveal.add(idx)
+  }
+
   // Randomly reveal some treasure tiles (~45% each)
   for (const [idx, name] of truthName) {
-    if (rng() < 0.45) {
+    if (forceReveal.has(idx) || rng() < 0.45) {
       const slug = name.toLowerCase().replace(/\s+/g, '_')
       rawTiles[idx] = ['treasure actual-treasure', `tileImage:${slug}`]
     }
@@ -145,7 +158,8 @@ function generateBoard(rng, numFormations, opts = {}) {
     }
   }
 
-  return { tiles: rawTiles, patternKeys: keys, truth, truthName, keyToPlots }
+  return { tiles: rawTiles, patternKeys: keys, truth, truthName, keyToPlots,
+    completed: opts.completeKey ? [opts.completeKey] : [] }
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -160,7 +174,7 @@ function runSoundnessCheck(seeds, numFormations, opts) {
     const board = generateBoard(rng, numFormations, opts)
     if (!board) { skipped++; continue }
 
-    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(board.tiles, board.patternKeys, G)
+    const { guaranteed, guaranteedSlugs, guaranteedFormationCounts } = solveTreasures(board.tiles, board.patternKeys, G, board.completed || [])
 
     for (const idx of guaranteed) {
       if (!board.truth.has(idx)) {
@@ -246,6 +260,25 @@ describe('Soundness oracle — duplicate-key boards', () => {
     const seeds = Array.from({ length: 100 }, (_, i) => i + 3001)
     for (const dupKey of ['COCKLE', 'OLD_BOTTLE', 'HIEROGLYPH']) {
       expectNoFailures(runSoundnessCheck(seeds, 3, { dupKey }))
+    }
+  })
+})
+
+describe('Soundness oracle — full-day boards (7 dailies + duplicate = 8 patterns)', () => {
+  const DUPS = ['HIEROGLYPH', 'COCKLE', 'OLD_BOTTLE']
+  it('no false positives across 300 full-day boards', () => {
+    for (let k = 0; k < DUPS.length; k++) {
+      const seeds = Array.from({ length: 100 }, (_, i) => i + 4001 + k * 100)
+      expectNoFailures(runSoundnessCheck(seeds, 8, { fullDay: true, dupKey: DUPS[k] }))
+    }
+  })
+
+  it('no false positives across 300 full-day boards with one completed pattern', () => {
+    for (let k = 0; k < DUPS.length; k++) {
+      const seeds = Array.from({ length: 100 }, (_, i) => i + 5001 + k * 100)
+      // completeKey stays distinct from the duplicate so exactly one instance completes.
+      const completeKey = DUPS[k] === 'COCKLE' ? 'CLAM_SHELLS' : 'COCKLE'
+      expectNoFailures(runSoundnessCheck(seeds, 8, { fullDay: true, dupKey: DUPS[k], completeKey }))
     }
   })
 })
