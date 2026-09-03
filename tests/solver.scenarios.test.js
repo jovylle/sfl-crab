@@ -1085,3 +1085,27 @@ describe('Completed-pattern pre-commit (live 4485248732423974 — G8 artefact21)
     expect(remainingCounts.get('ARTEFACT_FOURTEEN')).toBe(1)
   })
 })
+
+describe('Pass 5 crab-satisfaction (live 3863900154075909 — I6 crab forces G6)', () => {
+  // SEA_CUCUMBERS = SC,SC,SC,Pipi in a row. E6/F6 revealed SC: two placements
+  // cover them — ox=3 (…F6 SC, G6 Pipi) and ox=4 (…F6 SC, G6 SC, H6 Pipi).
+  // The I6 crab's neighbours are H6/J6/I5/I7; with no other shapes on the
+  // board only H6 (via ox=4's Pipi) can satisfy it, so the ox=3 world is
+  // impossible and G6 is provably Sea Cucumber. Pass 5 used to ignore
+  // crab-satisfaction, leaving G6 ambiguous.
+  const G6 = 5 * G + 6, H6 = 5 * G + 7
+  const dug = [
+    { x: 4, y: 5, items: { 'Sea Cucumber': 1 } }, // E6
+    { x: 5, y: 5, items: { 'Sea Cucumber': 1 } }, // F6
+    { x: 8, y: 5, items: { Crab: 1 } }, // I6
+  ]
+
+  it('guarantees G6 as Sea Cucumber and cascades H6 as Pipi', () => {
+    const tiles = makeTiles(dug)
+    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, ['SEA_CUCUMBERS'], G)
+
+    expect(guaranteed.has(G6), `expected ${label(G6)} guaranteed`).toBe(true)
+    expect(guaranteedSlugs.get(G6)).toBe('sea_cucumber')
+    expect(guaranteedSlugs.get(H6)).toBe('pipi')
+  })
+})

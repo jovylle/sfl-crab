@@ -468,4 +468,22 @@ export const SOLVER_SCENARIOS = [
       { idx: 76, property: 'guaranteed', expected: true, label: 'G8 (idx 76) guaranteed artefact' },
     ],
   },
+  {
+    id: 'crab-satisfaction-g6',
+    name: 'Crab-satisfaction — I6 crab forces H6 Pipi, G6 Sea Cucumber (live 3863900154075909)',
+    // Minimal replica: E6/F6 Sea Cucumber + I6 Crab, only SEA_CUCUMBERS on
+    // the board. G6=Pipi worlds leave the crab with no adjacent treasure,
+    // so G6 is provably Sea Cucumber and H6 cascades to Pipi.
+    grid: [
+      { x: 4, y: 5, items: { 'Sea Cucumber': 1 } },
+      { x: 5, y: 5, items: { 'Sea Cucumber': 1 } },
+      { x: 8, y: 5, items: { Crab: 1 } },
+    ],
+    patterns: ['SEA_CUCUMBERS'],
+    assertions: [
+      { idx: 56, property: 'guaranteed', expected: true, label: 'G6 (idx 56) guaranteed Sea Cucumber' },
+      { idx: 56, property: 'slug', expected: 'sea_cucumber', label: 'G6 slug = sea_cucumber' },
+      { idx: 57, property: 'slug', expected: 'pipi', label: 'H6 slug = pipi' },
+    ],
+  },
 ]

@@ -710,13 +710,16 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
     // name; names with NO consistent assignment are eliminated.
     //
     // Soundness: the real board's placement of every remaining instance is one
-    // of the enumerated legal placements, so "no consistent assignment with
-    // name n at cell X" ⇒ the real board does not name X=n ⇒ eliminating n is
-    // sound. The search checks placement legality (buildPlacement), non-overlap
-    // and reveal coverage; it deliberately ignores crab-satisfaction — a more
-    // permissive search can only KEEP names it shouldn't (cell stays
-    // ambiguous), never eliminate a real one. Budget exhaustion yields no
-    // conclusion (stays ambiguous — never a wrong name).
+    // of the enumerated legal placements, and it satisfies every revealed
+    // crab (each crab borders a real treasure), so "no consistent assignment
+    // with name n at cell X" ⇒ the real board does not name X=n ⇒ eliminating
+    // n is sound. The search checks placement legality (buildPlacement),
+    // non-overlap, reveal coverage, AND crab-satisfaction (a candidate
+    // assignment whose covered cells leave any revealed crab with no adjacent
+    // treasure is rejected — live case 3863900154075909: I6's only viable
+    // treasure neighbour is H6=Pipi, forcing SEA_CUCUMBERS@ox=4 and G6=Sea
+    // Cucumber). Budget exhaustion yields no conclusion (stays ambiguous —
+    // never a wrong name).
     if (ambiguousCandidates.size) {
       const groups = []
       let groupsValid = true
@@ -811,10 +814,32 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
           return true
         }
 
+        // Crab-satisfaction at the leaf: every revealed crab must border a
+        // revealed treasure or a cell covered by this candidate assignment.
+        // Sound — the true board satisfies every crab, so its branch always
+        // passes this filter. Only runs at the leaf (all reveals covered),
+        // so it costs O(crabs) per complete assignment, never per node.
+        const crabsOk = () => {
+          for (const cIdx of revealedCrab) {
+            const cx = cIdx % gridSize
+            const cy = Math.floor(cIdx / gridSize)
+            let ok = false
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const nx = cx + dx
+              const ny = cy + dy
+              if (!inBounds(nx, ny)) continue
+              const nIdx = ny * gridSize + nx
+              if (revealName.has(nIdx) || covered.has(nIdx)) { ok = true; break }
+            }
+            if (!ok) return false
+          }
+          return true
+        }
+
         const bt = () => {
           if (++nodes > 50000) throw BUDGET
           const uncovered = uncoveredReveals()
-          if (!uncovered.length) return floatsOk()
+          if (!uncovered.length) return floatsOk() && crabsOk()
 
           // Most-constrained reveal first: fewest live options.
           let best = null
