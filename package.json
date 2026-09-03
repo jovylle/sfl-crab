@@ -16,7 +16,8 @@
     "check-assets": "node scripts/check-missing-assets.js",
     "sync-artefact": "node scripts/sync-artefact.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "vite build && playwright test"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
@@ -33,6 +34,7 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.1.4",
     "@vitejs/plugin-vue": "^5.2.2",
     "netlify-cli": "^17.38.1",

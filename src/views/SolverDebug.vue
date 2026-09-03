@@ -96,11 +96,13 @@ import { gridArrayToTiles } from '@/utils/gridTileTransform.js'
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
 import { SOLVER_SCENARIOS_MECHANICS } from '@/dev/solverScenariosMechanics.js'
 import { SOLVER_SCENARIOS_OVERLAP } from '@/dev/solverScenariosOverlap.js'
+import { SOLVER_SCENARIOS_FULLDAY } from '@/dev/solverScenariosFullDay.js'
 
 const ALL_SCENARIOS = [
   ...SOLVER_SCENARIOS,
   ...SOLVER_SCENARIOS_MECHANICS,
   ...SOLVER_SCENARIOS_OVERLAP,
+  ...SOLVER_SCENARIOS_FULLDAY,
 ]
 
 const SLUG_ABBR = {
@@ -123,7 +125,7 @@ function buildRemainingSummary(remainingCounts, remainingRegions) {
 
 function evalScenario(scenario) {
   const tiles = gridArrayToTiles(scenario.grid, G)
-  const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, scenario.patterns, G)
+  const { guaranteed, guaranteedSlugs, remainingCounts, remainingRegions } = solveTreasures(tiles, scenario.patterns, G, scenario.completed)
 
   const cells = Array.from({ length: G * G }, (_, idx) => {
     const tileClasses = tiles[idx] || []

@@ -800,6 +800,29 @@ describe('Pass 4 — crab-satisfaction forcing', () => {
     expect(guaranteed.has(55), 'F6 crab cell itself not in guaranteed').toBe(false)
   })
 
+  it('4b: forces the only coverable neighbour and confirms its unique placement', () => {
+    // Live replica 3863900154075909 (H10 crab): F9/F10 revealed Old Bottle,
+    // crab at H10 (idx 97). Neighbours G10 (96), I10 (98), H9 (87) are all
+    // open, but sands at J9/I8 block every distant placement reaching I10/H9
+    // (as on the live board) while only OLD_BOTTLE@(5,8) covers G10 — so G10
+    // is forced and the whole OLD_BOTTLE instance (incl. G9 idx 86) is
+    // confirmed Old Bottle.
+    const tiles = makeTiles([
+      { x: 5, y: 8, items: { 'Old Bottle': 1 } },
+      { x: 5, y: 9, items: { 'Old Bottle': 1 } },
+      { x: 7, y: 9, items: { Crab: 1 } },
+      { x: 9, y: 8, items: { Sand: 1 } },
+      { x: 8, y: 7, items: { Sand: 1 } },
+    ])
+    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, ['OLD_BOTTLE', 'CLAM_SHELLS'], G)
+    expect(guaranteed.has(96), 'G10 (idx 96) must be forced').toBe(true)
+    expect(guaranteedSlugs.get(96)).toBe('old_bottle')
+    expect(guaranteed.has(86), 'G9 (idx 86) cascades via confirmed OLD_BOTTLE').toBe(true)
+    expect(guaranteedSlugs.get(86)).toBe('old_bottle')
+    expect(guaranteed.has(98), 'I10 (idx 98) must NOT be forced').toBe(false)
+    expect(guaranteed.has(87), 'H9 (idx 87) must NOT be forced').toBe(false)
+  })
+
   it('cascade: forcing one crab satisfies another which then forces further', () => {
     // Two crabs in a chain:
     // Crab at (3,3) idx 33: sand at (2,3),(3,2),(4,3) → only (3,4) idx 43 open
@@ -937,11 +960,13 @@ describe('guaranteedCandidates — disputed-name reporting', () => {
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
 import { SOLVER_SCENARIOS_MECHANICS } from '@/dev/solverScenariosMechanics.js'
 import { SOLVER_SCENARIOS_OVERLAP } from '@/dev/solverScenariosOverlap.js'
+import { SOLVER_SCENARIOS_FULLDAY } from '@/dev/solverScenariosFullDay.js'
 
 const ALL_SCENARIOS = [
   ...SOLVER_SCENARIOS,
   ...SOLVER_SCENARIOS_MECHANICS,
   ...SOLVER_SCENARIOS_OVERLAP,
+  ...SOLVER_SCENARIOS_FULLDAY,
 ]
 
 describe('SOLVER_SCENARIOS auto-generated regression suite', () => {
@@ -949,7 +974,7 @@ describe('SOLVER_SCENARIOS auto-generated regression suite', () => {
     if (!s.assertions || s.assertions.length === 0) continue
     it(s.name, () => {
       const tiles = gridArrayToTiles(s.grid, G)
-      const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, s.patterns, G)
+      const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, s.patterns, G, s.completed)
       for (const a of s.assertions) {
         if (a.property === 'guaranteed')
           expect(guaranteed.has(a.idx), a.label).toBe(a.expected)
@@ -1081,5 +1106,29 @@ describe('Completed-pattern pre-commit (live 4485248732423974 — G8 artefact21)
 
     expect(guaranteedFormationCounts.get('ARTEFACT_FOURTEEN')).toBe(1)
     expect(remainingCounts.get('ARTEFACT_FOURTEEN')).toBe(1)
+  })
+})
+
+describe('Pass 5 crab-satisfaction (live 3863900154075909 — I6 crab forces G6)', () => {
+  // SEA_CUCUMBERS = SC,SC,SC,Pipi in a row. E6/F6 revealed SC: two placements
+  // cover them — ox=3 (…F6 SC, G6 Pipi) and ox=4 (…F6 SC, G6 SC, H6 Pipi).
+  // The I6 crab's neighbours are H6/J6/I5/I7; with no other shapes on the
+  // board only H6 (via ox=4's Pipi) can satisfy it, so the ox=3 world is
+  // impossible and G6 is provably Sea Cucumber. Pass 5 used to ignore
+  // crab-satisfaction, leaving G6 ambiguous.
+  const G6 = 5 * G + 6, H6 = 5 * G + 7
+  const dug = [
+    { x: 4, y: 5, items: { 'Sea Cucumber': 1 } }, // E6
+    { x: 5, y: 5, items: { 'Sea Cucumber': 1 } }, // F6
+    { x: 8, y: 5, items: { Crab: 1 } }, // I6
+  ]
+
+  it('guarantees G6 as Sea Cucumber and cascades H6 as Pipi', () => {
+    const tiles = makeTiles(dug)
+    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, ['SEA_CUCUMBERS'], G)
+
+    expect(guaranteed.has(G6), `expected ${label(G6)} guaranteed`).toBe(true)
+    expect(guaranteedSlugs.get(G6)).toBe('sea_cucumber')
+    expect(guaranteedSlugs.get(H6)).toBe('pipi')
   })
 })

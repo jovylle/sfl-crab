@@ -446,4 +446,65 @@ export const SOLVER_SCENARIOS = [
       { idx: 59, property: 'slug', expected: 'camel_bone', label: 'J6 slug = camel_bone' },
     ],
   },
+  {
+    id: 'completed-precommit-g8',
+    name: 'Completed pre-commit — G8 artefact21 (live 4485248732423974)',
+    // ARTEFACT_FOURTEEN completed at C4/C6; G8 (seasonal) + H8 (Camel Bone)
+    // dug. Without the completed signal G8 has two equal candidates and
+    // I8/G9/H9 stay hidden; with it they are guaranteed Camel Bone.
+    grid: [
+      { x: 2, y: 3, items: { [SEASONAL]: 1 } },
+      { x: 2, y: 5, items: { 'Camel Bone': 1 } },
+      { x: 6, y: 7, items: { [SEASONAL]: 1 } },
+      { x: 7, y: 7, items: { 'Camel Bone': 1 } },
+    ],
+    patterns: ['ARTEFACT_FOURTEEN', 'ARTEFACT_TWENTY_ONE'],
+    completed: ['ARTEFACT_FOURTEEN'],
+    assertions: [
+      { idx: 78, property: 'guaranteed', expected: true, label: 'I8 (idx 78) guaranteed Camel Bone' },
+      { idx: 86, property: 'guaranteed', expected: true, label: 'G9 (idx 86) guaranteed Camel Bone' },
+      { idx: 87, property: 'guaranteed', expected: true, label: 'H9 (idx 87) guaranteed Camel Bone' },
+      { idx: 87, property: 'slug', expected: 'camel_bone', label: 'H9 (idx 87) slug = camel_bone' },
+      { idx: 76, property: 'guaranteed', expected: true, label: 'G8 (idx 76) guaranteed artefact' },
+    ],
+  },
+  {
+    id: 'crab-satisfaction-g6',
+    name: 'Crab-satisfaction — I6 crab forces H6 Pipi, G6 Sea Cucumber (live 3863900154075909)',
+    // Minimal replica: E6/F6 Sea Cucumber + I6 Crab, only SEA_CUCUMBERS on
+    // the board. G6=Pipi worlds leave the crab with no adjacent treasure,
+    // so G6 is provably Sea Cucumber and H6 cascades to Pipi.
+    grid: [
+      { x: 4, y: 5, items: { 'Sea Cucumber': 1 } },
+      { x: 5, y: 5, items: { 'Sea Cucumber': 1 } },
+      { x: 8, y: 5, items: { Crab: 1 } },
+    ],
+    patterns: ['SEA_CUCUMBERS'],
+    assertions: [
+      { idx: 56, property: 'guaranteed', expected: true, label: 'G6 (idx 56) guaranteed Sea Cucumber' },
+      { idx: 56, property: 'slug', expected: 'sea_cucumber', label: 'G6 slug = sea_cucumber' },
+      { idx: 57, property: 'slug', expected: 'pipi', label: 'H6 slug = pipi' },
+    ],
+  },
+  {
+    id: 'crab-coverability-h10',
+    name: 'Crab coverability — H10 crab forces G10, confirms OLD_BOTTLE incl. G9 (live 3863900154075909)',
+    // Minimal replica: F9/F10 Old Bottle + H10 Crab; only OLD_BOTTLE on the
+    // board can reach G10, so the H10 crab forces G10 and the unique covering
+    // placement OLD_BOTTLE@(5,8) is confirmed, cascading to G9.
+    grid: [
+      { x: 5, y: 8, items: { 'Old Bottle': 1 } },
+      { x: 5, y: 9, items: { 'Old Bottle': 1 } },
+      { x: 7, y: 9, items: { Crab: 1 } },
+      { x: 9, y: 8, items: { Sand: 1 } },
+      { x: 8, y: 7, items: { Sand: 1 } },
+    ],
+    patterns: ['OLD_BOTTLE', 'CLAM_SHELLS'],
+    assertions: [
+      { idx: 96, property: 'guaranteed', expected: true, label: 'G10 (idx 96) guaranteed Old Bottle' },
+      { idx: 96, property: 'slug', expected: 'old_bottle', label: 'G10 slug = old_bottle' },
+      { idx: 86, property: 'guaranteed', expected: true, label: 'G9 (idx 86) guaranteed Old Bottle' },
+      { idx: 86, property: 'slug', expected: 'old_bottle', label: 'G9 slug = old_bottle' },
+    ],
+  },
 ]
