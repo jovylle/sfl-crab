@@ -96,11 +96,13 @@ import { gridArrayToTiles } from '@/utils/gridTileTransform.js'
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
 import { SOLVER_SCENARIOS_MECHANICS } from '@/dev/solverScenariosMechanics.js'
 import { SOLVER_SCENARIOS_OVERLAP } from '@/dev/solverScenariosOverlap.js'
+import { SOLVER_SCENARIOS_FULLDAY } from '@/dev/solverScenariosFullDay.js'
 
 const ALL_SCENARIOS = [
   ...SOLVER_SCENARIOS,
   ...SOLVER_SCENARIOS_MECHANICS,
   ...SOLVER_SCENARIOS_OVERLAP,
+  ...SOLVER_SCENARIOS_FULLDAY,
 ]
 
 const SLUG_ABBR = {
