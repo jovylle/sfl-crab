@@ -800,6 +800,29 @@ describe('Pass 4 — crab-satisfaction forcing', () => {
     expect(guaranteed.has(55), 'F6 crab cell itself not in guaranteed').toBe(false)
   })
 
+  it('4b: forces the only coverable neighbour and confirms its unique placement', () => {
+    // Live replica 3863900154075909 (H10 crab): F9/F10 revealed Old Bottle,
+    // crab at H10 (idx 97). Neighbours G10 (96), I10 (98), H9 (87) are all
+    // open, but sands at J9/I8 block every distant placement reaching I10/H9
+    // (as on the live board) while only OLD_BOTTLE@(5,8) covers G10 — so G10
+    // is forced and the whole OLD_BOTTLE instance (incl. G9 idx 86) is
+    // confirmed Old Bottle.
+    const tiles = makeTiles([
+      { x: 5, y: 8, items: { 'Old Bottle': 1 } },
+      { x: 5, y: 9, items: { 'Old Bottle': 1 } },
+      { x: 7, y: 9, items: { Crab: 1 } },
+      { x: 9, y: 8, items: { Sand: 1 } },
+      { x: 8, y: 7, items: { Sand: 1 } },
+    ])
+    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, ['OLD_BOTTLE', 'CLAM_SHELLS'], G)
+    expect(guaranteed.has(96), 'G10 (idx 96) must be forced').toBe(true)
+    expect(guaranteedSlugs.get(96)).toBe('old_bottle')
+    expect(guaranteed.has(86), 'G9 (idx 86) cascades via confirmed OLD_BOTTLE').toBe(true)
+    expect(guaranteedSlugs.get(86)).toBe('old_bottle')
+    expect(guaranteed.has(98), 'I10 (idx 98) must NOT be forced').toBe(false)
+    expect(guaranteed.has(87), 'H9 (idx 87) must NOT be forced').toBe(false)
+  })
+
   it('cascade: forcing one crab satisfies another which then forces further', () => {
     // Two crabs in a chain:
     // Crab at (3,3) idx 33: sand at (2,3),(3,2),(4,3) → only (3,4) idx 43 open

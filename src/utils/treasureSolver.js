@@ -449,6 +449,9 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
     const sig = placementSignature(plots)
     const set = confirmedInstances.get(key)
     const isNewInstance = !set.has(sig)
+    if (typeof process !== 'undefined' && process.env.SFL_SOLVER_TRACE && isNewInstance) {
+      console.error(`[solver-trace] confirm ${key} @ ${sig}`)
+    }
     set.add(sig)
     for (const idx of plots.keys()) {
       if (!committedCellOrigin.has(idx)) committedCellOrigin.set(idx, { key, plots })
@@ -697,6 +700,108 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
       }
     }
 
+    // ── Pass 4b: crab-neighbour coverability forcing ─────────────────────
+    // Pass 4 only fires when sand-adjacency leaves a crab with exactly one
+    // open neighbour. But an open neighbour can still be IMPOSSIBLE: no
+    // remaining formation has any legal placement covering it (every other
+    // shape is pinned elsewhere on the board). Filter the open neighbours
+    // by coverability — if exactly one can still host a treasure, it must
+    // be the crab's treasure. Live case 3863900154075909: H10's neighbours
+    // G10/I10/H9 are all open, yet only OLD_BOTTLE can reach any of them
+    // (CLAM_SHELLS is pinned at F1/F2), and only G10.
+    //
+    // Two outcomes, deliberately asymmetric:
+    // - Exactly ONE live placement covers the forced cell → that placement
+    //   IS the true instance: confirm it wholesale (commit + consume +
+    //   plots), so G9 cascades through the normal machinery next iteration.
+    // - Several placements cover it → mark the cell guaranteed NAMELESS.
+    //   Nameless guaranteed cells create no constraints (nothing reads
+    //   `guaranteed` for deduction), so this is display-only + crab fuel.
+    //   Naming it would mint a pseudo-reveal with no committed instance,
+    //   which Phase A re-confirms without consuming — committing cells that
+    //   exclude the TRUE placement from Pass 3's enumeration and manufacture
+    //   a false sole survivor (oracle seed 4225: phantom SEAWEED at B3-D4).
+    // Sound: the true satisfier is a real adjacent treasure — never on
+    // sand/crab, never sand-adjacent (buildPlacement legality), and covered
+    // by its instance's true placement (confirmed ⇒ the crab would already
+    // be satisfied and skipped above; remaining ⇒ in the coverage union).
+    // So the true satisfier is always in `viable`, and a singleton is
+    // certain; a unique covering placement must be the true instance (live
+    // lists are complete: sound pseudos/commits never exclude it).
+    // Placement lists are memoized per iteration.
+    const disable4b = typeof process !== 'undefined' && !!process.env.SFL_DISABLE_4B
+    const livePlacementsCache = new Map()
+    const livePlacementsOf = (key) => {
+      let list = livePlacementsCache.get(key)
+      if (!list) {
+        const rem = remainingCount.get(key) ?? 0
+        list = rem === 1 ? enumerateSingleInstanceSurvivors(key) : enumerateAllPlacements(key)
+        livePlacementsCache.set(key, list)
+      }
+      return list
+    }
+    const isCoverable = (nIdx) => {
+      for (const key of presentKeys) {
+        if ((remainingCount.get(key) ?? 0) === 0) continue
+        if (livePlacementsOf(key).some(p => p.has(nIdx))) return true
+      }
+      return false
+    }
+    for (const cIdx of revealedCrab) {
+      const cx = cIdx % gridSize
+      const cy = Math.floor(cIdx / gridSize)
+      const ns = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+        .map(([dx, dy]) => [cx + dx, cy + dy])
+        .filter(([nx, ny]) => inBounds(nx, ny))
+
+      const satisfied = ns.some(([nx, ny]) => {
+        const nIdx = ny * gridSize + nx
+        return revealedTreasureName.has(nIdx) || guaranteed.has(nIdx)
+      })
+      if (satisfied) continue
+
+      const open = ns.filter(([nx, ny]) => {
+        const nIdx = ny * gridSize + nx
+        if (revealedSand.has(nIdx) || revealedCrab.has(nIdx) || revealedTreasureName.has(nIdx)) return false
+        return ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+          const sx = nx + dx
+          const sy = ny + dy
+          return inBounds(sx, sy) && revealedSand.has(sy * gridSize + sx) &&
+            !(sx === cx && sy === cy)
+        })
+      })
+      if (open.length < 2) continue // 0: nothing; 1: Pass 4 handled it
+
+      const viable = open.filter(([nx, ny]) => isCoverable(ny * gridSize + nx))
+      if (viable.length !== 1 || disable4b) continue
+      const [nx, ny] = viable[0]
+      const nIdx = ny * gridSize + nx
+      const covering = []
+      for (const key of presentKeys) {
+        if ((remainingCount.get(key) ?? 0) === 0) continue
+        for (const p of livePlacementsOf(key)) {
+          if (p.has(nIdx)) covering.push({ key, plots: p })
+        }
+      }
+      if (covering.length === 1) {
+        const { key, plots } = covering[0]
+        const isNewInstance = recordConfirmedInstance(key, plots)
+        if (isNewInstance) {
+          const rem = remainingCount.get(key) ?? 0
+          if (rem > 0) { remainingCount.set(key, rem - 1); iterChanged = true }
+        }
+        recordConfirmedPlots(plots)
+      } else if (!guaranteed.has(nIdx)) {
+        guaranteed.add(nIdx)
+        iterChanged = true
+      }
+      if (typeof process !== 'undefined' && process.env.SFL_SOLVER_TRACE) {
+        const lbl = (i) => `${'ABCDEFGHIJ'[i % gridSize]}${Math.floor(i / gridSize) + 1}`
+        const how = covering.length === 1 ? `confirms ${covering[0].key}` : `nameless (${covering.length} coverings)`
+        console.error(`[solver-trace] 4b crab=${lbl(cIdx)} forces=${lbl(nIdx)} ${how}`)
+      }
+    }
+
     // ── Pass 5: global-consistency name disambiguation ───────────────────
     // The per-anchor local passes are sound but incomplete: a cell can be
     // provably a treasure while its NAME is only provable via global
@@ -887,6 +992,10 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
         if (budgetHit) continue // no conclusions this iteration — stay conservative
         if (possible.length === 1) {
           // Exactly one disputed name survives global consistency → provable.
+          if (typeof process !== 'undefined' && process.env.SFL_SOLVER_TRACE) {
+            const lbl = `${'ABCDEFGHIJ'[idx % gridSize]}${Math.floor(idx / gridSize) + 1}`
+            console.error(`[solver-trace] pass5 resolves ${lbl} = ${possible[0]} (tried ${names.join('|')})`)
+          }
           guaranteedNames.set(idx, possible[0])
           ambiguousCandidates.delete(idx)
           ambiguousIdx.delete(idx)

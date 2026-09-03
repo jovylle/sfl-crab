@@ -486,4 +486,25 @@ export const SOLVER_SCENARIOS = [
       { idx: 57, property: 'slug', expected: 'pipi', label: 'H6 slug = pipi' },
     ],
   },
+  {
+    id: 'crab-coverability-h10',
+    name: 'Crab coverability — H10 crab forces G10, confirms OLD_BOTTLE incl. G9 (live 3863900154075909)',
+    // Minimal replica: F9/F10 Old Bottle + H10 Crab; only OLD_BOTTLE on the
+    // board can reach G10, so the H10 crab forces G10 and the unique covering
+    // placement OLD_BOTTLE@(5,8) is confirmed, cascading to G9.
+    grid: [
+      { x: 5, y: 8, items: { 'Old Bottle': 1 } },
+      { x: 5, y: 9, items: { 'Old Bottle': 1 } },
+      { x: 7, y: 9, items: { Crab: 1 } },
+      { x: 9, y: 8, items: { Sand: 1 } },
+      { x: 8, y: 7, items: { Sand: 1 } },
+    ],
+    patterns: ['OLD_BOTTLE', 'CLAM_SHELLS'],
+    assertions: [
+      { idx: 96, property: 'guaranteed', expected: true, label: 'G10 (idx 96) guaranteed Old Bottle' },
+      { idx: 96, property: 'slug', expected: 'old_bottle', label: 'G10 slug = old_bottle' },
+      { idx: 86, property: 'guaranteed', expected: true, label: 'G9 (idx 86) guaranteed Old Bottle' },
+      { idx: 86, property: 'slug', expected: 'old_bottle', label: 'G9 slug = old_bottle' },
+    ],
+  },
 ]
