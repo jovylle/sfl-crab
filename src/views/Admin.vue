@@ -41,7 +41,28 @@
     </div>
 
     <template v-else>
-      <div class="grid gap-4 lg:grid-cols-[220px_1fr]">
+      <div class="tabs tabs-boxed w-fit">
+        <button
+          type="button"
+          class="tab"
+          :class="{ 'tab-active': adminTab === 'blobs' }"
+          @click="adminTab = 'blobs'"
+        >
+          Blob stores (legacy)
+        </button>
+        <button
+          type="button"
+          class="tab"
+          :class="{ 'tab-active': adminTab === 'feedback' }"
+          @click="switchToFeedbackTab"
+        >
+          Public feedback
+          <span v-if="moderationPendingCount" class="badge badge-primary badge-sm ml-1">{{ moderationPendingCount }}</span>
+        </button>
+      </div>
+
+      <!-- Legacy Netlify Blobs browser -->
+      <div v-if="adminTab === 'blobs'" class="grid gap-4 lg:grid-cols-[220px_1fr]">
         <aside class="space-y-2">
           <p class="text-xs font-semibold uppercase opacity-60 px-2">Stores</p>
           <button
@@ -151,6 +172,89 @@
           </div>
         </div>
       </div>
+
+      <!-- Cloudflare ProjectMate moderation queue -->
+      <div v-else class="space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <p class="text-sm opacity-70">
+            Only items where the user ticked “allow public display” can go public.
+            Approve = shows on <router-link to="/feedbacks" class="link">/feedbacks</router-link>.
+            Same admin password is used as Worker Bearer — set Worker <code>ADMIN_API_KEY</code> to the same value to lock it down.
+          </p>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            :disabled="loadingMod"
+            @click="refreshModeration"
+          >
+            Refresh
+          </button>
+        </div>
+
+        <p v-if="!issuesEndpoint" class="alert text-sm">
+          Missing <code>VITE_PROJECTMATE_ISSUES_ENDPOINT</code> — set it to
+          <code>https://projectmate-issues-api.jovyllebermudez.workers.dev</code> and redeploy.
+        </p>
+        <p v-if="modError" class="text-error text-sm">{{ modError }}</p>
+
+        <div v-if="loadingMod" class="flex justify-center py-8">
+          <span class="loading loading-spinner loading-lg" />
+        </div>
+
+        <div v-else-if="moderation.length" class="grid gap-3">
+          <article
+            v-for="item in moderation"
+            :key="item.id"
+            class="card bg-base-200 shadow-sm"
+          >
+            <div class="card-body p-4">
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <span class="badge" :class="statusBadge(item.status)">{{ item.status }}</span>
+                <span
+                  class="badge"
+                  :class="item.meta?.allowPublicDisplay ? 'badge-success' : 'badge-ghost'"
+                >
+                  {{ item.meta?.allowPublicDisplay ? 'user allows public' : 'private only' }}
+                </span>
+                <span class="opacity-60">{{ formatDate(item.createdAt) }}</span>
+                <span v-if="item.meta?.displayName" class="font-semibold">— {{ item.meta.displayName }}</span>
+              </div>
+              <p class="text-sm mt-2 whitespace-pre-wrap break-words">{{ item.message }}</p>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <button
+                  type="button"
+                  class="btn btn-xs btn-success"
+                  :disabled="updatingId === item.id || !item.meta?.allowPublicDisplay"
+                  :title="item.meta?.allowPublicDisplay ? 'Publish to /feedbacks' : 'User did not consent — cannot publish'"
+                  @click="moderate(item, 'approved_open')"
+                >
+                  {{ updatingId === item.id ? '…' : 'Publish' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-xs btn-outline"
+                  :disabled="updatingId === item.id"
+                  @click="moderate(item, 'resolved')"
+                >
+                  Resolve
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-xs btn-error btn-outline"
+                  :disabled="updatingId === item.id"
+                  @click="moderate(item, 'rejected')"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <p v-else-if="issuesEndpoint" class="text-sm opacity-60 py-6 text-center">
+          Queue empty — new feedback with “allow public display” will appear here.
+        </p>
+      </div>
     </template>
   </section>
 </template>
@@ -167,6 +271,11 @@ import {
   setStoredAdminPassword,
   verifyAdminPassword,
 } from '@/services/adminBlobService.js'
+import {
+  getIssuesEndpoint,
+  listModeration,
+  setIssueStatus,
+} from '@/services/projectmateService.js'
 
 const password = ref(getStoredAdminPassword())
 const passwordInput = ref('')
@@ -174,6 +283,7 @@ const authenticated = ref(Boolean(password.value))
 const loggingIn = ref(false)
 const loginError = ref('')
 
+const adminTab = ref('feedback')
 const stores = ref([])
 const selectedStoreId = ref('practice-daily-patterns')
 const prefixFilter = ref('')
@@ -189,9 +299,35 @@ const deleting = ref(false)
 const keysError = ref('')
 const blobError = ref('')
 
+// ProjectMate moderation
+const issuesEndpoint = ref(getIssuesEndpoint())
+const moderation = ref([])
+const loadingMod = ref(false)
+const modError = ref('')
+const updatingId = ref('')
+
 const selectedStore = computed(() =>
   stores.value.find(s => s.id === selectedStoreId.value),
 )
+
+const moderationPendingCount = computed(() =>
+  moderation.value.filter(i => i.status === 'pending' || (i.status === 'approved_open' && i.meta?.allowPublicDisplay)).length,
+)
+
+function statusBadge (status) {
+  if (status === 'approved_open') return 'badge-success'
+  if (status === 'pending') return 'badge-warning'
+  if (status === 'resolved') return 'badge-info'
+  return 'badge-ghost'
+}
+
+function formatDate (iso) {
+  try {
+    return new Date(iso).toLocaleString()
+  } catch {
+    return iso || ''
+  }
+}
 
 async function login () {
   loginError.value = ''
@@ -204,6 +340,7 @@ async function login () {
     authenticated.value = true
     passwordInput.value = ''
     await refreshKeys()
+    await refreshModeration()
   } catch (err) {
     loginError.value =
       err.status === 503
@@ -225,6 +362,7 @@ function logout () {
   selectedKey.value = ''
   blobPreview.value = ''
   blobScreenshotSrc.value = ''
+  moderation.value = []
 }
 
 async function bootstrapSession () {
@@ -234,6 +372,7 @@ async function bootstrapSession () {
     stores.value = result.stores || []
     authenticated.value = true
     await refreshKeys()
+    await refreshModeration()
   } catch {
     logout()
   }
@@ -323,6 +462,46 @@ async function confirmDelete () {
     blobError.value = err.message
   } finally {
     deleting.value = false
+  }
+}
+
+async function switchToFeedbackTab () {
+  adminTab.value = 'feedback'
+  await refreshModeration()
+}
+
+async function refreshModeration () {
+  if (!issuesEndpoint.value) return
+  modError.value = ''
+  loadingMod.value = true
+  try {
+    moderation.value = await listModeration(password.value)
+  } catch (err) {
+    modError.value = err.message
+    // If Worker has ADMIN_API_KEY set and password mismatches, it 403s — tell them plainly
+    if (String(err.message).toLowerCase().includes('admin')) {
+      modError.value += ' (Worker ADMIN_API_KEY mismatch? Set it to the same value as Netlify ADMIN_PASSWORD.)'
+    }
+    moderation.value = []
+  } finally {
+    loadingMod.value = false
+  }
+}
+
+async function moderate (item, status) {
+  if (status === 'approved_open' && !item.meta?.allowPublicDisplay) {
+    window.alert('User did not consent to public display — cannot publish.')
+    return
+  }
+  updatingId.value = item.id
+  modError.value = ''
+  try {
+    const updated = await setIssueStatus(password.value, item.id, status)
+    moderation.value = moderation.value.map(m => (m.id === updated.id ? updated : m))
+  } catch (err) {
+    modError.value = err.message
+  } finally {
+    updatingId.value = ''
   }
 }
 
