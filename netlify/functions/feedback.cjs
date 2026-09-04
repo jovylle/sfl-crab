@@ -94,10 +94,8 @@ function validateBody (body) {
 
   const landId = body.landId ?? null
   const tileContext = body.tileContext && typeof body.tileContext === 'object' ? body.tileContext : null
-  const allowPublicDisplay = body.allowPublicDisplay === true
-  const displayName = typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 40) : ''
 
-  return { message, email, pageUrl, screenshot, landId, tileContext, allowPublicDisplay, displayName: displayName || null }
+  return { message, email, pageUrl, screenshot, landId, tileContext }
 }
 
 exports.handler = async (event) => {
@@ -133,7 +131,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}')
-    const { message, email, pageUrl, screenshot, landId, tileContext, allowPublicDisplay, displayName } = validateBody(body)
+    const { message, email, pageUrl, screenshot, landId, tileContext } = validateBody(body)
 
     const record = {
       message,
@@ -142,11 +140,6 @@ exports.handler = async (event) => {
       landId,
       tileContext,
       screenshot: screenshot || null,
-      allowPublicDisplay: !!allowPublicDisplay,
-      displayName: displayName || null,
-      // Admin gate: not public until you approve in /admin
-      isPublic: false,
-      publishedAt: null,
       createdAt: new Date().toISOString(),
       ip: getClientIp(event),
     }

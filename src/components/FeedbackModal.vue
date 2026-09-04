@@ -31,31 +31,7 @@
       />
     </label>
 
-    <label class="form-control w-full mt-3">
-      <span class="label-text">Display name (optional — shown if published)</span>
-      <input
-        v-model="displayName"
-        type="text"
-        maxlength="40"
-        class="input input-bordered w-full"
-        placeholder="Farmer Joe"
-        :disabled="status === 'sending'"
-      />
-    </label>
-
     <!-- screenshot attach disabled — image relay not working, text-only feedback -->
-
-    <label class="flex items-start gap-2 mt-4 cursor-pointer">
-      <input
-        v-model="allowPublicDisplay"
-        type="checkbox"
-        class="checkbox checkbox-sm checkbox-primary mt-0.5"
-        :disabled="status === 'sending'"
-      />
-      <span class="text-xs leading-4 text-base-content/70">
-        Allow my feedback to be shown publicly on d1g.uk (only your message + display name will be shown; email stays private)
-      </span>
-    </label>
 
     <p v-if="error" class="text-error text-sm mt-3">{{ error }}</p>
     <p v-else-if="status === 'sent'" class="text-success text-sm mt-3">
@@ -88,12 +64,11 @@ const props = defineProps({
   open: { type: Boolean, required: true },
   prefill: { type: Object, default: null },
 })
+
 const emit = defineEmits(['close'])
 
 const message = ref('')
 const email = ref('')
-const displayName = ref('')
-const allowPublicDisplay = ref(false)
 const status = ref('idle')
 const error = ref('')
 
@@ -118,8 +93,6 @@ async function send () {
   if (!canSend.value) return
   const messageText = message.value
   const emailText = email.value
-  const displayNameText = displayName.value.trim().slice(0, 40)
-  const allowPublic = !!allowPublicDisplay.value
   const pageUrl = typeof window !== 'undefined' ? window.location.href : ''
 
   status.value = 'sending'
@@ -131,8 +104,6 @@ async function send () {
       body: JSON.stringify({
         message: messageText,
         email: emailText,
-        displayName: displayNameText || null,
-        allowPublicDisplay: allowPublic,
         pageUrl,
         landId: props.prefill?.landId ?? null,
         tileContext: props.prefill?.tileLabel
@@ -148,37 +119,13 @@ async function send () {
     status.value = 'sent'
     message.value = ''
     email.value = ''
-    displayName.value = ''
-    allowPublicDisplay.value = false
   } catch (err) {
     status.value = 'error'
     error.value = err.message || 'Could not send feedback.'
   }
 
-  // Fire-and-forget: keep email relay, but never block UI — /api/feedback is source of truth.
+  // Fire-and-forget: keep the existing email relay working, but never let it
+  // affect the UI status — /api/feedback above is the durable source of truth.
   submitWeb3FormsFeedback({ message: messageText, email: emailText, pageUrl }).catch(() => {})
-
-  // Dual-write to Cloudflare Worker (projectmate) if configured — enables public display without Netlify.
-  // Set VITE_PROJECTMATE_ISSUES_ENDPOINT e.g. https://projectmate-issues-api.<account>.workers.dev
-  const issuesEndpoint = import.meta.env.VITE_PROJECTMATE_ISSUES_ENDPOINT
-  if (issuesEndpoint) {
-    const base = issuesEndpoint.replace(/\/+$/, '')
-    fetch(`${base}/issues`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        projectId: import.meta.env.VITE_PROJECTMATE_PROJECT_ID || 'sfl-crab',
-        message: messageText,
-        email: emailText || undefined,
-        meta: {
-          parentHref: pageUrl || undefined,
-          allowPublicDisplay: allowPublic,
-          displayName: displayNameText || undefined,
-          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-        },
-        interactions: [],
-      }),
-    }).catch(() => {})
-  }
 }
 </script>
