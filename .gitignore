@@ -24,6 +24,10 @@ dist-ssr
 *.sw?
 .history/
 
+# Playwright output (regenerated on every e2e run)
+test-results/
+playwright-report/
+
 # Environment variables
 .env
 .env.local
