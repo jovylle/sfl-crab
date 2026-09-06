@@ -613,6 +613,80 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
       }
     }
 
+    // ── Pass 1c: pairwise common-placement forcing ─────────────────────
+    // Two anchors X≠Y share an identical (key, signature) candidate p, but
+    // each also has OTHER candidates — all belonging to ONE single-remaining
+    // key K, with DISJOINT signature sets across the two anchors. If p were
+    // unreal, X and Y would each need a distinct K placement — impossible
+    // with one instance left — so p IS the real instance. Live case
+    // (land 4485248732423974): A9={T21@(0,8),T20@(0,7)} ×
+    // C9={T21@(0,8),T20@(1,8),T20@(2,8)} with TWENTY single-remaining forces
+    // T21@(0,8) ⇒ A10/B10 certain Camel Bone.
+    //
+    // Soundness: computeCandidates is complete (only rejects placements
+    // contradicting sound reveals/pseudos/commits/counts, by induction over
+    // the fixpoint); K single-remaining ⇒ at most one distinct K placement
+    // is real; disjoint ⇒ X,Y cannot both be K-covered ⇒ p real. Confirming
+    // p (consume + commit + pseudo-reveal) is then exactly as sound as a
+    // Phase-A pin. The disjointness check doubles as the
+    // identical-signature exemption: a true instance's self-overlap across
+    // two of its own reveals (same key+signature in both lists) can never
+    // satisfy it, so it never forces. Candidates are recomputed fresh for
+    // every pair inside the loop — never cached across iterations. One force
+    // per pass, then back to the fixpoint (fresh state for everything else).
+    // O(A²·C²) over anchors × candidates — polynomial, monotone (only
+    // confirms), gives up (= no conclusion) whenever the shape doesn't fit.
+    {
+      const sigOf = (c) => c.key + '@' + placementSignature(c.plots)
+      const anchors = [...revealedTreasureName]
+      let forced = false
+      for (let ai = 0; ai < anchors.length && !forced; ai++) {
+        const [xIdx, xName] = anchors[ai]
+        const xCands = computeCandidates(xIdx, xName)
+        if (xCands.length < 2) continue // 0: inconsistent (skip); 1: Phase A/B owns it
+        for (let bi = ai + 1; bi < anchors.length && !forced; bi++) {
+          const [yIdx, yName] = anchors[bi]
+          const yCands = computeCandidates(yIdx, yName)
+          if (yCands.length < 2) continue
+          const yBySig = new Map(yCands.map(c => [sigOf(c), c]))
+          for (const xc of xCands) {
+            const s = sigOf(xc)
+            if (!yBySig.has(s)) continue
+            const qx = xCands.filter(c => sigOf(c) !== s)
+            const qy = yCands.filter(c => sigOf(c) !== s)
+            if (!qx.length || !qy.length) continue
+            const altKeys = new Set([...qx, ...qy].map(c => c.key))
+            if (altKeys.size !== 1) continue
+            const K = qx[0].key
+            if ((remainingCount.get(K) ?? 0) !== 1) continue
+            const qxSigs = new Set(qx.map(sigOf))
+            if (qy.some(c => qxSigs.has(sigOf(c)))) continue // identical alternative, not a conflict
+            // FORCE p = xc: the one real instance covering both anchors.
+            const { key: pKey, plots: pPlots } = xc
+            const isNewInstance = recordConfirmedInstance(pKey, pPlots)
+            recordConfirmedPlots(pPlots)
+            if ((!pseudoRevealed.has(xIdx) || !pseudoRevealed.has(yIdx)) && isNewInstance) {
+              const rem = remainingCount.get(pKey) ?? 0
+              if (rem > 0) remainingCount.set(pKey, rem - 1)
+            }
+            for (const [idx, name] of pPlots) {
+              if (!revealedTreasureName.has(idx) && !pseudoRevealed.has(idx)) {
+                revealedTreasureName.set(idx, name)
+                pseudoRevealed.add(idx)
+              }
+            }
+            if (typeof process !== 'undefined' && process.env.SFL_SOLVER_TRACE) {
+              const lbl = (i) => `${'ABCDEFGHIJ'[i % gridSize]}${Math.floor(i / gridSize) + 1}`
+              console.error(`[solver-trace] 1c pairwise forces ${pKey} via ${lbl(xIdx)}x${lbl(yIdx)} (alt key ${K})`)
+            }
+            iterChanged = true
+            forced = true
+            break
+          }
+        }
+      }
+    }
+
     // ── Pass 2: single-instance forcing ─────────────────────────────────
     // When exactly one formation of a shape is on the board, every revealed
     // treasure that (dynamically — see revealIsExclusiveTo) can ONLY be
