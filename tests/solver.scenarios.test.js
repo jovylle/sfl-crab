@@ -960,12 +960,14 @@ describe('guaranteedCandidates — disputed-name reporting', () => {
 import { SOLVER_SCENARIOS } from '@/dev/solverScenarios.js'
 import { SOLVER_SCENARIOS_MECHANICS } from '@/dev/solverScenariosMechanics.js'
 import { SOLVER_SCENARIOS_OVERLAP } from '@/dev/solverScenariosOverlap.js'
+import { SOLVER_SCENARIOS_PAIRWISE } from '@/dev/solverScenariosPairwise.js'
 import { SOLVER_SCENARIOS_FULLDAY } from '@/dev/solverScenariosFullDay.js'
 
 const ALL_SCENARIOS = [
   ...SOLVER_SCENARIOS,
   ...SOLVER_SCENARIOS_MECHANICS,
   ...SOLVER_SCENARIOS_OVERLAP,
+  ...SOLVER_SCENARIOS_PAIRWISE,
   ...SOLVER_SCENARIOS_FULLDAY,
 ]
 
@@ -1074,13 +1076,22 @@ describe('Completed-pattern pre-commit (live 4485248732423974 — G8 artefact21)
   const patterns = ['ARTEFACT_FOURTEEN', 'ARTEFACT_TWENTY_ONE']
   const I8 = 7 * G + 8, G9 = 8 * G + 6, H9 = 8 * G + 7
 
-  it('leaves I8/G9/H9 hidden when completedPatterns is not passed (old behaviour)', () => {
+  it('guarantees I8/G9/H9 even without completedPatterns (pairwise subsumes the signal)', () => {
+    // SUPERSEDED 2026-09 by Pass 1c (pairwise common-placement forcing):
+    // C4={F14@(2,3),T21@(2,3)} × C6={F14@(2,3),4 other T21s} share only
+    // F14@(2,3), and all alternatives are distinct placements of the
+    // single-remaining TWENTY_ONE — killing F14 would need two of them.
+    // So FOURTEEN@(2,3) is forced WITHOUT the completed signal, TWENTY_ONE
+    // becomes G8's sole candidate, and I8/G9/H9 cascade as Camel Bone.
+    // G10 stays hidden (only the dead FOURTEEN@(6,7) ever covered it).
     const tiles = makeTiles(dug)
-    const { guaranteed } = solveTreasures(tiles, patterns, G)
+    const { guaranteed, guaranteedSlugs } = solveTreasures(tiles, patterns, G)
 
     for (const idx of [I8, G9, H9]) {
-      expect(guaranteed.has(idx), `expected ${label(idx)} NOT guaranteed`).toBe(false)
+      expect(guaranteed.has(idx), `expected ${label(idx)} guaranteed`).toBe(true)
+      expect(guaranteedSlugs.get(idx)).toBe('camel_bone')
     }
+    expect(guaranteed.has(9 * G + 6), 'expected G10 NOT guaranteed').toBe(false)
   })
 
   it('guarantees I8/G9/H9 as Camel Bone once FOURTEEN is marked completed', () => {
