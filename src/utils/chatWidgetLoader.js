@@ -50,7 +50,11 @@ export function initChatWidget () {
     'https://projectmate.uft1.com/overlay/'
   const PROJECT_ID =
     import.meta.env?.VITE_PROJECTMATE_PROJECT_ID || 'sfl-crab'
-  const ISSUES_ENDPOINT = import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT
+  // Same-origin proxy (Netlify function) keeps the Worker URL server-side —
+  // nothing host-specific in the client bundle. Absolute URL required by schema.
+  const ISSUES_ENDPOINT =
+    import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT ||
+    `${window.location.origin}/api/projectmate`
 
   function setProjectMateReady (ready) {
     window.dispatchEvent(
@@ -79,9 +83,12 @@ export function initChatWidget () {
         // Feedback uses FeedbackModal + Web3Forms in the browser (free plan blocks server proxy).
         feedback: false,
         updates: true,
-        issues: false,
+        issues: true,
         about: true,
       },
+      issuesEndpoint: ISSUES_ENDPOINT,
+      adminMode: { hash: 'admin' },
+      autoOpen: { hash: 'admin' },
       theme: 'auto',
       accentColor: '#4f46e5',
       launcher: {
@@ -104,6 +111,14 @@ export function initChatWidget () {
 
     window.ProjectMate.init(buildProjectMateConfig())
     setProjectMateReady(typeof window.ProjectMate.open === 'function')
+    // Deep-link: #admin opens the widget straight to the lock prompt.
+    try {
+      if ((window.location.hash || '').replace(/^#/, '') === 'admin') {
+        window.ProjectMate.open()
+      }
+    } catch {
+      // non-fatal: user can still open via menu
+    }
   }
 
   function onDataReady () {
