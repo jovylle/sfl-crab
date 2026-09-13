@@ -87,13 +87,15 @@ export function initChatWidget () {
         about: true,
       },
       issuesEndpoint: ISSUES_ENDPOINT,
-      adminMode: { hash: 'admin' },
-      autoOpen: { hash: 'admin' },
       theme: 'auto',
       accentColor: '#4f46e5',
       launcher: {
         hidden: true,
       },
+      // Owner unlock path: #owner reveals the Review tab + passphrase prompt.
+      // (Renamed from "admin" — friendlier word, same server-side key check.)
+      ownerMode: { hash: 'owner' },
+      autoOpen: { hash: 'owner' },
     }
 
     if (ISSUES_ENDPOINT) {
@@ -111,9 +113,9 @@ export function initChatWidget () {
 
     window.ProjectMate.init(buildProjectMateConfig())
     setProjectMateReady(typeof window.ProjectMate.open === 'function')
-    // Deep-link: #admin opens the widget straight to the lock prompt.
+    // Deep-link: #owner opens the widget straight to the unlock prompt.
     try {
-      if ((window.location.hash || '').replace(/^#/, '') === 'admin') {
+      if ((window.location.hash || '').replace(/^#/, '') === 'owner') {
         window.ProjectMate.open()
       }
     } catch {
@@ -146,8 +148,20 @@ export function initChatWidget () {
     hasInitialized = true
   }
 
-  // Listen for your event
-  window.addEventListener('landDataReady', e => onDataReady(e.detail))
+  // Boot immediately on script eval (module import), not on land data.
+  // The widget is standalone (About / Updates / Feedback) — no land needed.
+  // Guard StrictMode-style double-eval with a window flag.
+  function bootNow () {
+    if (window.__pmBooted) return
+    window.__pmBooted = true
+    onDataReady()
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootNow, { once: true })
+  } else {
+    bootNow()
+  }
 
   // Option B: fallback polling if we don’t emit the event
   ;(function pollStorage () {
