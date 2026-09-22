@@ -55,11 +55,12 @@ export function initChatWidget () {
     'https://projectmate.uft1.com/overlay/'
   const PROJECT_ID =
     import.meta.env?.VITE_PROJECTMATE_PROJECT_ID || 'sfl-crab'
-  // Same-origin proxy (Netlify function) keeps the Worker URL server-side —
-  // nothing host-specific in the client bundle. Absolute URL required by schema.
+  // Minimum host requirement: just point at the Worker. No proxy, no Netlify
+  // env, no secrets in the bundle — the passphrase is typed at the unlock
+  // prompt and never stored. (Same-origin proxy remains optional hardening.)
   const ISSUES_ENDPOINT =
     import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT ||
-    `${window.location.origin}/api/projectmate`
+    'https://projectmate-issues-api.jovyllebermudez.workers.dev'
 
   function setProjectMateReady (ready) {
     window.dispatchEvent(
