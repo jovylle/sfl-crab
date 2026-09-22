@@ -22,7 +22,9 @@ function corsHeaders (origin) {
   const allowed =
     !origin ||
     CORS_ORIGINS.includes(origin) ||
-    /^https:\/\/[\w-]+--[\w-]+\.netlify\.app$/.test(origin)
+    /^https:\/\/[\w-]+--[\w-]+\.netlify\.app$/.test(origin) ||
+    // Local dev: overlay dev server (e.g. http://localhost:5174) + vite (5199).
+    /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
 
   return {
     'Access-Control-Allow-Origin': allowed ? origin || CORS_ORIGINS[0] : CORS_ORIGINS[1],

@@ -44,7 +44,12 @@ const PROJECT_CHANGELOG = [
 
 export function initChatWidget () {
   let hasInitialized = false
-  const EMBED_SRC = 'https://projectmate.uft1.com/embed.js'
+  // Local override for dev (loopback CSP): VITE_PROJECTMATE_EMBED_SRC=http://localhost:xxxx/embed.js
+  const EMBED_SRC =
+    import.meta.env?.VITE_PROJECTMATE_EMBED_SRC ||
+    'https://projectmate.uft1.com/embed.js'
+  // Local overlay for dev: VITE_PROJECTMATE_APP_URL=http://localhost:5174/
+  // (live https overlay can't fetch localhost APIs — Chrome blocks public→loopback).
   const APP_URL =
     import.meta.env?.VITE_PROJECTMATE_APP_URL ||
     'https://projectmate.uft1.com/overlay/'
