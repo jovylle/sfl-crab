@@ -2,7 +2,10 @@ name: Warm Daily Cache
 
 on:
   schedule:
-    - cron: '10 0 * * *' # daily at 00:10 UTC (avoid rollover race)
+    # 00:25 UTC: past the post-midnight rollover window, so the canonical build
+    # is taken from rolled-over SFL data. force=1 heals any provisional snapshot
+    # seeded by early visitors (see _practiceDailyStore.cjs).
+    - cron: '25 0 * * *' # daily at 00:25 UTC (past rollover race window)
   workflow_dispatch: {}
 
 jobs:
@@ -18,11 +21,13 @@ jobs:
           fi
 
           # Prefer explicit site URL secret, otherwise try known domains.
+          # force=1: rebuild even if a snapshot exists, healing any provisional
+          # snapshot seeded from pre-rollover data by early visitors.
           if [ -n "${{ secrets.NETLIFY_SITE_URL }}" ]; then
-            BUILD_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/api/build-daily-pattern?utcDate=$UTC_DATE")
+            BUILD_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/api/build-daily-pattern?utcDate=$UTC_DATE&force=1")
             READ_ENDPOINTS=("${{ secrets.NETLIFY_SITE_URL }}/api/practice-patterns?utcDate=$UTC_DATE")
           else
-            BUILD_ENDPOINTS=("https://d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE" "https://beta.d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE")
+            BUILD_ENDPOINTS=("https://d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE&force=1" "https://beta.d1g.uk/api/build-daily-pattern?utcDate=$UTC_DATE&force=1")
             READ_ENDPOINTS=("https://d1g.uk/api/practice-patterns?utcDate=$UTC_DATE" "https://beta.d1g.uk/api/practice-patterns?utcDate=$UTC_DATE")
           fi
 
