@@ -38,3 +38,6 @@ prod.env
 
 # Captured land snapshots for scripts/debug-solver.js (real player data)
 scripts/fixtures/
+
+# Playwright MCP scratch output (snapshots, console logs)
+.playwright-mcp/

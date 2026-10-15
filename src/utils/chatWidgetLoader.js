@@ -1,5 +1,5 @@
 // src/utils/chatWidgetLoader.js
-// Waits for landData, then boots ProjectMate embed.js without floating launcher.
+// Boots the ProjectMate embed.js (no floating launcher) on DOM ready — not on landData.
 
 import { getLandDataStorageKey } from '@/config/api.js'
 
@@ -44,13 +44,23 @@ const PROJECT_CHANGELOG = [
 
 export function initChatWidget () {
   let hasInitialized = false
-  const EMBED_SRC = 'https://projectmate.uft1.com/embed.js'
+  // Local override for dev (loopback CSP): VITE_PROJECTMATE_EMBED_SRC=http://localhost:xxxx/embed.js
+  const EMBED_SRC =
+    import.meta.env?.VITE_PROJECTMATE_EMBED_SRC ||
+    'https://projectmate.uft1.com/embed.js'
+  // Local overlay for dev: VITE_PROJECTMATE_APP_URL=http://localhost:5174/
+  // (live https overlay can't fetch localhost APIs — Chrome blocks public→loopback).
   const APP_URL =
     import.meta.env?.VITE_PROJECTMATE_APP_URL ||
     'https://projectmate.uft1.com/overlay/'
   const PROJECT_ID =
     import.meta.env?.VITE_PROJECTMATE_PROJECT_ID || 'sfl-crab'
-  const ISSUES_ENDPOINT = import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT
+  // Minimum host requirement: just point at the Worker. No proxy, no Netlify
+  // env, no secrets in the bundle — the passphrase is typed at the unlock
+  // prompt and never stored. (Same-origin proxy remains optional hardening.)
+  const ISSUES_ENDPOINT =
+    import.meta.env?.VITE_PROJECTMATE_ISSUES_ENDPOINT ||
+    'https://projectmate-issues-api.jovyllebermudez.workers.dev'
 
   function setProjectMateReady (ready) {
     window.dispatchEvent(
@@ -79,14 +89,19 @@ export function initChatWidget () {
         // Feedback uses FeedbackModal + Web3Forms in the browser (free plan blocks server proxy).
         feedback: false,
         updates: true,
-        issues: false,
+        issues: true,
         about: true,
       },
+      issuesEndpoint: ISSUES_ENDPOINT,
       theme: 'auto',
       accentColor: '#4f46e5',
       launcher: {
         hidden: true,
       },
+      // Owner unlock path: #owner reveals the Review tab + passphrase prompt.
+      // (Renamed from "admin" — friendlier word, same server-side key check.)
+      ownerMode: { hash: 'owner' },
+      autoOpen: { hash: 'owner' },
     }
 
     if (ISSUES_ENDPOINT) {
@@ -104,6 +119,14 @@ export function initChatWidget () {
 
     window.ProjectMate.init(buildProjectMateConfig())
     setProjectMateReady(typeof window.ProjectMate.open === 'function')
+    // Deep-link: #owner opens the widget straight to the unlock prompt.
+    try {
+      if ((window.location.hash || '').replace(/^#/, '') === 'owner') {
+        window.ProjectMate.open()
+      }
+    } catch {
+      // non-fatal: user can still open via menu
+    }
   }
 
   function onDataReady () {
@@ -131,8 +154,20 @@ export function initChatWidget () {
     hasInitialized = true
   }
 
-  // Listen for your event
-  window.addEventListener('landDataReady', e => onDataReady(e.detail))
+  // Boot immediately on script eval (module import), not on land data.
+  // The widget is standalone (About / Updates / Feedback) — no land needed.
+  // Guard StrictMode-style double-eval with a window flag.
+  function bootNow () {
+    if (window.__pmBooted) return
+    window.__pmBooted = true
+    onDataReady()
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootNow, { once: true })
+  } else {
+    bootNow()
+  }
 
   // Option B: fallback polling if we don’t emit the event
   ;(function pollStorage () {

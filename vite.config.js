@@ -50,6 +50,15 @@ export default defineConfig(({ mode }) => {
         target: env.VITE_NETLIFY_DEV_URL || 'http://localhost:8888',
         changeOrigin: true,
       },
+      // Local ProjectMate proxy (dev only) — mirrors the Netlify function so
+      // the overlay talks same-origin on :5199 without touching the Worker URL.
+      // NOTE: must come before the generic /api rule (Vite matches top-down).
+      // Vite strips the matched prefix, so rewrite it back for netlify dev.
+      '/api/projectmate': {
+        target: env.VITE_NETLIFY_DEV_URL || 'http://localhost:8888',
+        changeOrigin: true,
+        rewrite: (path) => `/api/projectmate${path.replace(/^\/api\/projectmate/, '') || '/'}`,
+      },
       '/api': {
         target: apiProxyTarget,
         changeOrigin: true,

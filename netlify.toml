@@ -72,8 +72,8 @@
   status = 200
 
 [[redirects]]
-  from = "/api/projectmate/issues"
-  to = "/.netlify/functions/projectmate-feedback"
+  from = "/api/projectmate/*"
+  to = "/.netlify/functions/projectmate-feedback/:splat"
   status = 200
 
 [[redirects]]
@@ -95,5 +95,5 @@
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, x-admin-password, Accept"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, x-admin-password, x-projectmate-admin, Accept"
     Access-Control-Allow-Methods = "GET, POST, DELETE, OPTIONS"

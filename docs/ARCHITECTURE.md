@@ -185,7 +185,7 @@ Known non-functional or trap-laden spots. Documented so an AI doesn't waste time
 | Item | Status |
 |---|---|
 | `npm run prerender` / `scripts/prerender.js` | **Broken** — script file is missing. Ignore. |
-| `netlify/functions/projectmate-feedback.cjs` | **Dead** — Web3Forms blocks server-side calls. Still referenced by `_redirects` / `netlify.toml` but non-functional. |
+| `netlify/functions/projectmate-feedback.cjs` | **Live but unconfigured** — same-origin proxy to the ProjectMate issues Worker (`/api/projectmate/*` → `/issues*`). Answers `503 PROXY_NOT_CONFIGURED` unless `PROJECTMATE_WORKER_URL` is set, and **no client calls it**: the widget talks to the Worker directly. Optional hardening path only. |
 | `netlify/functions/_digDayStore.cjs` | **Dead** — old Netlify Blobs path, superseded by the Hub proxy. Nothing imports it. Kept only as a reference impl of the merge/500/413 rules the Hub now enforces. |
 | `src/views/Home.vue` | Present but **not referenced by any route** (`/` redirects to `/digging`). |
 | `src/utils/artefactIcons.ts` | Present but **never imported** → its `src_other` glob is the only (dead) bridge into `src_other`. |
