@@ -4,6 +4,9 @@ const {
   initBlobContext,
   getExistingDailySnapshot,
   createAndStoreDailySnapshot,
+  revalidateProvisionalSnapshot,
+  clampToToday,
+  isProvisionalTime,
 } = require('./_practiceDailyStore.cjs')
 
 function secondsUntilUTCMidnightForDate (utcDate) {
@@ -21,9 +24,14 @@ function secondsUntilUTCMidnightForDate (utcDate) {
   return Math.max(0, Math.floor((nextMidnightUtc.getTime() - now.getTime()) / 1000))
 }
 
-function buildSuccessHeaders (snapshotDate) {
-  const ttlSeconds = secondsUntilUTCMidnightForDate(snapshotDate)
-  return {
+function buildSuccessHeaders (snapshotDate, provisional = false) {
+  // Provisional snapshots (seeded inside the post-midnight rollover window) get
+  // a short edge TTL so a healed revalidation reaches users within minutes
+  // instead of staying hidden behind the day-long cache.
+  const ttlSeconds = provisional
+    ? 300
+    : secondsUntilUTCMidnightForDate(snapshotDate)
+  const headers = {
     'Content-Type': 'application/json',
     'Cache-Control': 'public, max-age=60, must-revalidate',
     'CDN-Cache-Control': `public, s-maxage=${ttlSeconds}, stale-while-revalidate=60, stale-if-error=600`,
@@ -31,23 +39,39 @@ function buildSuccessHeaders (snapshotDate) {
     'X-Pattern-Date': snapshotDate,
     'X-Pattern-Source': 'daily-snapshot-store',
   }
+  if (provisional) {
+    headers['X-Pattern-Provisional'] = '1'
+  }
+  return headers
 }
 
 exports.handler = async (event) => {
   initBlobContext(event)
   const requestedUtcDate = parseUTCDate(event?.queryStringParameters?.utcDate)
+  // A fast client clock can request "tomorrow" just before UTC midnight and
+  // seed a future-dated snapshot from pre-rollover data (observed twice).
+  // Nothing legitimately needs future dates — clamp to today.
+  const effectiveUtcDate = clampToToday(requestedUtcDate)
+
   try {
-    let snapshot = await getExistingDailySnapshot(requestedUtcDate)
+    let snapshot = await getExistingDailySnapshot(effectiveUtcDate)
 
     // Fallback safety: if warm/scheduler misses, first request seeds the snapshot.
     if (!snapshot) {
-      const created = await createAndStoreDailySnapshot(requestedUtcDate, { force: false })
+      const created = await createAndStoreDailySnapshot(effectiveUtcDate, { force: false })
       snapshot = created.snapshot
+    }
+
+    // Heal snapshots seeded inside the rollover window once safely past it.
+    // revalidateProvisionalSnapshot never throws; on failure we serve stored.
+    if (snapshot?.provisional && !isProvisionalTime()) {
+      const revalidated = await revalidateProvisionalSnapshot(effectiveUtcDate, snapshot)
+      snapshot = revalidated.snapshot
     }
 
     return {
       statusCode: 200,
-      headers: buildSuccessHeaders(requestedUtcDate),
+      headers: buildSuccessHeaders(effectiveUtcDate, snapshot?.provisional === true),
       body: JSON.stringify({
         date: snapshot.date,
         visitedFarmState: snapshot.visitedFarmState || {},

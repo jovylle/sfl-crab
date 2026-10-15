@@ -47,7 +47,11 @@ Sunflower Land public API (api.sunflower-land.com | api-dev.sunflower-land.com)
 
 The **practice patterns** path (`/api/practice-patterns` via `practicePatternService.js`)
 is separate: it has its own single-flight (`ongoingFetch` + `window[...]` key in
-`usePracticePatterns.js`) and a per-day localStorage cache. Leave it alone.
+`usePracticePatterns.js`) and a per-day localStorage cache. The request date is
+clamped to today client-side (`resolvePatternRequestDate`) and again
+server-side, so a fast clock can never seed a future-dated snapshot; bump
+`PRACTICE_PATTERN_CACHE_VERSION` to un-pin clients holding a poisoned cache.
+Leave it alone otherwise.
 
 The **dig-day hub** path (`digDayApiService.js`) is also separate and already good:
 ETag + freshness cache + force flag. See [DIG_DAY_SYNC.md](./DIG_DAY_SYNC.md).
@@ -68,7 +72,8 @@ in `src/config/api.js`.
 
 **Netlify CDN / edge caching is deliberately NOT used for land data.** The only
 place edge caching exists is `practice-patterns.cjs` (`CDN-Cache-Control` until
-UTC midnight) — appropriate because daily patterns are immutable within a day.
+UTC midnight, dropping to 300 s while a snapshot is provisional) — appropriate
+because daily patterns are immutable within a day once the snapshot is final.
 Land data is per-farm and changes as the player digs, so the 60s in-memory
 proxy cache is the outermost cache it gets. (History: the in-memory cache came
 first — `8254d9c` — and the bypass header `61272c1` exists because refreshes

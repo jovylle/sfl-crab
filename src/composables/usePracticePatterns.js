@@ -5,7 +5,9 @@ import { PRACTICE_CONSTANTS } from '@/data/app/constants'
 
 const getTodayUTC = () => new Date().toISOString().slice(0, 10)
 const UTC_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-export const PRACTICE_PATTERN_CACHE_VERSION = 2
+// Bump to invalidate localStorage caches pinned to a previously poisoned
+// snapshot (v2 clients kept serving the wrong day's patterns all day).
+export const PRACTICE_PATTERN_CACHE_VERSION = 3
 
 // Module-level historical override — when set, useLandData reads from this
 // instead of the localStorage cache. Set by Digging.vue when ?date= is present.

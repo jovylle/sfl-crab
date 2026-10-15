@@ -89,7 +89,7 @@ The current seasonal artefact is determined by `getCurrentSeasonalArtefact()` in
 2. Tries up to 150 random placements per pattern to find non-overlapping positions
 3. Auto-places crabs on all unoccupied orthogonal neighbors of placed treasures
 4. Player digs to reveal tiles; game ends when all treasures are found (victory) or abandoned
-5. Practice-of-the-day is sourced from **farm ID 1** (Adam's farm, `src/data/app/constants.js:17`), fetched via `/api/practice-patterns` which is CDN-cached until UTC midnight
+5. Practice-of-the-day is sourced from **farm ID 1** (Adam's farm, `src/data/app/constants.js:17`), served from a per-day snapshot store (`netlify/functions/_practiceDailyStore.cjs`) and CDN-cached until UTC midnight. Request dates are clamped to today (a fast clock used to seed *tomorrow* from pre-rollover data and poison the whole day); snapshots seeded in the first 15 min after UTC midnight are marked **provisional** → 5-min edge TTL + heal-on-read once SFL has rolled over
 
 ### Round start modes (`PracticeDigging.vue`)
 
@@ -141,7 +141,7 @@ Three distinct pattern sets:
 
 - **`patternKeys`** — formation keys that exist on the actual farm (from API `desert.digging.patterns`)
 - **`completedPatternKeys`** — patterns where the farm owner has already dug all tiles (from API `desert.digging.completedPatterns`)
-- **`dailyPatternKeys`** — today's practice patterns sourced from farm #1 via `/api/practice-patterns`
+- **`dailyPatternKeys`** — today's practice patterns sourced from farm #1 via `/api/practice-patterns` (per-day snapshot store + provisional heal; see [Practice mode](#practice-mode))
 
 Pattern completion is detected locally by comparing dug grid tiles against formation pattern coordinates (`utils/patternPreview.js`).
 

@@ -6,6 +6,15 @@ function normalizeUTCDate (value) {
   return typeof value === 'string' && UTC_DATE_PATTERN.test(value) ? value : ''
 }
 
+// A fast client clock used to request "tomorrow", which seeded tomorrow's
+// snapshot from pre-rollover data (poisoned the day). The server clamps too,
+// but requests should never even leave the client dated in the future.
+export function resolvePatternRequestDate (utcDate, today = getTodayUTC()) {
+  const requested = normalizeUTCDate(utcDate)
+  if (!requested || requested > today) return today
+  return requested
+}
+
 function normalizePracticePayload (data, responseDate = '') {
   const date = normalizeUTCDate(data?.date) || normalizeUTCDate(responseDate)
 
@@ -37,7 +46,7 @@ function normalizePracticePayload (data, responseDate = '') {
 export async function fetchPracticePatterns (utcDate = getTodayUTC()) {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
   const url = new URL(PRACTICE_PATTERN_ENDPOINT, baseUrl)
-  url.searchParams.set('utcDate', utcDate)
+  url.searchParams.set('utcDate', resolvePatternRequestDate(utcDate))
   const response = await fetch(url.toString())
 
   if (!response.ok) {
