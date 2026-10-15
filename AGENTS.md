@@ -151,6 +151,7 @@ Two example files: `env.example` (detailed) and `.env.example` (terse). For `net
 | `HUB_API_BASE` | Dig-day/hub-auth backend URL |
 | `HUB_WRITE_SECRET` | Guest dig-day write secret |
 | `ADMIN_PASSWORD` | `/admin` page auth |
+| `PROJECTMATE_WORKER_URL` / `PROJECTMATE_ADMIN_KEY` | **Optional.** Only for the same-origin `/api/projectmate/*` proxy; unset = proxy returns 503 and the widget uses the Worker directly |
 | `VITE_*` vars | Client-side, safe to expose |
 
 ## Hot-deploy detection

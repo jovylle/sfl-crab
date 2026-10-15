@@ -1,5 +1,5 @@
 // src/utils/chatWidgetLoader.js
-// Waits for landData, then boots ProjectMate embed.js without floating launcher.
+// Boots the ProjectMate embed.js (no floating launcher) on DOM ready — not on landData.
 
 import { getLandDataStorageKey } from '@/config/api.js'
 
