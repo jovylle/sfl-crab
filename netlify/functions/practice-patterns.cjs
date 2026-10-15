@@ -62,9 +62,11 @@ exports.handler = async (event) => {
       snapshot = created.snapshot
     }
 
-    // Heal snapshots seeded inside the rollover window once safely past it.
-    // revalidateProvisionalSnapshot never throws; on failure we serve stored.
-    if (snapshot?.provisional && !isProvisionalTime()) {
+    // Heal snapshots seeded inside the rollover window once safely past it —
+    // but only for today: a past date has no live source, and healing it would
+    // rewrite history with current data. revalidateProvisionalSnapshot never
+    // throws; on failure we serve what is stored.
+    if (snapshot?.provisional && !isProvisionalTime() && effectiveUtcDate === getTodayUTC()) {
       const revalidated = await revalidateProvisionalSnapshot(effectiveUtcDate, snapshot)
       snapshot = revalidated.snapshot
     }

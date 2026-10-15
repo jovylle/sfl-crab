@@ -56,6 +56,14 @@ function patternsEqual (a, b) {
   return JSON.stringify(a || []) === JSON.stringify(b || [])
 }
 
+// A 200 with no patterns (hollow payload) must never replace a snapshot that
+// has real patterns — that would erase the day's data and mark it final.
+function wouldErasePatterns (livePatterns, existingPatterns) {
+  const live = Array.isArray(livePatterns) ? livePatterns : []
+  const existing = Array.isArray(existingPatterns) ? existingPatterns : []
+  return live.length === 0 && existing.length > 0
+}
+
 // Nothing legitimately needs a future date: a client with a fast clock used to
 // seed "tomorrow's" snapshot from current (pre-rollover) data, poisoning the
 // whole day. Clamp at the door.
@@ -148,12 +156,24 @@ async function createAndStoreDailySnapshot (utcDate, { force = false } = {}) {
  * when it was built from pre-rollover data. Never throws — on any failure the
  * caller keeps serving the stored snapshot (stale-if-error).
  *
+ * Only today's snapshot is eligible: a past date has no live source, so
+ * fetching now would rewrite history with today's patterns. Returns such
+ * snapshots unchanged.
+ *
  * @returns {Promise<{ snapshot: object, healed: boolean }>}
  */
 async function revalidateProvisionalSnapshot (utcDate, existing, nowMs = Date.now()) {
+  if (utcDate !== getTodayUTC()) {
+    return { snapshot: existing, healed: false }
+  }
+
   try {
     const livePayload = await fetchLivePracticePayload()
     const livePatterns = livePayload.visitedFarmState?.desert?.digging?.patterns || []
+
+    if (wouldErasePatterns(livePatterns, existing.patterns)) {
+      return { snapshot: existing, healed: false }
+    }
 
     if (!patternsEqual(livePatterns, existing.patterns || [])) {
       const store = getStore(STORE_NAME)
@@ -192,4 +212,5 @@ module.exports = {
   isProvisionalTime,
   startOfUtcDayMs,
   patternsEqual,
+  wouldErasePatterns,
 }
