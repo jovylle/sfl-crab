@@ -70,6 +70,18 @@ The current seasonal artefact is determined by `getCurrentSeasonalArtefact()` in
 4. **Grid render** (`updateGridFromData`): Calls `gridArrayToTiles()` (`src/utils/gridTileTransform.js` — shared pure function, also used by the solver debug CLI) to convert API grid tiles (`{x, y, items: {Crab|Sand|TreasureName}}`) to CSS class arrays, then calls `rebuildNearHints()` to generate neighbor hints.
 5. **Cooldown**: 15s between successful refreshes, 30s after failures (`useLandSync.js:10-11`). `bypassCache` is sent on every sync to skip the proxy's own 60s cache.
 
+## Dig-site daily scope & day statistics
+
+The whole `desert.digging` block (`grid`, `patterns`, `completedPatterns`, `streak`, `extraDigs`) is **UTC-day scoped**: the archaeology site resets at UTC midnight (SFL `secondsTillDesertStorm`), so every dug tile and every treasure in the grid is *today's*. Anything labelled "total" in the UI is therefore today's total — e.g. DigStats renders "Digs Today", not lifetime digs.
+
+`src/utils/digStatsUtils.js` holds pure, unit-tested mirrors of the SFL game rules the day statistics depend on:
+- `getRemainingDigs` / `getDailyDigMax` — SFL `desert.ts` `getDailyDigLimit`/`getRemainingDigs`: base 25 digs/day **plus** boosts; a placed "Heart of Davy Jones" (+20), "Meerkat" (+5), "Pharaoh Chicken" (+1) or an *equipped* "Bionic Drill" (+5) raises the cap up to 56/day. Ownership alone (inventory or un-equipped) grants nothing. `digsRemaining = max(0, boostedMax − dugCount) + extraDigs`.
+- `getActiveStreakCount` — SFL `Digby.tsx` `getStreaks`: the streak counter lapses to 0 once >1 UTC day passes without claiming the daily beach reward.
+- `isCollectibleBuilt` / `isWearableActive` — faithful to `collectibleBuilt.ts` / `wearables.ts`: placed on one of the four collectible surfaces (`farm`, `home`, `interior.ground`, `interior.level_one`) with `readyAt ≤ now`, coordinates set, `used` false.
+- `getBestFindValue` — best *single*-item treasure price dug today, not a stack total.
+
+If SFL adds new digs boosts, mirror the change here; the tests in `tests/digStatsUtils.test.js` encode the expected game semantics.
+
 ## Dig day persistence
 
 `useDigDayStore.js` syncs user dig status to the SFL Digging Hub via `/api/dig-day`:
