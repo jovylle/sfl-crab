@@ -2,7 +2,17 @@
   <div class="w-full max-w-none">
     <div class="card">
       <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
-        <h3 class="card-title text-center text-lg sm:text-xl mb-4">📊 Dig Statistics</h3>
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <h3 class="card-title text-center text-lg sm:text-xl">📊 Dig Statistics</h3>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs"
+            :aria-expanded="expanded"
+            @click="expanded = !expanded"
+          >
+            {{ expanded ? 'Less ⌃' : 'More ⋮' }}
+          </button>
+        </div>
         
         <!-- Financial Summary -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -31,8 +41,8 @@
           </div>
         </div>
 
-        <!-- Main Stats Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <!-- Secondary stats — persisted Behind "More" -->
+        <div v-show="expanded" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           <!-- Total Digs -->
           <div class="bg-base-200 rounded-lg p-3 text-center">
             <div class="text-2xl font-bold text-primary">{{ totalDigs }}</div>
@@ -96,8 +106,8 @@
           </div>
         </div>
 
-        <!-- Last Dig Info -->
-        <div v-if="lastDigTime" class="mt-3 text-xs text-base-content/70 text-center">
+        <!-- Last Dig Info — persisted Behind "More" -->
+        <div v-if="expanded && lastDigTime" class="mt-3 text-xs text-base-content/70 text-center">
           <span class="font-medium">Last dig:</span> {{ formatTime(lastDigTime) }}
         </div>
       </div>
@@ -107,7 +117,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useNow } from '@vueuse/core'
+import { useNow, useStorage } from '@vueuse/core'
 import { useLandData } from '@/composables/useLandData'
 import { getTreasuresWithPrices, calculateTotalValue, getTreasurePrice } from '@/utils/treasurePrices'
 import {
@@ -117,6 +127,10 @@ import {
 } from '@/utils/digStatsUtils'
 
 const { landData, desert } = useLandData()
+
+// "More" section (Digs Today / Streak / Remaining / last dig) — collapsed by
+// default, remembered across visits. Global key: the panel is identical per site.
+const expanded = useStorage('digStats:expanded', false)
 
 // The full SFL farm (game) state — needed for daily-dig boost detection
 // (placed collectibles, equipped wearables). Mirrors `visitedFarmState`.
