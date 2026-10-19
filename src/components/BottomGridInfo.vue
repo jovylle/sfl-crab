@@ -15,7 +15,6 @@
         alt="Shovel"
         class="w-4 h-4"
       />
-      <!-- <span class="ml-0.5 font-medium text-nowrap">Digs left: {{ totalRemaining }} </span> -->
       <span class="ml-0.5 font-medium text-nowrap">Digs made: {{ usedDigs }} </span>
     </span>
   </div>
@@ -25,13 +24,12 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLandData } from '@/composables/useLandData'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
-import { getRemainingDigs } from '@/utils/digStatsUtils'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
 
 // ── Grab the entire `desert` object from your composable ──
-const { landData, desert } = useLandData()
+const { desert } = useLandData()
 const route = useRoute()
 const props = defineProps({
   showLandIdInUrl: { type: Boolean, default: true },
@@ -45,18 +43,6 @@ const usedDigs = computed(() => {
   return Array.isArray(desert.value.digging?.grid)
     ? desert.value.digging.grid.length
     : 0
-})
-
-/**
- * Total digs left today, matching the SFL game exactly (`desert.ts
- * getRemainingDigs` via digStatsUtils): boosted daily max (25 + placed
- * collectible / equipped wearable boosts) − dug today, floored at 0,
- * plus purchased `extraDigs`. The display is currently commented out in
- * the template, but the math stays live and SFL-accurate for whoever
- * re-enables it — no hardcoded 25 here.
- */
-const totalRemaining = computed(() => {
-  return getRemainingDigs(desert.value, landData.value?.visitedFarmState || {})
 })
 
 // ── URL‐shortening logic (unchanged) ──

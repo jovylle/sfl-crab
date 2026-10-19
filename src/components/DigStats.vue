@@ -117,8 +117,9 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useNow, useStorage } from '@vueuse/core'
+import { useStorage } from '@vueuse/core'
 import { useLandData } from '@/composables/useLandData'
+import { STORAGE_KEYS } from '@/constants/storageKeys'
 import { getTreasuresWithPrices, calculateTotalValue, getTreasurePrice } from '@/utils/treasurePrices'
 import {
   getRemainingDigs,
@@ -130,15 +131,15 @@ const { landData, desert } = useLandData()
 
 // "More" section (Digs Today / Streak / Remaining / last dig) — collapsed by
 // default, remembered across visits. Global key: the panel is identical per site.
-const expanded = useStorage('digStats:expanded', false)
+const expanded = useStorage(STORAGE_KEYS.DIG_STATS_EXPANDED.key, false)
 
 // The full SFL farm (game) state — needed for daily-dig boost detection
 // (placed collectibles, equipped wearables). Mirrors `visitedFarmState`.
 const farm = computed(() => landData.value?.visitedFarmState || {})
 
-// Ticking "now" so the streak lapses on its own and readyAt-gated boost
-// placements flip to active without waiting for an unrelated re-render.
-const now = useNow({ interval: 30_000 })
+// shortcut: no ticking clock — streak/remaining recheck only on mount or land
+// sync, so a tab open across UTC midnight shows stale counts until then; add
+// a scoped interval here if anyone reports it.
 
 // Computed stats from API data
 const totalDigs = computed(() => {
@@ -148,11 +149,11 @@ const totalDigs = computed(() => {
 })
 
 const activeStreak = computed(() => {
-  return getActiveStreakCount(desert.value.digging?.streak, now.value)
+  return getActiveStreakCount(desert.value.digging?.streak)
 })
 
 const digsRemaining = computed(() => {
-  return getRemainingDigs(desert.value, farm.value, now.value)
+  return getRemainingDigs(desert.value, farm.value)
 })
 
 const lastDigTime = computed(() => {

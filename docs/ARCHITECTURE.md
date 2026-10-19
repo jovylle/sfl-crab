@@ -125,6 +125,7 @@ All keys live here — one source of truth. Fixed keys:
 | `sfl-api-environment` | SFL API target: `production` \| `test` |
 | `theme` | DaisyUI theme name |
 | `todays-checklist:landId` / `todays-checklist:selectedNpcIds` | Checklist page state |
+| `digStats:expanded` | Dig statistics "More" toggle state |
 
 Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, testApi)`, `gridCustomHintsKey(id)` → `gridCustomHints_${id}`, `markJournalKey(id, utcDate)` → `markJournal_${id}_${utcDate}`, `landUiPrefKey(id, pref)` → `${pref}-${id}`.
 

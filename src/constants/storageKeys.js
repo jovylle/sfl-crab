@@ -76,6 +76,11 @@ export const STORAGE_KEYS = {
     description: 'Selected NPC ids on checklist',
     audience: STORAGE_AUDIENCE.GUEST,
   },
+  DIG_STATS_EXPANDED: {
+    key: 'digStats:expanded',
+    description: 'Dig statistics "More" section expanded state',
+    audience: STORAGE_AUDIENCE.GUEST,
+  },
 }
 
 /** Raw string keys for imports. */
