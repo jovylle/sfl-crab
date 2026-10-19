@@ -994,11 +994,14 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
         }
 
         // Crab-satisfaction at the leaf: every revealed crab must border a
-        // revealed treasure or a cell covered by this candidate assignment.
+        // revealed treasure, a cell covered by this candidate assignment, or a
+        // cell coverable by a still-floating group (`slots[gi] > 0`).
         // Sound — the true board satisfies every crab, so its branch always
         // passes this filter. Only runs at the leaf (all reveals covered),
         // so it costs O(crabs) per complete assignment, never per node.
+        // shortcut: checks floating groups independently per crab, upgrade to joint search if multi-float overlap ever matters
         const crabsOk = () => {
+          let floatCover = null
           for (const cIdx of revealedCrab) {
             const cx = cIdx % gridSize
             const cy = Math.floor(cIdx / gridSize)
@@ -1009,6 +1012,20 @@ export function solveTreasures(tiles, patternKeys, gridSize = 10, completedPatte
               if (!inBounds(nx, ny)) continue
               const nIdx = ny * gridSize + nx
               if (revealName.has(nIdx) || covered.has(nIdx)) { ok = true; break }
+              if (!floatCover) {
+                floatCover = new Set()
+                for (let gi = 0; gi < groups.length; gi++) {
+                  if (slots[gi] === 0) continue
+                  const { placements } = groups[gi]
+                  for (let pi = 0; pi < placements.length; pi++) {
+                    if (!groupPlacementOk[gi][pi]) continue
+                    const p = placements[pi]
+                    if ([...p.keys()].some(idx => occupied.has(idx))) continue
+                    for (const idx of p.keys()) floatCover.add(idx)
+                  }
+                }
+              }
+              if (floatCover.has(nIdx)) { ok = true; break }
             }
             if (!ok) return false
           }

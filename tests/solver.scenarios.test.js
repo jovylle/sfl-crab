@@ -1143,3 +1143,42 @@ describe('Pass 5 crab-satisfaction (live 3863900154075909 — I6 crab forces G6)
     expect(guaranteedSlugs.get(H6)).toBe('pipi')
   })
 })
+
+describe('Pass 5 floating satisfier (live 4485248732423974 — F7 crab, F6 must stay hidden)', () => {
+  // 20-dig screenshot prefix. F7 (idx 65) is a revealed crab; F6 (idx 55) is
+  // undug. Later digs proved F6=Crab and F8=Wooden Compass, so F7 was satisfied
+  // from below by the still-hidden compass — F6 must never be guaranteed.
+  const F6 = 5 * G + 5
+  const dug = [
+    { x: 9, y: 7, items: { [SEASONAL]: 1 } }, // J8
+    { x: 1, y: 8, items: { Crab: 1 } }, // B9
+    { x: 2, y: 8, items: { Crab: 1 } }, // C9
+    { x: 1, y: 7, items: { Vase: 1 } }, // B8
+    { x: 3, y: 8, items: { Crab: 1 } }, // D9
+    { x: 2, y: 9, items: { 'Sea Cucumber': 1 } }, // C10
+    { x: 4, y: 9, items: { Pipi: 1 } }, // E10
+    { x: 1, y: 1, items: { Sand: 2 } }, // B2
+    { x: 8, y: 1, items: { Vase: 1 } }, // I2
+    { x: 8, y: 2, items: { Hieroglyph: 1 } }, // I3
+    { x: 6, y: 1, items: { Crab: 1 } }, // G2
+    { x: 5, y: 1, items: { 'Cockle Shell': 1 } }, // F2
+    { x: 4, y: 0, items: { 'Cockle Shell': 1 } }, // E1
+    { x: 1, y: 5, items: { Sand: 2 } }, // B6
+    { x: 3, y: 3, items: { [SEASONAL]: 1 } }, // D4
+    { x: 7, y: 8, items: { Sand: 2 } }, // H9
+    { x: 8, y: 4, items: { Sand: 2 } }, // I5
+    { x: 4, y: 6, items: { Crab: 1 } }, // E7
+    { x: 5, y: 6, items: { Crab: 1 } }, // F7
+    { x: 4, y: 5, items: { 'Camel Bone': 1 } }, // E6
+  ]
+  const patterns = [
+    'ARTEFACT_TWENTY_ONE', 'ARTEFACT_TWENTY_TWO', 'ARTEFACT_FOURTEEN',
+    'HIEROGLYPH', 'HIEROGLYPH', 'SEA_CUCUMBERS', 'COCKLE', 'WOODEN_COMPASS',
+  ]
+
+  it('leaves F6 hidden — the F7 crab may belong to the still-hidden compass', () => {
+    const { guaranteed } = solveTreasures(makeTiles(dug), patterns, G)
+
+    expect(guaranteed.has(F6), `expected ${label(F6)} NOT guaranteed`).toBe(false)
+  })
+})
