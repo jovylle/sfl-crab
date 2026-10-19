@@ -2,7 +2,17 @@
   <div class="w-full max-w-none">
     <div class="card">
       <div class="card-body [@media(max-width:639px)]:px-3 [@media(max-width:639px)]:pt-1">
-        <h3 class="card-title text-center text-lg sm:text-xl mb-4">📊 Dig Statistics</h3>
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <h3 class="card-title text-center text-lg sm:text-xl">📊 Dig Statistics</h3>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs"
+            :aria-expanded="expanded"
+            @click="expanded = !expanded"
+          >
+            {{ expanded ? 'Less ⌃' : 'More ⋮' }}
+          </button>
+        </div>
         
         <!-- Financial Summary -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -31,21 +41,21 @@
           </div>
         </div>
 
-        <!-- Main Stats Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <!-- Secondary stats — persisted Behind "More" -->
+        <div v-show="expanded" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           <!-- Total Digs -->
           <div class="bg-base-200 rounded-lg p-3 text-center">
             <div class="text-2xl font-bold text-primary">{{ totalDigs }}</div>
-            <div class="text-xs text-base-content/70">Total Digs</div>
+            <div class="text-xs text-base-content/70">Digs Today</div>
           </div>
 
-          <!-- Current Streak -->
+          <!-- Current Streak — drops to 0 once >1 day passes without a claim, like in-game -->
           <div class="bg-base-200 rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-secondary">{{ currentStreak }}</div>
+            <div class="text-2xl font-bold text-secondary">{{ activeStreak }}</div>
             <div class="text-xs text-base-content/70">Current Streak</div>
           </div>
 
-          <!-- Digs Remaining -->
+          <!-- Digs Remaining — SFL formula: boosted daily max − digs, + purchased extras -->
           <div class="bg-base-200 rounded-lg p-3 text-center">
             <div class="text-2xl font-bold text-accent">{{ digsRemaining }}</div>
             <div class="text-xs text-base-content/70">Digs Remaining</div>
@@ -96,8 +106,8 @@
           </div>
         </div>
 
-        <!-- Last Dig Info -->
-        <div v-if="lastDigTime" class="mt-3 text-xs text-base-content/70 text-center">
+        <!-- Last Dig Info — persisted Behind "More" -->
+        <div v-if="expanded && lastDigTime" class="mt-3 text-xs text-base-content/70 text-center">
           <span class="font-medium">Last dig:</span> {{ formatTime(lastDigTime) }}
         </div>
       </div>
@@ -107,10 +117,28 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useNow, useStorage } from '@vueuse/core'
 import { useLandData } from '@/composables/useLandData'
-import { getTreasuresWithPrices, calculateTotalValue } from '@/utils/treasurePrices'
+import { getTreasuresWithPrices, calculateTotalValue, getTreasurePrice } from '@/utils/treasurePrices'
+import {
+  getRemainingDigs,
+  getActiveStreakCount,
+  getBestFindValue,
+} from '@/utils/digStatsUtils'
 
-const { desert } = useLandData()
+const { landData, desert } = useLandData()
+
+// "More" section (Digs Today / Streak / Remaining / last dig) — collapsed by
+// default, remembered across visits. Global key: the panel is identical per site.
+const expanded = useStorage('digStats:expanded', false)
+
+// The full SFL farm (game) state — needed for daily-dig boost detection
+// (placed collectibles, equipped wearables). Mirrors `visitedFarmState`.
+const farm = computed(() => landData.value?.visitedFarmState || {})
+
+// Ticking "now" so the streak lapses on its own and readyAt-gated boost
+// placements flip to active without waiting for an unrelated re-render.
+const now = useNow({ interval: 30_000 })
 
 // Computed stats from API data
 const totalDigs = computed(() => {
@@ -119,23 +147,12 @@ const totalDigs = computed(() => {
     : 0
 })
 
-const currentStreak = computed(() => {
-  return desert.value.digging?.streak?.count || 0
-})
-
-const totalStreaksClaimed = computed(() => {
-  return desert.value.digging?.streak?.totalClaimed || 0
-})
-
-const extraDigs = computed(() => {
-  return desert.value.digging?.extraDigs || 0
+const activeStreak = computed(() => {
+  return getActiveStreakCount(desert.value.digging?.streak, now.value)
 })
 
 const digsRemaining = computed(() => {
-  const FREE_DIGS = 25
-  const used = totalDigs.value
-  const freeRemaining = used < FREE_DIGS ? FREE_DIGS - used : 0
-  return freeRemaining + extraDigs.value
+  return getRemainingDigs(desert.value, farm.value, now.value)
 })
 
 const lastDigTime = computed(() => {
@@ -199,9 +216,10 @@ const successRate = computed(() => {
   return (treasureDigs / totalDigs.value) * 100
 })
 
+// Per-item price of the most valuable treasure dug today — a stack of
+// 4 cheap shells must not masquerade as a single big find.
 const bestFindValue = computed(() => {
-  if (treasuresWithPrices.value.length === 0) return 0
-  return Math.max(...treasuresWithPrices.value.map(t => t.totalValue))
+  return getBestFindValue(treasureBreakdown.value, getTreasurePrice)
 })
 
 // Helper function to get treasure icons
@@ -247,15 +265,5 @@ function formatTime(timestamp) {
   if (diffHours < 24) return `${diffHours}h ago`
   
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-// Helper function to format date for data freshness
-function formatDate(isoString) {
-  const date = new Date(isoString)
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
-  })
 }
 </script>

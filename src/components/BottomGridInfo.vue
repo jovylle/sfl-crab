@@ -25,12 +25,13 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLandData } from '@/composables/useLandData'
 import { useReliableAssets } from '@/composables/useReliableAssets.js'
+import { getRemainingDigs } from '@/utils/digStatsUtils'
 
 // Use reliable assets composable
 const { getImageSrc } = useReliableAssets()
 
 // ── Grab the entire `desert` object from your composable ──
-const { desert } = useLandData()
+const { landData, desert } = useLandData()
 const route = useRoute()
 const props = defineProps({
   showLandIdInUrl: { type: Boolean, default: true },
@@ -46,30 +47,16 @@ const usedDigs = computed(() => {
     : 0
 })
 
-/** 
- * How many “extra bought” digs remain 
- * – this value is already decremented by the backend every time
- *   the user digs _past_ their 25 free digs.
- */
-const extraRemaining = computed(() => {
-  return desert.value.digging?.extraDigs || 0
-})
-
 /**
- * Compute “free remaining” as:
- *   if usedDigs ≤ 25, freeRemaining = 25 – usedDigs
- *   else (i.e. usedDigs > 25), all free digs are gone (0 remain)
- */
-const freeRemaining = computed(() => {
-  const FREE = 25
-  return usedDigs.value < FREE ? FREE - usedDigs.value : 0
-})
-
-/**
- * Finally, totalRemaining = freeRemaining + extraRemaining
+ * Total digs left today, matching the SFL game exactly (`desert.ts
+ * getRemainingDigs` via digStatsUtils): boosted daily max (25 + placed
+ * collectible / equipped wearable boosts) − dug today, floored at 0,
+ * plus purchased `extraDigs`. The display is currently commented out in
+ * the template, but the math stays live and SFL-accurate for whoever
+ * re-enables it — no hardcoded 25 here.
  */
 const totalRemaining = computed(() => {
-  return freeRemaining.value + extraRemaining.value
+  return getRemainingDigs(desert.value, landData.value?.visitedFarmState || {})
 })
 
 // ── URL‐shortening logic (unchanged) ──
