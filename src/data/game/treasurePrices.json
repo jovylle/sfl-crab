@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-25T04:18:37.124Z",
+  "lastUpdated": "2026-11-01T04:10:20.497Z",
   "source": "https://github.com/sunflower-land/sunflower-land/blob/main/src/features/game/types/treasure.ts",
   "version": "1.0.0",
   "prices": {
@@ -30,6 +30,6 @@
     "Ammonite Shell": 200,
     "Salt Dino Egg": 200,
     "Otter Pebble": 200,
-    "Cave Dwellers Artefact": 200
+    "Clover Coin": 200
   }
 }
