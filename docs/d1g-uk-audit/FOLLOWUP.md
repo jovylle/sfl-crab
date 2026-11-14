@@ -53,7 +53,8 @@ Post in the Sunflower Land Discord (developer/community channel). Suggested mess
 >    Is it acceptable that the key is used for the site and not for personal use only?
 > 3. Expected volume is about 240 visits/day (peak about 330). The proxy now allows only
 >    `/community/farms/<digits>`, caches responses for 60 seconds and rate limits to 60
->    requests/minute/IP. Is that volume fine, and is there a preferred limit?
+>    requests/minute/IP, with a cap of 120 upstream calls/minute per instance. Is that volume
+>    fine, and is there a preferred limit?
 
 Write the answer into `API_KEY_SETUP.md` once you have it.
 
@@ -187,7 +188,10 @@ remove that override.
    only cover `d1g.uk`, not the Netlify hostname. If real abuse shows up, add that rule and
    also block or redirect the direct `d1guk.netlify.app` function path (for example a Host
    check in the function, or a Netlify-side rule), since the Cloudflare rule alone leaves
-   it open.
+   it open. The 120 call cap trades availability for quota safety: a caller who sends
+   `x-sfl-bypass-cache` with rotated IP headers can exhaust the 120/min budget, and
+   uncached lands then get 429 until the window rolls. If that is ever seen, the owner
+   could drop the bypass header on the proxy.
 3. **Production branch and CI timing.** In Netlify, Site configuration > Build & deploy >
    Branches > Production branch must be `master`, because the sync workflows and the
    health check run from `master`. The new `ci.yml` workflow runs on pull requests, so it
@@ -322,7 +326,7 @@ monitors with a 60 s interval:
 3. `https://api.d1g.uk/health`, expect `{"ok":true}`
 
 The new GitHub Actions health check (`health-check.yml`) covers the same ground every 6
-hours and opens an issue on failure. Kuma adds the 60 s resolution and push alerts. Run
+hours, opens an issue on failure and closes open `health-check` issues when a later run passes. Kuma adds the 60 s resolution and push alerts. Run
 both: Kuma for fast alerting, GitHub for a second opinion that does not depend on your
 home network. Also turn on Always Online (1(e)).
 
@@ -363,8 +367,10 @@ before the PR is opened and may change if the branch is rebased.
 | `0a677bc` | Removed dead weight: `src_other` vendored copy, tracked `.history`, unused `artefactIcons.ts` and Vite aliases (tracked files 1274 to 492 at that commit). `src/assets/feedbacks` kept because `FeedbackGallery.vue` uses it | `vite.config.js`, `docs/ARCHITECTURE.md`, `docs/PREDICTION_MODE_PLAN.md`, `AGENTS.md`, comment in `src/data/game/diggingFormations.js` |
 | `461438a` | Removed unused dependencies (`puppeteer`, `react-i18next`, `i18next`, `decimal.js-light`, `node-fetch`), Netlify and CI moved to Node 22. `npm audit` 93 to 72 | `package.json`, `package-lock.json`, `netlify.toml`, `.nvmrc`, sync workflows |
 | `f4e53c9` | `ci.yml`: `npm ci`, `npm test`, `npm run build` on pull requests and pushes to `master` and `development` | `.github/workflows/ci.yml` |
-| `3defb96` | `health-check.yml` (every 6 hours, opens or updates a `health-check` issue) and `scripts/health-check.js` | `.github/workflows/health-check.yml`, `scripts/health-check.js`, `tests/healthCheck.test.js`, `AGENTS.md` |
-| this commit | This document | `docs/d1g-uk-audit/FOLLOWUP.md` |
+| `3defb96` | `health-check.yml` (every 6 hours, opens or comments on a `health-check` issue; closing on recovery was added in `4b9ce3d`) and `scripts/health-check.js` | `.github/workflows/health-check.yml`, `scripts/health-check.js`, `tests/healthCheck.test.js`, `AGENTS.md` |
+| `5e52a7c` | `sfl-api`: canonical land ids (leading zeros rejected, trailing slash stripped), response cache bounded at 500 entries, per-instance cap of 120 upstream calls/minute (log reason `upstream_budget`) | `netlify/functions/sfl-api.cjs`, `netlify/functions/_rateLimit.cjs`, `tests/sflApiProxy.test.js` |
+| `4b9ce3d` | Direct-host caveat in this document, `health-check.yml` closes open `health-check` issues when a later run passes, `PUPPETEER_SKIP_DOWNLOAD` removed from CI | `.github/workflows/health-check.yml`, `.github/workflows/ci.yml`, `docs/d1g-uk-audit/FOLLOWUP.md` |
+| this commit | Docs only: new `sfl-api` limits in the permanent docs, this table | `AGENTS.md`, `netlify/functions/README.md`, `docs/API_LAYER.md`, `docs/d1g-uk-audit/FOLLOWUP.md` |
 
 Not changed by design: Cloudflare and Netlify configuration, DNS, `netlify.toml` header
 blocks, the 429 fix and `_headers` move already made on the audit branch (see REPORT.md
