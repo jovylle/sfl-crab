@@ -9,7 +9,7 @@ Read in this order; each doc is kept accurate. If anything here conflicts with o
 | Doc | When to read it |
 |---|---|
 | **AGENTS.md** (this file) | Dev commands, conventions, env, API-proxy quirks, dead-code register |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture: directories, routes, startup, data flow, composables/services, grid-builders, entrypoints, `src_other` |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture: directories, routes, startup, data flow, composables/services, grid-builders, entrypoints |
 | [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) | The 10×10 grid engine: tiles, hints, formations, practice mode |
 | [docs/API_LAYER.md](docs/API_LAYER.md) | **Request pipeline + caching policy for the SFL farm API** — read before touching anything that fetches land data |
 | [docs/DIG_DAY_SYNC.md](docs/DIG_DAY_SYNC.md) | Dig-day Hub sync: debounce, ETag, merge-by-seq, the layers |
@@ -92,7 +92,7 @@ Use `npm run dev` when working with Netlify functions (auth, dig-day, practice p
 
 ## Linter / formatter
 
-No ESLint, no lint script. Prettier is installed but has no config file. Tests in `src_other/` (legacy game libs) are not wired into CI.
+No ESLint, no lint script. Prettier is installed but has no config file.
 
 ## Verifying changes end-to-end
 
@@ -167,7 +167,6 @@ Two example files: `env.example` (detailed) and `.env.example` (terse). For `net
 | `netlify/functions/` | Serverless functions (`.cjs`) |
 | `scripts/` | Data sync + asset check scripts |
 | `public/world/` | Treasure/artefact images (`.webp`) |
-| `src_other/` | Legacy SFL game libs (types, ABIs, i18n, React hooks); aliased as `assets`/`lib` but effectively **dead** — no running app code imports it |
 
 ## Dead code / gotchas
 
@@ -176,5 +175,5 @@ Documented so you don't waste time or "fix" load-bearing weirdness. Full table i
 - `npm run prerender` / `scripts/prerender.js` — **broken**, missing file, ignore.
 - `netlify/functions/projectmate-feedback.cjs` — **dead** (Web3Forms blocks server calls), still referenced by `_redirects`/`netlify.toml`.
 - `netlify/functions/_digDayStore.cjs` — **dead** legacy Netlify Blobs path, superseded by the Hub proxy; kept only as a reference impl.
-- `src/views/Home.vue`, `src/utils/artefactIcons.ts` — present but **unreferenced**.
+- `src/views/Home.vue` — present but **unreferenced**.
 - Grid tiles are `string[]` of CSS classes (not objects) — fragile by design; read GRID_MECHANICS.md first.
