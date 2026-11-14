@@ -101,10 +101,19 @@ Notes:
 All land-data keys live in `src/config/api.js` (builders) and
 `src/constants/storageKeys.js` (fixed keys). Same for every other app key.
 
+## Proxy access control
+
+`sfl-api.cjs` forwards only `GET /community/farms/<digits>` (plus the legacy
+`/visit/<digits>` alias, rewritten to it). Everything else is a 404 before the
+API key is touched. CORS is an origin allow-list with `Vary: Origin` (a foreign
+`Origin` gets 403; no `Origin` is allowed). Each IP gets 60 requests per minute,
+counted before the cache lookup, and gets 429 plus `Retry-After` beyond that.
+
 ## Observability
 
 The proxy logs one line per request: `sfl-api { env, path, landId, status, cache }`
-where cache ∈ `hit | miss | bypass`. In the Netlify function logs you can verify
+where cache ∈ `hit | miss | bypass`. Blocked requests log a `reason` instead
+(`origin_not_allowed`, `path_not_allowed`, `rate_limited`). In the Netlify function logs you can verify
 the policy is working: auto reloads inside 60s should show `hit` or `bypass`
 only for explicit refreshes.
 

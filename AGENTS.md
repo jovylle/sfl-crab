@@ -137,6 +137,7 @@ Both sync workflows commit + push to `master`, then **mirror the data files to `
 
 - `sfl-api.cjs` has a 60s in-memory cache for 200 responses. Bypass with `x-sfl-bypass-cache: 1` header or `?bypassCache=1` — the app sends this **only** on explicit user refreshes and env switches (see [docs/API_LAYER.md](docs/API_LAYER.md)); auto loads go through the proxy cache.
 - **All land-data requests go through `src/services/landFetchCoordinator.js`** (single-flight, 5-min localStorage freshness, cooldown). Never call `fetchLandDataFromServer()` from a component.
+- `sfl-api.cjs` only forwards `GET /community/farms/<digits>` (anything else is 404), restricts CORS to an origin allow-list (foreign `Origin` gets 403) and rate limits to 60 requests per minute per IP. Update `tests/sflApiProxy.test.js` if you change any of these.
 - `/visit/*` often returns 401 for third-party tools. The app uses `/community/farms/*` as primary and `/visit/*` as fallback only.
 - Prod/test API switching is communicated via `x-sfl-api-env` header. Land data cache keys are prefixed per-environment (`landData_` vs `landData_test_`).
 - Practice patterns are CDN-cached until UTC midnight (`CDN-Cache-Control` headers).

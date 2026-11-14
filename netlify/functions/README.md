@@ -35,6 +35,8 @@ Structured logs go to **Netlify function logs** (Site → Functions → sfl-api 
 
 `sfl-api { env, path, landId, status, cache: 'hit' | 'miss' }`
 
+**Hardening.** Only `GET /community/farms/<digits>` is forwarded (the legacy `/visit/<digits>` alias is rewritten to it); any other path returns 404 before the API key is used. CORS is an allow-list (d1g.uk, beta, development, the uft1.com hosts, `d1guk.netlify.app` and its deploy previews, localhost dev ports) with `Vary: Origin`; a request with a foreign `Origin` gets 403, and requests with no `Origin` are allowed. Each IP is limited to 60 requests per minute (cache hits included), returning 429 with `Retry-After`. Blocked requests log `reason: 'origin_not_allowed' | 'path_not_allowed' | 'rate_limited'`. Tests: `tests/sflApiProxy.test.js`.
+
 Only HTTP 200 responses are cached in-memory for 60s. Send `x-sfl-bypass-cache: 1` (or `?bypassCache=1`) to skip the cache — the app does this on every land sync / Refresh Data click. `/visit/*` often returns 401 for third-party tools — the app uses `/community/farms/*` instead.
 
 ## Admin UI (`/admin`)
