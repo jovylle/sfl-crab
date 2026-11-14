@@ -155,6 +155,12 @@ Two example files: `env.example` (detailed) and `.env.example` (terse). For `net
 | `PROJECTMATE_WORKER_URL` / `PROJECTMATE_ADMIN_KEY` | **Optional.** Only for the same-origin `/api/projectmate/*` proxy; unset = proxy returns 503 and the widget uses the Worker directly |
 | `VITE_*` vars | Client-side, safe to expose |
 
+## CI and monitoring
+
+- `.github/workflows/ci.yml` runs `npm ci`, `npm test` and `npm run build` on every pull request and on pushes to `master` and `development` (Node from `.nvmrc`).
+- `.github/workflows/health-check.yml` runs every 6 hours (and on demand) and calls `scripts/health-check.js`. It checks the live sfl-api proxy for land 1, `/api/practice-patterns` and the Hub `/health` endpoints. On failure it opens or comments on a GitHub issue labelled `health-check` and fails the run. Scheduled workflows only run from `master`.
+- Run it locally with `node scripts/health-check.js`. It only sends GET requests to public d1g.uk URLs and needs no secrets. Override targets with `SITE_URL` and `HUB_URL`. The pure validators are covered by `tests/healthCheck.test.js` (no network).
+
 ## Hot-deploy detection
 
 `main.js` bakes `__APP_VERSION__` (git SHA from `COMMIT_REF`) via Vite `define`. After mount it polls `/` with `cache: no-cache` to compare with the live version and force-reloads on mismatch. Relies on Netlify injecting `COMMIT_REF` at build time.

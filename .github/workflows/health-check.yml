@@ -1,0 +1,61 @@
+# Scheduled workflows only run from the default branch (master), so this starts
+# working after the branch is merged. workflow_dispatch also needs this file on
+# master before the "Run workflow" button appears.
+#
+# On failure the job opens (or comments on) a GitHub issue labelled
+# "health-check" and then exits non-zero so GitHub emails the owner.
+name: Health Check
+
+on:
+  schedule:
+    - cron: '17 */6 * * *' # every 6 hours, off the :00 and :25 slots
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run health check
+        id: check
+        run: |
+          set +e
+          node scripts/health-check.js | tee health-summary.md
+          code=${PIPESTATUS[0]}
+          cat health-summary.md >> "$GITHUB_STEP_SUMMARY"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Open or update issue on failure
+        if: steps.check.outputs.code != '0'
+        run: |
+          gh label create health-check --force --color B60205 \
+            --description "Scheduled d1g.uk health check failures"
+          {
+            echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            cat health-summary.md
+          } > issue-body.md
+          existing="$(gh issue list --label health-check --state open --limit 1 --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file issue-body.md
+          else
+            gh issue create --title "d1g.uk health check failing" \
+              --label health-check --body-file issue-body.md
+          fi
+
+      - name: Fail the job when checks failed
+        if: steps.check.outputs.code != '0'
+        run: exit 1
