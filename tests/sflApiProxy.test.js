@@ -49,6 +49,7 @@ describe('sfl-api proxy', () => {
   })
 
   afterEach(() => {
+    proxy.resetState()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
     if (savedKey === undefined) delete process.env.SFL_API_KEY
@@ -106,6 +107,9 @@ describe('sfl-api proxy', () => {
       ['legacy visit non-numeric', '/visit/abc'],
       ['legacy visit traversal', '/visit/123/../../admin'],
       ['visit root', '/visit/'],
+      ['leading zero id', '/community/farms/01'],
+      ['zero id', '/community/farms/0'],
+      ['legacy visit leading zero', '/visit/007'],
     ]
 
     it.each(rejected)('returns 404 without upstream call: %s', async (_name, suffix) => {
@@ -126,6 +130,7 @@ describe('sfl-api proxy', () => {
       expect(proxy.isAllowedApiPath('/community/farms/42')).toBe(true)
       expect(proxy.isAllowedApiPath('/community/farms/42/')).toBe(true)
       expect(proxy.isAllowedApiPath('/community/farms/42/x')).toBe(false)
+      expect(proxy.isAllowedApiPath('/community/farms/042')).toBe(false)
       expect(proxy.isAllowedApiPath('/other')).toBe(false)
       expect(proxy.isAllowedApiPath(undefined)).toBe(false)
     })
@@ -276,6 +281,55 @@ describe('sfl-api proxy', () => {
         makeEvent(`${PREFIX}/community/farms/${freshId()}`, { ip }),
       )
       expect(ok.statusCode).toBe(200)
+    })
+  })
+
+  describe('cache and upstream bounds', () => {
+    it('shares one cache entry between a path and its trailing-slash variant', async () => {
+      const id = freshId()
+      await proxy.handler(makeEvent(`${PREFIX}/community/farms/${id}`))
+      await proxy.handler(makeEvent(`${PREFIX}/community/farms/${id}/`))
+      await proxy.handler(makeEvent(`${PREFIX}/visit/${id}/`))
+      expect(fetch).toHaveBeenCalledTimes(1)
+      expect(fetch.mock.calls[0][0]).toBe(
+        `https://api.sunflower-land.com/community/farms/${id}`,
+      )
+    })
+
+    it('caps upstream calls even when the client IP header is rotated', async () => {
+      const budget = proxy.UPSTREAM_BUDGET_PER_MINUTE
+      for (let i = 0; i < budget; i += 1) {
+        const res = await proxy.handler(
+          makeEvent(`${PREFIX}/community/farms/${freshId()}`),
+        )
+        expect(res.statusCode).toBe(200)
+      }
+      expect(fetch).toHaveBeenCalledTimes(budget)
+
+      const blocked = await proxy.handler(
+        makeEvent(`${PREFIX}/community/farms/${freshId()}`),
+      )
+      expect(blocked.statusCode).toBe(429)
+      expect(Number(blocked.headers['Retry-After'])).toBeGreaterThan(0)
+      expect(fetch).toHaveBeenCalledTimes(budget)
+    })
+
+    it('still serves cached responses after the upstream budget is spent', async () => {
+      const cachedId = freshId()
+      await proxy.handler(makeEvent(`${PREFIX}/community/farms/${cachedId}`))
+      for (let i = 1; i < proxy.UPSTREAM_BUDGET_PER_MINUTE; i += 1) {
+        await proxy.handler(makeEvent(`${PREFIX}/community/farms/${freshId()}`))
+      }
+      const hit = await proxy.handler(makeEvent(`${PREFIX}/community/farms/${cachedId}`))
+      expect(hit.statusCode).toBe(200)
+    })
+
+    it('bounds the response cache size and evicts the oldest entry', () => {
+      const max = proxy.MAX_CACHE_ENTRIES
+      for (let i = 0; i < max + 50; i += 1) {
+        proxy.setCachedResponse(`production:/community/farms/${i + 1}`, 200, '{}')
+      }
+      expect(proxy.cacheSize()).toBe(max)
     })
   })
 

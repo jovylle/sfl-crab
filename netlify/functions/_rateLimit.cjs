@@ -2,7 +2,7 @@ const WINDOW_MS = 60_000
 
 function clientIp (event) {
   return (
-    event.headers['cf-connecting-ip'] ||        // set by Cloudflare, not spoofable by the client
+    event.headers['cf-connecting-ip'] ||        // set by Cloudflare; client-controlled if the function is reached directly on *.netlify.app
     event.headers['x-nf-client-connection-ip'] ||
     event.headers['client-ip'] ||
     event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||

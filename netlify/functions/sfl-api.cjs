@@ -10,10 +10,17 @@ const API_ORIGINS = {
 
 const CACHE_TTL_MS = 60_000
 const RATE_LIMIT_PER_MINUTE = 60
+// Bounds on state and upstream traffic per warm lambda instance. The per-IP
+// limit alone is not enough: on the Netlify-direct hostname the client can
+// forge the IP header, so a global ceiling caps upstream calls regardless.
+const MAX_CACHE_ENTRIES = 500
+const UPSTREAM_BUDGET_PER_MINUTE = 120
+const UPSTREAM_WINDOW_MS = 60_000
 
 // The app only ever fetches one upstream path. Anything else is refused so the
 // proxy cannot be used to call arbitrary endpoints with the owner's API key.
-const ALLOWED_PATH = /^\/community\/farms\/\d{1,20}\/?$/
+// Ids have no leading zero so one farm maps to exactly one canonical path.
+const ALLOWED_PATH = /^\/community\/farms\/[1-9]\d{0,19}\/?$/
 
 const CORS_ORIGINS = [
   'https://d1g.uk',
@@ -124,11 +131,40 @@ function getCachedResponse (cacheKey) {
 }
 
 function setCachedResponse (cacheKey, statusCode, body) {
+  responseCache.delete(cacheKey)
+  if (responseCache.size >= MAX_CACHE_ENTRIES) {
+    const now = Date.now()
+    for (const [key, entry] of responseCache) {
+      if (now - entry.storedAt > CACHE_TTL_MS) responseCache.delete(key)
+    }
+    // Map iterates in insertion order, so the first key is the oldest.
+    while (responseCache.size >= MAX_CACHE_ENTRIES) {
+      responseCache.delete(responseCache.keys().next().value)
+    }
+  }
   responseCache.set(cacheKey, {
     storedAt: Date.now(),
     statusCode,
     body,
   })
+}
+
+let upstreamWindowStart = 0
+let upstreamCount = 0
+
+// Returns the seconds to wait when the per-instance upstream budget is spent,
+// or 0 when the call may proceed (and has been counted).
+function takeUpstreamBudget () {
+  const now = Date.now()
+  if (now - upstreamWindowStart > UPSTREAM_WINDOW_MS) {
+    upstreamWindowStart = now
+    upstreamCount = 0
+  }
+  if (upstreamCount >= UPSTREAM_BUDGET_PER_MINUTE) {
+    return Math.max(1, Math.ceil((upstreamWindowStart + UPSTREAM_WINDOW_MS - now) / 1000))
+  }
+  upstreamCount += 1
+  return 0
 }
 
 exports.handler = async (event) => {
@@ -175,6 +211,9 @@ exports.handler = async (event) => {
     }
   }
 
+  // Canonical form (no trailing slash) so variants share one cache entry.
+  apiPath = apiPath.replace(/\/$/, '')
+
   try {
     checkRateLimit(event, RATE_LIMIT_PER_MINUTE)
   } catch (err) {
@@ -208,6 +247,16 @@ exports.handler = async (event) => {
       statusCode: cached.statusCode,
       headers: corsHeaders,
       body: cached.body,
+    }
+  }
+
+  const waitSeconds = takeUpstreamBudget()
+  if (waitSeconds > 0) {
+    logSflApi({ env, path: apiPath, landId, status: 429, reason: 'upstream_budget' })
+    return {
+      statusCode: 429,
+      headers: { ...corsHeaders, 'Retry-After': String(waitSeconds) },
+      body: JSON.stringify({ error: 'Too many requests — please retry in a moment' }),
     }
   }
 
@@ -270,3 +319,14 @@ exports.handler = async (event) => {
 
 exports.isAllowedApiPath = isAllowedApiPath
 exports.resolveCorsOrigin = resolveCorsOrigin
+
+// Test hooks.
+exports.MAX_CACHE_ENTRIES = MAX_CACHE_ENTRIES
+exports.UPSTREAM_BUDGET_PER_MINUTE = UPSTREAM_BUDGET_PER_MINUTE
+exports.setCachedResponse = setCachedResponse
+exports.cacheSize = () => responseCache.size
+exports.resetState = () => {
+  responseCache.clear()
+  upstreamWindowStart = 0
+  upstreamCount = 0
+}
