@@ -1,4 +1,5 @@
 const { hubBase } = require('./_hubBase.cjs')
+const { checkRateLimit } = require('./_rateLimit.cjs')
 
 const CORS_ORIGINS = [
   'https://d1g.uk',
@@ -10,9 +11,6 @@ const CORS_ORIGINS = [
   'http://127.0.0.1:5174',
 ]
 
-const RATE_LIMIT = 30
-const RATE_WINDOW_MS = 60_000
-const rateBuckets = new Map()
 
 function corsHeaders (origin) {
   const allowed =
@@ -28,29 +26,6 @@ function corsHeaders (origin) {
   }
 }
 
-function getClientIp (event) {
-  return (
-    event.headers['x-nf-client-connection-ip'] ||
-    event.headers['client-ip'] ||
-    event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    'unknown'
-  )
-}
-
-function checkRateLimit (ip) {
-  const now = Date.now()
-  let bucket = rateBuckets.get(ip)
-  if (!bucket || now - bucket.start > RATE_WINDOW_MS) {
-    bucket = { start: now, count: 0 }
-    rateBuckets.set(ip, bucket)
-  }
-  bucket.count += 1
-  if (bucket.count > RATE_LIMIT) {
-    const err = new Error('Too many requests')
-    err.statusCode = 429
-    throw err
-  }
-}
 
 function digDayLandId (event) {
   if (event.httpMethod === 'GET') {
@@ -122,7 +97,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    checkRateLimit(getClientIp(event))
+    checkRateLimit(event, 120)
   } catch (err) {
     console.log('dig-day', {
       method: event.httpMethod,
@@ -132,7 +107,7 @@ exports.handler = async (event) => {
     })
     return {
       statusCode: err.statusCode || 429,
-      headers,
+      headers: { ...headers, 'Retry-After': String(err.retryAfter || 60) },
       body: JSON.stringify({ error: err.message }),
     }
   }

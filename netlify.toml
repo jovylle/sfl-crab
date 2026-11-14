@@ -76,6 +76,12 @@
   to = "/.netlify/functions/projectmate-feedback/:splat"
   status = 200
 
+# Serve the prerendered digging entry directly; skip Netlify's pretty-URL 301.
+[[redirects]]
+  from = "/digging"
+  to = "/digging/index.html"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
