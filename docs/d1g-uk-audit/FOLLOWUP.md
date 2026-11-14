@@ -178,8 +178,16 @@ remove that override.
 2. **The `sfl-api` rate limit is best effort.** It is an in-memory counter per Netlify
    lambda instance (`netlify/functions/_rateLimit.cjs`). Two warm instances give each IP
    up to twice the limit, and a cold start resets the count. It stops casual abuse, not a
-   determined flood. If real abuse shows up, add a Cloudflare rate-limiting rule (needs the
-   Rulesets scope in (c)) in front of `/.netlify/functions/sfl-api/*`.
+   determined flood. The per-IP key comes from `cf-connecting-ip`, which Cloudflare sets
+   on `d1g.uk` traffic but which a client can forge when calling the function directly at
+   `https://d1guk.netlify.app/.netlify/functions/sfl-api/...` (that traffic never passes
+   Cloudflare). To cover that, `sfl-api.cjs` also has a per-instance cap of 120 upstream
+   calls per minute that does not depend on client identity, and a 500 entry bound on its
+   response cache. A Cloudflare rate-limiting rule (needs the Rulesets scope in (c)) would
+   only cover `d1g.uk`, not the Netlify hostname. If real abuse shows up, add that rule and
+   also block or redirect the direct `d1guk.netlify.app` function path (for example a Host
+   check in the function, or a Netlify-side rule), since the Cloudflare rule alone leaves
+   it open.
 3. **Production branch and CI timing.** In Netlify, Site configuration > Build & deploy >
    Branches > Production branch must be `master`, because the sync workflows and the
    health check run from `master`. The new `ci.yml` workflow runs on pull requests, so it
@@ -194,6 +202,13 @@ remove that override.
    is a reasonable later bump: change `NODE_VERSION` in `netlify.toml`, `.nvmrc`,
    `engines` in `package.json` and the `node-version` in the workflows in one commit, and
    run `npm test` first.
+6. **Browser smoke test before merge.** `npm audit fix` moved runtime `vue` (3.5.13 to
+   3.5.45) and `vite` (6.3.2 to 6.4.6) within their declared ranges. Build and unit tests
+   passed, but no browser run was done for this branch. Open `/digging` and `/practice` on
+   the deploy preview and check that a land loads and a tile can be dug.
+7. **Health check schedule.** GitHub disables scheduled workflows after 60 days without
+   repository activity. If the repo goes quiet, re-enable `health-check.yml` under the
+   Actions tab.
 
 ---
 
@@ -345,7 +360,7 @@ before the PR is opened and may change if the branch is rebased.
 | Commit | Topic | Docs and files touched |
 |---|---|---|
 | `6ae57f0` | `sfl-api`: path allow-list (`/community/farms/<digits>` only), CORS allow-list (foreign Origin gets 403), 60 requests/min/IP rate limit | `netlify/functions/sfl-api.cjs`, `tests/sflApiProxy.test.js`, `AGENTS.md`, `docs/API_LAYER.md`, `netlify/functions/README.md` |
-| `0a677bc` | Removed dead weight: `src_other` vendored copy, tracked `.history`, unused `artefactIcons.ts` and Vite aliases (tracked files 1275 to 492). `src/assets/feedbacks` kept because `FeedbackGallery.vue` uses it | `vite.config.js`, `docs/ARCHITECTURE.md`, `docs/PREDICTION_MODE_PLAN.md`, `AGENTS.md`, comment in `src/data/game/diggingFormations.js` |
+| `0a677bc` | Removed dead weight: `src_other` vendored copy, tracked `.history`, unused `artefactIcons.ts` and Vite aliases (tracked files 1274 to 492 at that commit). `src/assets/feedbacks` kept because `FeedbackGallery.vue` uses it | `vite.config.js`, `docs/ARCHITECTURE.md`, `docs/PREDICTION_MODE_PLAN.md`, `AGENTS.md`, comment in `src/data/game/diggingFormations.js` |
 | `461438a` | Removed unused dependencies (`puppeteer`, `react-i18next`, `i18next`, `decimal.js-light`, `node-fetch`), Netlify and CI moved to Node 22. `npm audit` 93 to 72 | `package.json`, `package-lock.json`, `netlify.toml`, `.nvmrc`, sync workflows |
 | `f4e53c9` | `ci.yml`: `npm ci`, `npm test`, `npm run build` on pull requests and pushes to `master` and `development` | `.github/workflows/ci.yml` |
 | `3defb96` | `health-check.yml` (every 6 hours, opens or updates a `health-check` issue) and `scripts/health-check.js` | `.github/workflows/health-check.yml`, `scripts/health-check.js`, `tests/healthCheck.test.js`, `AGENTS.md` |

@@ -3,7 +3,8 @@
 # master before the "Run workflow" button appears.
 #
 # On failure the job opens (or comments on) a GitHub issue labelled
-# "health-check" and then exits non-zero so GitHub emails the owner.
+# "health-check" and then exits non-zero so GitHub emails the owner. When a
+# later run passes it closes the open health-check issues.
 name: Health Check
 
 on:
@@ -55,6 +56,13 @@ jobs:
             gh issue create --title "d1g.uk health check failing" \
               --label health-check --body-file issue-body.md
           fi
+
+      - name: Close open issue on recovery
+        if: steps.check.outputs.code == '0'
+        run: |
+          for n in $(gh issue list --label health-check --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "Health check passing again: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          done
 
       - name: Fail the job when checks failed
         if: steps.check.outputs.code != '0'
