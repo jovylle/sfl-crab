@@ -21,11 +21,14 @@
         v-model:showTreasureOrder="showTreasureOrder"
         v-model:hideLandIdInUrl="hideLandIdInUrl"
         v-model:showPrediction="showPrediction"
+        :can-sync-dig-day="canSyncDigDay"
+        :dig-day-sync-enabled="digDaySyncEnabled"
         :dig-day-sync-status="digDaySyncStatus"
         :dig-day-updated-at="digDayUpdatedAt"
         :dig-day-sync-error="digDaySyncError"
         :hub-replay-url="hubReplayUrl"
         :can-replay="canReplay"
+        @update:digDaySyncEnabled="setDigDaySyncEnabled"
         @open-replay="openReplay()"
       />
     </template>
@@ -154,6 +157,9 @@ const replayPatternDateLabel = computed(() => {
 })
 
 const {
+  canSync: canSyncDigDay,
+  syncEnabled: digDaySyncEnabled,
+  setSyncEnabled: setDigDaySyncEnabled,
   syncStatus: digDaySyncStatus,
   lastUpdatedAt: digDayUpdatedAt,
   syncError: digDaySyncError,
