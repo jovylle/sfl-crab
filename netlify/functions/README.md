@@ -35,7 +35,9 @@ Structured logs go to **Netlify function logs** (Site → Functions → sfl-api 
 
 `sfl-api { env, path, landId, status, cache: 'hit' | 'miss' }`
 
-Only HTTP 200 responses are cached in-memory for 60s. Send `x-sfl-bypass-cache: 1` (or `?bypassCache=1`) to skip the cache — the app does this on every land sync / Refresh Data click. `/visit/*` often returns 401 for third-party tools — the app uses `/community/farms/*` instead.
+**Hardening.** Only `GET /community/farms/<digits>` is forwarded (the legacy `/visit/<digits>` alias is rewritten to it); any other path returns 404 before the API key is used. CORS is an allow-list (d1g.uk, beta, development, the uft1.com hosts, `d1guk.netlify.app` and its deploy previews, localhost dev ports) with `Vary: Origin`; a request with a foreign `Origin` gets 403, and requests with no `Origin` are allowed. Land ids must be canonical (`[1-9]\d{0,19}`, a trailing slash is ignored); ids with leading zeros return 404 with no upstream call. Each IP is limited to 60 requests per minute (cache hits included), returning 429 with `Retry-After`. Separately, each warm instance makes at most 120 upstream calls per minute regardless of client identity (cache hits are free), because `cf-connecting-ip` can be forged on the direct `*.netlify.app` host; beyond that it returns 429. Blocked requests log `reason: 'origin_not_allowed' | 'path_not_allowed' | 'rate_limited' | 'upstream_budget'`. Tests: `tests/sflApiProxy.test.js`.
+
+Only HTTP 200 responses are cached in-memory for 60s, up to 500 entries (expired entries are evicted first, then the oldest). Send `x-sfl-bypass-cache: 1` (or `?bypassCache=1`) to skip the cache — the app does this on every land sync / Refresh Data click. `/visit/*` often returns 401 for third-party tools — the app uses `/community/farms/*` instead.
 
 ## Admin UI (`/admin`)
 

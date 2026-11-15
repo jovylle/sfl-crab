@@ -1,5 +1,6 @@
 const crypto = require('crypto')
 const { connectLambda, getStore } = require('@netlify/blobs')
+const { checkRateLimit, clientIp: getClientIp } = require('./_rateLimit.cjs')
 
 const CORS_ORIGINS = [
   'https://d1g.uk',
@@ -11,9 +12,6 @@ const CORS_ORIGINS = [
   'http://127.0.0.1:5174',
 ]
 
-const RATE_LIMIT = 30
-const RATE_WINDOW_MS = 60_000
-const rateBuckets = new Map()
 
 const MAX_MESSAGE_CHARS = 5000
 const MAX_EMAIL_CHARS = 200
@@ -33,29 +31,6 @@ function corsHeaders (origin) {
   }
 }
 
-function getClientIp (event) {
-  return (
-    event.headers['x-nf-client-connection-ip'] ||
-    event.headers['client-ip'] ||
-    event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    'unknown'
-  )
-}
-
-function checkRateLimit (ip) {
-  const now = Date.now()
-  let bucket = rateBuckets.get(ip)
-  if (!bucket || now - bucket.start > RATE_WINDOW_MS) {
-    bucket = { start: now, count: 0 }
-    rateBuckets.set(ip, bucket)
-  }
-  bucket.count += 1
-  if (bucket.count > RATE_LIMIT) {
-    const err = new Error('Too many requests')
-    err.statusCode = 429
-    throw err
-  }
-}
 
 function validateBody (body) {
   const message = typeof body.message === 'string' ? body.message.trim() : ''
@@ -120,11 +95,11 @@ exports.handler = async (event) => {
   }
 
   try {
-    checkRateLimit(getClientIp(event))
+    checkRateLimit(event, 20)
   } catch (err) {
     return {
       statusCode: err.statusCode || 429,
-      headers,
+      headers: { ...headers, 'Retry-After': String(err.retryAfter || 60) },
       body: JSON.stringify({ error: err.message }),
     }
   }

@@ -1,5 +1,5 @@
 // Digging Formations Data
-// Extracted from Sunflower Land game repo (src_other/features/game/types/desert.ts)
+// Extracted from Sunflower Land game repo (features/game/types/desert.ts)
 // Last updated: November 2025
 
 import { getCurrentSeasonalArtefact } from './seasonalArtefacts.js'

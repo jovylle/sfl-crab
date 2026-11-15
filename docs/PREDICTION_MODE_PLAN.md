@@ -956,4 +956,4 @@ There is **NO existing automated treasure-prediction engine**. Existing pieces a
 - Practice-only `collectAutoMarkers` (`PracticeGrid.vue:300-336`) — derives `hint-crab-eyes-maybe` / `hint-nothing` from revealed tiles. Single-crab proximity, not intersection.
 - "Guaranteed" treasure is referenced only conceptually in `docs/GRID_MECHANICS.md:15` ("intersection of multiple known crabs is a guaranteed treasure") — **not implemented in code**.
 
-The word `guaranteed` / `predict` appears only in `src_other/` i18n dictionaries (dead legacy, unrelated).
+The word `guaranteed` / `predict` appears only in the i18n dictionaries of the old vendored game copy (since removed, unrelated).
