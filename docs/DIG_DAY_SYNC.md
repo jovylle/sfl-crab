@@ -64,6 +64,7 @@ Pass-through to `${hubBase()}/v1/dig-day` (GET forwards the query string; POST f
 - **Rate limit:** 30 requests / 60s per client IP, tracked in an in-memory `Map`. Best-effort only — buckets are per warm Lambda instance, not global. Over-limit → `429`.
 - **Write secret:** `HUB_WRITE_SECRET` is injected as `X-Hub-Write-Secret` **only on POST**. The incoming `Authorization` Bearer token is passed through on both methods.
 - **Headers:** forwards `Accept`, `Content-Type`, `Authorization`, `If-None-Match` upstream. Echoes upstream status + `ETag` downstream. `Cache-Control` is `public, max-age=120, must-revalidate` for GET, `no-store` for POST.
+- **Empty snapshot:** the Hub answers a GET for a land with no snapshot for the date with `404` and a full empty dig-day body (`v: 1`, `patterns: []`, `digs: []`, `stats.totalDigs: 0`). That is the normal first-visit state, so the proxy returns it as `200` with the same body. Any other 404 body, any other status, and all POST responses pass through unchanged. The client accepts both `200` and `404` with that body, so older deploys keep working during rollout.
 - **CORS:** allowlist of `d1g.uk` subdomains + localhost + Netlify deploy-preview regex; exposes `ETag`, allows `If-None-Match`; `OPTIONS` → 204.
 
 ## 4. Caches & merge semantics
