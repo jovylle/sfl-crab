@@ -124,6 +124,7 @@ All keys live here — one source of truth. Fixed keys:
 | `sfl-api-environment` | SFL API target: `production` \| `test` |
 | `theme` | DaisyUI theme name |
 | `todays-checklist:landId` / `todays-checklist:selectedNpcIds` | Checklist page state |
+| `digDaySync-<landId>` | Per-land opt-in for dig-day Hub sync (`1` = on, absent = off) |
 
 Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, testApi)`, `gridCustomHintsKey(id)` → `gridCustomHints_${id}`, `markJournalKey(id, utcDate)` → `markJournal_${id}_${utcDate}`, `landUiPrefKey(id, pref)` → `${pref}-${id}`.
 
@@ -145,7 +146,7 @@ Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, tes
 | `useGridManager.js` | User marks / manual hint cycling |
 | `useLandData.js` ⭐ | Central land-data store + localStorage cache; `solverPatternKeys` is the historical-aware solver-input source shared by Grid.vue/TodayPatterns.vue on both digging pages |
 | `useLandSync.js` | Refresh UI state (isLoading/isCooldown/countdown) — network decisions delegated to `landFetchCoordinator` |
-| `useDigDayStore.js` | Hub dig-day sync (debounce/ETag/merge) — see [DIG_DAY_SYNC.md](./DIG_DAY_SYNC.md) |
+| `useDigDayStore.js` | Opt-in (default off) Hub dig-day sync (debounce/ETag/merge) — see [DIG_DAY_SYNC.md](./DIG_DAY_SYNC.md) |
 | `usePracticeEngine.js` / `usePracticePatterns.js` | Practice mode grid generation + daily patterns |
 | `useHintsStorage.js` | Per-land per-UTC-day hint persistence |
 | `useMarkJournal.js` / `usePatternMarks.js` / `markJournalBridge.js` | Mark event journal (feeds dig-day sync + replays) |

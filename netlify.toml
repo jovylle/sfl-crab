@@ -24,6 +24,10 @@
   # Node.js version
   NODE_VERSION = "22"
 
+# Off so /digging is not forwarded to /digging/ before the /digging redirect rule runs.
+[build.processing.html]
+  pretty_urls = false
+
 # Redirect rules (backup for _redirects file)
 
 [[redirects]]

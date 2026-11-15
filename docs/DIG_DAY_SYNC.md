@@ -2,6 +2,19 @@
 
 > Deep dive on how a user's dig/mark state is persisted to the **SFL Digging Hub** and rendered as a shareable dig-day replay. See [ARCHITECTURE.md](./ARCHITECTURE.md) for the big picture and [GRID_MECHANICS.md](./GRID_MECHANICS.md) for grid semantics.
 
+## Opt-in (default off)
+
+Hub sync is **opt-in per land**. A visitor who never touches the toggle causes no dig-day network traffic at all: no initial `GET /api/dig-day` on mount, no debounced `POST`, no flush on hide/unload. Marks and digs still work locally exactly as before (the mark-journal handlers stay registered; only the network calls are gated).
+
+- **Toggle:** "Save and share this day" (`src/components/DigDaySyncToggle.vue`, rendered by `DigToolSection.vue` in the Digging view). Shown only for persistable land ids; guest and non-numeric ids get the no-op store (`canSync: false`) and no toggle.
+- **Persistence:** localStorage key `digDaySync-<landId>` (`digDaySyncKey()` in `src/constants/storageKeys.js`; registry entry `DIG_DAY_SYNC`, audience `guest_or_signed_in`). `1` means on; absent means off. Turning it off removes the key.
+- **Default for Hub-signed-in users:** also off. A signed-in user sees the toggle highlighted with a short hint, but nothing is sent until they switch it on. This keeps request volume predictable and the rule simple.
+- **Turning on:** `setSyncEnabled(true)` persists the choice, GETs the Hub snapshot and merges it (`applyRemote`), then POSTs the current local state once if there is at least one dig or mark. After that the normal behaviour below applies.
+- **Turning off:** `setSyncEnabled(false)` clears the debounce timer, drops hydration and the fingerprint, resets status to `idle`, and flushes nothing. A request already in flight when the toggle flips is ignored when it settles.
+- **On page load when already on:** same as the pre-opt-in behaviour (GET once, merge, seed the fingerprint so the reload itself does not POST).
+- **Read-only views are unaffected:** `DiggingHistory.vue` and `PublicDigDay.vue` call `fetchDigDay` on demand (explicit user actions) and do not depend on the toggle.
+- **Old session cache:** `sessionStorage` `digDayCache_*` entries written by earlier versions are only read by `fetchDigDay`, expire after 15 minutes and are per tab, so no migration is needed.
+
 ## Layers
 
 ```
@@ -26,11 +39,13 @@ Instances are cached in a module-level `Map` keyed by stringified landId, so all
 
 **No-op guard.** `isPersistableLandId()` requires a pure-numeric id that is not `guest`/`0`/empty. Non-persistable ids get a `noopStore` with zero network activity.
 
-**State:** `syncStatus` (`idle | loading | syncing | saved | error | auth_required`), `lastUpdatedAt`, `syncError`, `hubReplayUrl`.
+**State:** `syncEnabled` (the opt-in), `canSync`, `syncStatus` (`idle | loading | syncing | saved | error | auth_required`), `lastUpdatedAt`, `syncError`, `hubReplayUrl`. `loadFromServer`, `syncToServer`, `scheduleSync` and `flushSyncIfDirty` all return immediately while `syncEnabled` is false.
+
+The toggle shows `syncStatus` as text (`Saving...`, `Saved`, or the error message) and links `hubReplayUrl` as "Open shared day".
 
 **Dirty check (fingerprint).** `buildSyncCore()` builds the lean payload snapshot; `buildSyncFingerprint()` is its `JSON.stringify`. `syncToServer()` bails immediately if the fingerprint is unchanged, and only advances `lastSyncFingerprint` after a successful save. This is the client-side guard against redundant POSTs.
 
-**30s debounce.** `SYNC_DEBOUNCE_MS = 30_000`. `scheduleSync()` returns early if not hydrated or fingerprint unchanged; otherwise it (re)arms a 30s timer that calls `syncToServer()`. The long window deliberately batches dig/mark bursts into few Hub writes.
+**30s debounce (only while opted in).** `SYNC_DEBOUNCE_MS = 30_000`. `scheduleSync()` returns early if not hydrated or fingerprint unchanged; otherwise it (re)arms a 30s timer that calls `syncToServer()`. The long window deliberately batches dig/mark bursts into few Hub writes.
 
 **What triggers a sync:** mark-journal handlers (`onPick`/`onClearAll`), `upsertFromApi()`, and a `watch` on a grid signal `"${timelineLength}:${lastDugAt}"`.
 
@@ -64,6 +79,7 @@ Pass-through to `${hubBase()}/v1/dig-day` (GET forwards the query string; POST f
 - **Rate limit:** 30 requests / 60s per client IP, tracked in an in-memory `Map`. Best-effort only — buckets are per warm Lambda instance, not global. Over-limit → `429`.
 - **Write secret:** `HUB_WRITE_SECRET` is injected as `X-Hub-Write-Secret` **only on POST**. The incoming `Authorization` Bearer token is passed through on both methods.
 - **Headers:** forwards `Accept`, `Content-Type`, `Authorization`, `If-None-Match` upstream. Echoes upstream status + `ETag` downstream. `Cache-Control` is `public, max-age=120, must-revalidate` for GET, `no-store` for POST.
+- **Empty snapshot:** the Hub answers a GET for a land with no snapshot for the date with `404` and a full empty dig-day body (`v: 1`, `patterns: []`, `digs: []`, `stats.totalDigs: 0`). That is the normal first-visit state, so the proxy returns it as `200` with the same body. Any other 404 body, any other status, and all POST responses pass through unchanged. The client accepts both `200` and `404` with that body, so older deploys keep working during rollout.
 - **CORS:** allowlist of `d1g.uk` subdomains + localhost + Netlify deploy-preview regex; exposes `ETag`, allows `If-None-Match`; `OPTIONS` → 204.
 
 ## 4. Caches & merge semantics

@@ -71,6 +71,12 @@ export const STORAGE_KEYS = {
     description: 'Last land id on checklist page',
     audience: STORAGE_AUDIENCE.GUEST,
   },
+  /** Per-land opt-in for dig-day Hub sync; full key is `digDaySync-<landId>` (see `digDaySyncKey`). */
+  DIG_DAY_SYNC: {
+    key: 'digDaySync',
+    description: 'Per-land dig-day Hub sync opt-in (`1` on, absent or `0` off)',
+    audience: STORAGE_AUDIENCE.GUEST_OR_SIGNED_IN,
+  },
   CHECKLIST_NPCS: {
     key: 'todays-checklist:selectedNpcIds',
     description: 'Selected NPC ids on checklist',
@@ -133,4 +139,12 @@ export function markJournalKey (landId, utcDate) {
  */
 export function landUiPrefKey (landId, pref) {
   return `${pref}-${landId}`
+}
+
+/**
+ * Dig-day Hub sync opt-in for a land. Value `1` means on; anything else means off.
+ * @param {string} landId
+ */
+export function digDaySyncKey (landId) {
+  return `${STORAGE_KEYS.DIG_DAY_SYNC.key}-${landId}`
 }
