@@ -103,6 +103,15 @@
       </div>
     </div>
   </div>
+  <DigDaySyncToggle
+    v-if="canSyncDigDay"
+    :enabled="digDaySyncEnabled"
+    :status="digDaySyncStatus"
+    :error="digDaySyncError"
+    :replay-url="hubReplayUrl"
+    :signed-in="isHubSignedIn"
+    @update:enabled="$emit('update:digDaySyncEnabled', $event)"
+  />
   </div>
 
 </template>
@@ -117,6 +126,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { resolveLandRoute } from '@/utils/landRoutes.js'
 import { useApiEnvironment } from '@/composables/useApiEnvironment.js'
 import { useFeedbackModal } from '@/composables/useFeedbackModal.js'
+import { useHubSession } from '@/composables/useHubSession.js'
+import DigDaySyncToggle from '@/components/DigDaySyncToggle.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -124,12 +135,15 @@ const { isTestServer } = useApiEnvironment()
 const landId = route.params.landId || '0'
 const grid = useGridManager(landId)
 const { openFeedback } = useFeedbackModal()
+const { isAuthenticated: isHubSignedIn } = useHubSession()
 
 // Public dig-day snapshots: data is keyed by landId + UTC date (no ownership in v1).
 defineProps({
   showTreasureOrder: { type: Boolean, default: false },
   hideLandIdInUrl: { type: Boolean, default: false },
   showPrediction: { type: Boolean, default: false },
+  canSyncDigDay: { type: Boolean, default: false },
+  digDaySyncEnabled: { type: Boolean, default: false },
   digDaySyncStatus: { type: String, default: 'idle' },
   digDayUpdatedAt: { type: String, default: null },
   digDaySyncError: { type: String, default: null },
@@ -171,7 +185,7 @@ async function copyMarksLink (event) {
 }
 
 // we'll emit update:showTreasureOrder via @change above
-defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'update:showPrediction', 'open-replay'])
+defineEmits(['update:showTreasureOrder', 'update:hideLandIdInUrl', 'update:showPrediction', 'update:digDaySyncEnabled', 'open-replay'])
 
 function clearLandId () {
   const test = isTestServer.value

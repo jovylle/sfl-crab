@@ -12,6 +12,7 @@ import { DigDayApiError, fetchDigDay, saveDigDay } from '@/services/digDayApiSer
 import { isTestnetLandId } from '@/utils/testnet.js'
 import { resolveHubReplayUrl } from '@/utils/hubReplayUrl.js'
 import { getHubDisplayName } from '@/composables/useHubSession.js'
+import { digDaySyncKey } from '@/constants/storageKeys.js'
 
 const instances = new Map()
 /** Batch dig/mark edits before POST — longer window cuts Hub writes sharply. */
@@ -22,7 +23,27 @@ function isPersistableLandId (landId) {
   return id && id !== 'guest' && id !== '0' && /^\d+$/.test(id)
 }
 
+function readSyncPreference (landId) {
+  try {
+    return localStorage.getItem(digDaySyncKey(landId)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeSyncPreference (landId, enabled) {
+  try {
+    if (enabled) localStorage.setItem(digDaySyncKey(landId), '1')
+    else localStorage.removeItem(digDaySyncKey(landId))
+  } catch {
+    /* private mode / storage full: the choice lasts for this page view only */
+  }
+}
+
 const noopStore = {
+  canSync: false,
+  syncEnabled: ref(false),
+  setSyncEnabled: async () => {},
   syncStatus: ref('idle'),
   lastUpdatedAt: ref(null),
   syncError: ref(null),
@@ -32,15 +53,18 @@ const noopStore = {
   upsertFromApi: () => {},
 }
 
-/**
- * Per landId + UTC date: sync lean dig snapshot via /api/dig-day → SFL Digging Hub.
- * @param {string} landId
- * @param {import('vue').Ref | (() => object)} desertSource reactive desert or getter
- */
 function shouldHideLandIdOnHub (landId) {
   return isTestApiEnvironment() || isTestnetLandId(landId)
 }
 
+/**
+ * Per landId + UTC date: sync lean dig snapshot via /api/dig-day → SFL Digging Hub.
+ *
+ * Sync is opt-in per land (localStorage `digDaySync-<landId>`). While it is off
+ * the composable makes no dig-day network calls; marks and digs stay local.
+ * @param {string} landId
+ * @param {import('vue').Ref | (() => object)} desertSource reactive desert or getter
+ */
 export function useDigDayStore (landId, desertSource) {
   const key = String(landId || '')
   if (!isPersistableLandId(key)) return noopStore
@@ -51,6 +75,7 @@ export function useDigDayStore (landId, desertSource) {
     const lastUpdatedAt = ref(null)
     const syncError = ref(null)
     const hubReplayUrl = ref(null)
+    const syncEnabled = ref(readSyncPreference(key))
     let syncTimer = null
     let lastSyncFingerprint = ''
     let hydrated = false
@@ -140,25 +165,37 @@ export function useDigDayStore (landId, desertSource) {
       lastSyncFingerprint = buildSyncFingerprint()
     }
 
-    async function loadFromServer () {
+    /**
+     * GET the Hub snapshot and merge it in. No-op while sync is off.
+     * @param {{ pushLocal?: boolean }} [opts] pushLocal: leave the fingerprint
+     *   unseeded so the caller can push local state that the Hub may not have.
+     */
+    async function loadFromServer ({ pushLocal = false } = {}) {
+      if (!syncEnabled.value) return
       syncStatus.value = 'loading'
       syncError.value = null
       try {
         const remote = await fetchDigDay(key, getTodayUTC())
+        if (!syncEnabled.value) return
         applyRemote(remote)
         syncStatus.value = 'idle'
       } catch (err) {
+        if (!syncEnabled.value) return
         console.warn('dig-day load failed:', err)
         syncError.value =
           err instanceof Error ? err.message : 'Failed to load dig day'
         syncStatus.value = 'error'
       } finally {
-        hydrated = true
-        seedFingerprint()
+        if (syncEnabled.value) {
+          hydrated = true
+          if (pushLocal) lastSyncFingerprint = ''
+          else seedFingerprint()
+        }
       }
     }
 
     async function syncToServer () {
+      if (!syncEnabled.value) return
       const fingerprint = buildSyncFingerprint()
       if (fingerprint === lastSyncFingerprint) return
 
@@ -167,11 +204,13 @@ export function useDigDayStore (landId, desertSource) {
       syncError.value = null
       try {
         const saved = await saveDigDay(payload)
+        if (!syncEnabled.value) return
         lastSyncFingerprint = fingerprint
         applyRemote(saved)
         lastUpdatedAt.value = saved?.updatedAt || payload.updatedAt
         syncStatus.value = 'saved'
       } catch (err) {
+        if (!syncEnabled.value) return
         console.warn('dig-day sync failed:', err)
         if (err instanceof DigDayApiError && err.status === 401) {
           syncError.value = 'Sign in to save dig day to your account.'
@@ -189,7 +228,7 @@ export function useDigDayStore (landId, desertSource) {
     }
 
     function scheduleSync () {
-      if (!hydrated) return
+      if (!syncEnabled.value || !hydrated) return
       if (buildSyncFingerprint() === lastSyncFingerprint) return
       if (syncTimer) clearTimeout(syncTimer)
       syncTimer = setTimeout(() => {
@@ -199,7 +238,7 @@ export function useDigDayStore (landId, desertSource) {
     }
 
     function flushSyncIfDirty () {
-      if (!hydrated) return
+      if (!syncEnabled.value || !hydrated) return
       if (syncTimer) {
         clearTimeout(syncTimer)
         syncTimer = null
@@ -222,7 +261,41 @@ export function useDigDayStore (landId, desertSource) {
 
     watch(() => getGridSyncSignal(), () => scheduleSync())
 
+    /** Local state has something worth sharing (a dig or a mark). */
+    function hasLocalState () {
+      const core = buildSyncCore()
+      return core.digs.length > 0 || core.markEvents.length > 0
+    }
+
+    /**
+     * Turn Hub sync on or off for this land and remember the choice.
+     * On: fetch and merge the Hub snapshot, then push local state.
+     * Off: stop the timer; nothing further is sent or fetched.
+     */
+    async function setSyncEnabled (enabled) {
+      const next = Boolean(enabled)
+      if (next === syncEnabled.value) return
+      syncEnabled.value = next
+      writeSyncPreference(key, next)
+      if (next) {
+        await loadFromServer({ pushLocal: true })
+        if (syncEnabled.value && hasLocalState()) await syncToServer()
+      } else {
+        if (syncTimer) {
+          clearTimeout(syncTimer)
+          syncTimer = null
+        }
+        hydrated = false
+        lastSyncFingerprint = ''
+        syncStatus.value = 'idle'
+        syncError.value = null
+      }
+    }
+
     const store = {
+      canSync: true,
+      syncEnabled,
+      setSyncEnabled,
       syncStatus,
       lastUpdatedAt,
       syncError,
@@ -243,7 +316,7 @@ export function useDigDayStore (landId, desertSource) {
     onMounted(() => {
       document.addEventListener('visibilitychange', onVisibilityChange)
       window.addEventListener('beforeunload', flushSyncIfDirty)
-      loadFromServer()
+      if (syncEnabled.value) loadFromServer()
     })
 
     onBeforeUnmount(() => {
