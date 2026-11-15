@@ -852,17 +852,17 @@ describe('Pass 4 — crab-satisfaction forcing', () => {
 // a legal placement through C4-D4, disagreeing on D4.
 describe('guaranteedCandidates — disputed-name reporting', () => {
   it('D4 is guaranteed but reports the two names still in dispute', () => {
-    // C4 (idx 32) = Camel Bone, D5 (idx 43) = Otter Pebble. Crabs at B4 and C3
+    // C4 (idx 32) = Camel Bone, D5 (idx 43) = the seasonal artefact (ART). Crabs at B4 and C3
     // kill every OTHER placement that could explain C4 (the FIFTEEN/TWENTY_FOUR
     // line-origins through B4, TWENTY_FOUR's C3 variant), leaving exactly three
     // legal explanations of the C4-D4-D5 cluster:
-    //   FIFTEEN @ (2,3):     C4=CB, D4=OP, E4=CB
-    //   TWENTY_FOUR @ (2,3): C4=CB, D4=OP, E4=CB, C5=CB, E5=CB
-    //   SEVENTEEN @ (2,3):   C4=CB, D4=CB, D5=OP
+    //   FIFTEEN @ (2,3):     C4=CB, D4=ART, E4=CB
+    //   TWENTY_FOUR @ (2,3): C4=CB, D4=ART, E4=CB, C5=CB, E5=CB
+    //   SEVENTEEN @ (2,3):   C4=CB, D4=CB, D5=ART
     // All three cover D4, but name it differently → guaranteed + ambiguous.
     const tiles = makeTiles([
       { x: 2, y: 3, items: { 'Camel Bone': 1 } },   // C4 (idx 32)
-      { x: 3, y: 4, items: { 'Otter Pebble': 1 } }, // D5 (idx 43)
+      { x: 3, y: 4, items: { [SEASONAL]: 1 } }, // D5 (idx 43)
       { x: 1, y: 3, items: { Crab: 1 } },           // B4 (idx 31)
       { x: 2, y: 2, items: { Crab: 1 } },           // C3 (idx 22)
     ])
@@ -872,13 +872,13 @@ describe('guaranteedCandidates — disputed-name reporting', () => {
 
     // The unambiguous cells keep their names…
     expect(guaranteedSlugs.get(32), 'C4 — all candidates agree Camel Bone').toBe('camel_bone')
-    expect(guaranteedSlugs.get(43), 'D5 — all candidates agree Otter Pebble').toBe('otter_pebble')
+    expect(guaranteedSlugs.get(43), 'D5 — all candidates agree seasonal artefact').toBe(SEASONAL_SLUG)
 
     // …and D4 is guaranteed, nameless, with both disputed identities reported.
     expect(guaranteed.has(33), 'D4 guaranteed treasure').toBe(true)
     expect(guaranteedSlugs.has(33), 'D4 not in guaranteedSlugs').toBe(false)
     const candidates = guaranteedCandidates.get(33) || []
-    expect([...candidates].sort()).toEqual(['camel bone', 'otter pebble'])
+    expect([...candidates].sort()).toEqual(['camel bone', SEASONAL.toLowerCase()].sort())
 
     // Named cells must NOT appear in the candidates map (no stale ambiguity).
     expect(guaranteedCandidates.has(32)).toBe(false)
@@ -887,10 +887,10 @@ describe('guaranteedCandidates — disputed-name reporting', () => {
 
   it('global consistency resolves D4 = Camel Bone (live land 4485248732423974 case)', () => {
     // Same C4/D5/B4/C3 cluster as the ambiguous mini-board above, PLUS the
-    // third artefact cluster G9=Otter Pebble + H9=Camel Bone. Now the name is
+    // third artefact cluster G9=seasonal artefact + H9=Camel Bone. Now the name is
     // provable GLOBALLY, even though the local passes still see two legal
     // explanations for D4:
-    //   - D4=Otter Pebble would force FIFTEEN(2,3) or TWENTY_FOUR(2,3) at
+    //   - D4=the seasonal artefact would force FIFTEEN(2,3) or TWENTY_FOUR(2,3) at
     //     C4-D4-E4; the remaining shapes then cannot cover BOTH the D5 reveal
     //     AND the G9/H9 cluster without overlapping or running out of
     //     formations (each artefact occurs exactly once).
@@ -899,10 +899,10 @@ describe('guaranteedCandidates — disputed-name reporting', () => {
     // So only the Camel Bone name survives a full-consistency check.
     const tiles = makeTiles([
       { x: 2, y: 3, items: { 'Camel Bone': 1 } },   // C4 (idx 32)
-      { x: 3, y: 4, items: { 'Otter Pebble': 1 } }, // D5 (idx 43)
+      { x: 3, y: 4, items: { [SEASONAL]: 1 } }, // D5 (idx 43)
       { x: 1, y: 3, items: { Crab: 1 } },           // B4 (idx 31)
       { x: 2, y: 2, items: { Crab: 1 } },           // C3 (idx 22)
-      { x: 6, y: 8, items: { 'Otter Pebble': 1 } }, // G9 (idx 86)
+      { x: 6, y: 8, items: { [SEASONAL]: 1 } }, // G9 (idx 86)
       { x: 7, y: 8, items: { 'Camel Bone': 1 } },   // H9 (idx 87)
     ])
     const { guaranteedSlugs, guaranteedCandidates, guaranteedFormationCounts } = solveTreasures(
