@@ -39,6 +39,19 @@ function digDayLandId (event) {
   }
 }
 
+/**
+ * The Hub answers 404 with a full, empty dig-day body when a land has no
+ * snapshot for the date. That is the normal first-visit-of-the-day state.
+ */
+function isEmptySnapshotBody (body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return false
+  if (body.v !== 1) return false
+  if (!Array.isArray(body.patterns) || body.patterns.length !== 0) return false
+  if (!Array.isArray(body.digs) || body.digs.length !== 0) return false
+  if (Array.isArray(body.markEvents) && body.markEvents.length !== 0) return false
+  return body.stats?.totalDigs === 0
+}
+
 async function proxyToHub (event) {
   const secret = process.env.HUB_WRITE_SECRET
   const base = hubBase()
@@ -117,7 +130,17 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { status, body, etag } = await proxyToHub(event)
+    const hub = await proxyToHub(event)
+    const { body, etag } = hub
+    let status = hub.status
+    // Report "no snapshot yet" as 200 so it is not counted as a 404 error.
+    if (
+      event.httpMethod === 'GET' &&
+      status === 404 &&
+      isEmptySnapshotBody(body)
+    ) {
+      status = 200
+    }
     const cache =
       event.httpMethod === 'GET'
         ? 'public, max-age=120, must-revalidate'
