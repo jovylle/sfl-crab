@@ -1,6 +1,6 @@
 // Seasonal Artefacts Data
 // Extracted from Sunflower Land game repo for local use
-// Last updated: 2026-08-23
+// Last updated: 2026-11-01
 
 /**
  * Maps season names to their corresponding seasonal artifact
@@ -21,6 +21,7 @@ export const SEASONAL_ARTEFACT = {
   "Crabs and Traps": "Ammonite Shell",
   "Salt Awakening": "Salt Dino Egg",
   "Ascension Age": "Otter Pebble",
+  "Cave Dwellers": "Clover Coin",
 }
 
 /**
@@ -45,6 +46,7 @@ export function getCurrentSeasonalArtefact() {
     { name: "Crabs and Traps", start: new Date("2026-02-02T00:00:00.000Z"), end: new Date("2026-05-04T00:00:00.000Z") },
     { name: "Salt Awakening", start: new Date("2026-05-04T00:00:00.000Z"), end: new Date("2026-08-03T00:00:00.000Z") },
     { name: "Ascension Age", start: new Date("2026-08-03T00:00:00.000Z"), end: new Date("2026-11-02T00:00:00.000Z") },
+    { name: "Cave Dwellers", start: new Date("2026-11-02T00:00:00.000Z"), end: new Date("2027-02-01T00:00:00.000Z") },
   ]
   
   // Find current season
@@ -53,7 +55,7 @@ export function getCurrentSeasonalArtefact() {
   // If no season found (we're past all defined seasons), return the latest season's artifact
   if (!currentSeason) {
     console.warn(`No active season found for date ${now.toISOString()}. Using latest season artifact.`)
-    return SEASONAL_ARTEFACT["Ascension Age"] // Default to latest season
+    return SEASONAL_ARTEFACT["Cave Dwellers"] // Default to latest season
   }
   
   return SEASONAL_ARTEFACT[currentSeason.name]
