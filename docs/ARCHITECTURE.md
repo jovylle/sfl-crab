@@ -41,7 +41,6 @@ The 10×10 grid is the heart of the app. Full spec lives in [GRID_MECHANICS.md](
 | `netlify/functions/` | Serverless proxies — see [../netlify/functions/README.md](../netlify/functions/README.md) |
 | `scripts/` | Data sync + asset-check scripts (run by CI) |
 | `public/world/` | Treasure/artefact sprites (`.webp`) |
-| `src_other/` | **Vendored, effectively dead** — see [src_other section](#src_other-vendored-and-dead) |
 
 ## Routes
 
@@ -174,10 +173,6 @@ These form a **producer/consumer pipeline** around a common `DigStep[]` shape (`
 
 The two order-map helpers (`buildTreasureOrderMap` from raw grid vs `buildTreasureOrderMapFromDigs` from `DigStep[]`) differ only by input source.
 
-## `src_other/` — vendored and dead
-
-`src_other/` is copied from the official SFL game repo and aliased as `assets`/`lib` in `vite.config.js`. **No running app code imports it.** The only bridge (`import.meta.glob('/src_other/assets/icons/*.webp')` in `src/utils/artefactIcons.ts`) lives in a module that is itself never imported. `diggingFormations.js` references `desert.ts` in a **comment only**. Treat `src_other/` as reference material; extract data into `src/data/game/` rather than importing it.
-
 ## Dead code / gotchas register
 
 Known non-functional or trap-laden spots. Documented so an AI doesn't waste time or "fix" load-bearing weirdness:
@@ -188,8 +183,6 @@ Known non-functional or trap-laden spots. Documented so an AI doesn't waste time
 | `netlify/functions/projectmate-feedback.cjs` | **Live but unconfigured** — same-origin proxy to the ProjectMate issues Worker (`/api/projectmate/*` → `/issues*`). Answers `503 PROXY_NOT_CONFIGURED` unless `PROJECTMATE_WORKER_URL` is set, and **no client calls it**: the widget talks to the Worker directly. Optional hardening path only. |
 | `netlify/functions/_digDayStore.cjs` | **Dead** — old Netlify Blobs path, superseded by the Hub proxy. Nothing imports it. Kept only as a reference impl of the merge/500/413 rules the Hub now enforces. |
 | `src/views/Home.vue` | Present but **not referenced by any route** (`/` redirects to `/digging`). |
-| `src/utils/artefactIcons.ts` | Present but **never imported** → its `src_other` glob is the only (dead) bridge into `src_other`. |
-| `src_other/` | Vendored, effectively unused (see above). |
 | Tile stringly-typing | Tiles are `string[]` of CSS classes, not objects. Fragile by design — see GRID_MECHANICS.md before touching. |
 
 ## Related docs

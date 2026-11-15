@@ -22,7 +22,7 @@
 
 [build.environment]
   # Node.js version
-  NODE_VERSION = "18"
+  NODE_VERSION = "22"
 
 # Redirect rules (backup for _redirects file)
 
@@ -74,6 +74,12 @@
 [[redirects]]
   from = "/api/projectmate/*"
   to = "/.netlify/functions/projectmate-feedback/:splat"
+  status = 200
+
+# Serve the prerendered digging entry directly; skip Netlify's pretty-URL 301.
+[[redirects]]
+  from = "/digging"
+  to = "/digging/index.html"
   status = 200
 
 [[redirects]]

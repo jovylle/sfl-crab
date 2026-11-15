@@ -9,7 +9,7 @@ Read in this order; each doc is kept accurate. If anything here conflicts with o
 | Doc | When to read it |
 |---|---|
 | **AGENTS.md** (this file) | Dev commands, conventions, env, API-proxy quirks, dead-code register |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture: directories, routes, startup, data flow, composables/services, grid-builders, entrypoints, `src_other` |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture: directories, routes, startup, data flow, composables/services, grid-builders, entrypoints |
 | [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) | The 10×10 grid engine: tiles, hints, formations, practice mode |
 | [docs/API_LAYER.md](docs/API_LAYER.md) | **Request pipeline + caching policy for the SFL farm API** — read before touching anything that fetches land data |
 | [docs/DIG_DAY_SYNC.md](docs/DIG_DAY_SYNC.md) | Dig-day Hub sync: debounce, ETag, merge-by-seq, the layers |
@@ -92,7 +92,7 @@ Use `npm run dev` when working with Netlify functions (auth, dig-day, practice p
 
 ## Linter / formatter
 
-No ESLint, no lint script. Prettier is installed but has no config file. Tests in `src_other/` (legacy game libs) are not wired into CI.
+No ESLint, no lint script. Prettier is installed but has no config file.
 
 ## Verifying changes end-to-end
 
@@ -137,6 +137,7 @@ Both sync workflows commit + push to `master`, then **mirror the data files to `
 
 - `sfl-api.cjs` has a 60s in-memory cache for 200 responses. Bypass with `x-sfl-bypass-cache: 1` header or `?bypassCache=1` — the app sends this **only** on explicit user refreshes and env switches (see [docs/API_LAYER.md](docs/API_LAYER.md)); auto loads go through the proxy cache.
 - **All land-data requests go through `src/services/landFetchCoordinator.js`** (single-flight, 5-min localStorage freshness, cooldown). Never call `fetchLandDataFromServer()` from a component.
+- `sfl-api.cjs` only forwards `GET /community/farms/<digits>` (anything else is 404), restricts CORS to an origin allow-list (foreign `Origin` gets 403) rate limits to 60 requests per minute per IP, caps real upstream calls at 120 per minute per warm instance (429, log reason `upstream_budget`; cache hits do not count), bounds the in-memory cache at 500 entries and rejects land ids with leading zeros (404, canonical ids are `[1-9]\d{0,19}`). Update `tests/sflApiProxy.test.js` if you change any of these.
 - `/visit/*` often returns 401 for third-party tools. The app uses `/community/farms/*` as primary and `/visit/*` as fallback only.
 - Prod/test API switching is communicated via `x-sfl-api-env` header. Land data cache keys are prefixed per-environment (`landData_` vs `landData_test_`).
 - Practice patterns are CDN-cached until UTC midnight (`CDN-Cache-Control` headers).
@@ -154,6 +155,12 @@ Two example files: `env.example` (detailed) and `.env.example` (terse). For `net
 | `PROJECTMATE_WORKER_URL` / `PROJECTMATE_ADMIN_KEY` | **Optional.** Only for the same-origin `/api/projectmate/*` proxy; unset = proxy returns 503 and the widget uses the Worker directly |
 | `VITE_*` vars | Client-side, safe to expose |
 
+## CI and monitoring
+
+- `.github/workflows/ci.yml` runs `npm ci`, `npm test` and `npm run build` on every pull request and on pushes to `master` and `development` (Node from `.nvmrc`).
+- `.github/workflows/health-check.yml` runs every 6 hours (and on demand) and calls `scripts/health-check.js`. It checks the live sfl-api proxy for land 1, `/api/practice-patterns` and the Hub `/health` endpoints. On failure it opens or comments on a GitHub issue labelled `health-check` and fails the run. Scheduled workflows only run from `master`.
+- Run it locally with `node scripts/health-check.js`. It only sends GET requests to public d1g.uk URLs and needs no secrets. Override targets with `SITE_URL` and `HUB_URL`. The pure validators are covered by `tests/healthCheck.test.js` (no network).
+
 ## Hot-deploy detection
 
 `main.js` bakes `__APP_VERSION__` (git SHA from `COMMIT_REF`) via Vite `define`. After mount it polls `/` with `cache: no-cache` to compare with the live version and force-reloads on mismatch. Relies on Netlify injecting `COMMIT_REF` at build time.
@@ -166,7 +173,6 @@ Two example files: `env.example` (detailed) and `.env.example` (terse). For `net
 | `netlify/functions/` | Serverless functions (`.cjs`) |
 | `scripts/` | Data sync + asset check scripts |
 | `public/world/` | Treasure/artefact images (`.webp`) |
-| `src_other/` | Legacy SFL game libs (types, ABIs, i18n, React hooks); aliased as `assets`/`lib` but effectively **dead** — no running app code imports it |
 
 ## Dead code / gotchas
 
@@ -175,5 +181,5 @@ Documented so you don't waste time or "fix" load-bearing weirdness. Full table i
 - `npm run prerender` / `scripts/prerender.js` — **broken**, missing file, ignore.
 - `netlify/functions/projectmate-feedback.cjs` — **dead** (Web3Forms blocks server calls), still referenced by `_redirects`/`netlify.toml`.
 - `netlify/functions/_digDayStore.cjs` — **dead** legacy Netlify Blobs path, superseded by the Hub proxy; kept only as a reference impl.
-- `src/views/Home.vue`, `src/utils/artefactIcons.ts` — present but **unreferenced**.
+- `src/views/Home.vue` — present but **unreferenced**.
 - Grid tiles are `string[]` of CSS classes (not objects) — fragile by design; read GRID_MECHANICS.md first.
