@@ -117,6 +117,13 @@ hits do not spend budget. This protects the API quota when `cf-connecting-ip` is
 forged on the direct `*.netlify.app` host. It is a fixed window per warm
 instance, so it is best effort.
 
+## Bypass, endpoints and environment
+
+- **Bypass header.** `x-sfl-bypass-cache: 1`, or the query `?bypassCache=1`, skips the proxy's 60 s in-memory cache. The app sends it **only** on explicit user refreshes and env switches. Auto loads go through the proxy cache.
+- **Endpoints.** The primary endpoint is `/community/farms/<id>`. `/visit/<id>` is fallback only. `/visit/*` often returns 401 for third-party tools.
+- **Environment.** Prod and test are switched with the `x-sfl-api-env` header. The app adds it only in test mode (see [ARCHITECTURE.md](./ARCHITECTURE.md#api-environment-switching-srcconfigapijs)).
+- **Changing the proxy.** If you change any proxy rule (path allow-list, CORS, rate limit, upstream budget, cache bound, id format), update `tests/sflApiProxy.test.js` in the same change.
+
 ## Observability
 
 The proxy logs one line per request: `sfl-api { env, path, landId, status, cache }`
