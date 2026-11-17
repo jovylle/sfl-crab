@@ -47,17 +47,19 @@ node scripts/debug-solver.js --diff scripts/fixtures/<earlier>.json scripts/fixt
 ### Vitest test suite
 
 ```bash
-npm test              # run all 3 test files once
+npm test              # run all 9 unit test files once (214 tests)
 npm run test:watch    # watch mode
 ```
 
-**Three test files** — run `npm test` before pushing any change to `treasureSolver.js` or `gridTileTransform.js`:
+**Key test files** — run `npm test` before pushing any change to `treasureSolver.js` or `gridTileTransform.js`:
 
 | File | What it guards |
 |---|---|
 | `tests/solver.oracle.test.js` | **Soundness oracle** — 600 random boards with known ground-truth; every `guaranteed` cell must be a real treasure. Catches false positives introduced by solver logic changes. Uses deterministic PRNG (xorshift32, seeded) so failures are reproducible. |
 | `tests/solver.scenarios.test.js` | **Hand-crafted scenarios** — one test per algorithm path (Pass 1 treasure-anchor, Pass 2 single-instance forcing, 3-of-4 reveal, edge cases). Intent readable from the board. Catches gross breakage and documents expected solver behaviour. |
 | `tests/gridTileTransform.test.js` | **Transform contract** — locks the string format between `gridArrayToTiles` (emitter) and `treasureSolver` (consumer). Changing `"treasure actual-treasure"` or the `tileImage:` prefix in either file without updating the other silently breaks the solver with zero errors. |
+
+The other unit test files run by `npm test` are `tests/digDayOptIn.test.js`, `tests/digDayProxy.test.js`, `tests/digStatsUtils.test.js`, `tests/healthCheck.test.js`, `tests/practicePatterns.test.js` and `tests/sflApiProxy.test.js`. `tests/e2e/solver-debug.spec.js` is Playwright; run it with `npm run test:e2e`, not `npm test`.
 
 **Key constraints when writing new solver tests**:
 - Use only **non-seasonal formations**: `HIEROGLYPH`, `OLD_BOTTLE`, `COCKLE`, `WOODEN_COMPASS`, `CLAM_SHELLS`, `SEAWEED`, `SEA_CUCUMBERS`. Seasonal formations reference `CURRENT_SEASONAL_ARTEFACT` which changes monthly and breaks test assertions.
@@ -96,7 +98,7 @@ No ESLint, no lint script. Prettier is installed but has no config file.
 
 ## Verifying changes end-to-end
 
-For changes to the solver or grid transform: **run `npm test` first** (17 tests, ~1s). For everything else the real check is **build + drive the app in a browser and observe**. Tool-agnostic (works with Playwright, Puppeteer, or manual clicking).
+For changes to the solver or grid transform: **run `npm test` first** (214 tests across 9 files). For everything else the real check is **build + drive the app in a browser and observe**. Tool-agnostic (works with Playwright, Puppeteer, or manual clicking).
 
 ```bash
 npx vite build                                # ~8s; also catches template/compile errors
@@ -178,8 +180,5 @@ Two example files: `env.example` (detailed) and `.env.example` (terse). For `net
 
 Documented so you don't waste time or "fix" load-bearing weirdness. Full table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#dead-code--gotchas-register).
 
-- `npm run prerender` / `scripts/prerender.js` — **broken**, missing file, ignore.
-- `netlify/functions/projectmate-feedback.cjs` — **dead** (Web3Forms blocks server calls), still referenced by `_redirects`/`netlify.toml`.
-- `netlify/functions/_digDayStore.cjs` — **dead** legacy Netlify Blobs path, superseded by the Hub proxy; kept only as a reference impl.
-- `src/views/Home.vue` — present but **unreferenced**.
+- `netlify/functions/projectmate-feedback.cjs` — still routed by `netlify.toml` and `public/_redirects`. No code in `src/` calls `/api/projectmate` by default. It is used only if `VITE_PROJECTMATE_ISSUES_ENDPOINT=/api/projectmate` is set (opt-in).
 - Grid tiles are `string[]` of CSS classes (not objects) — fragile by design; read GRID_MECHANICS.md first.
