@@ -19,9 +19,6 @@
     "daisyui",
     "tailwindcss"
   ],
-  "ignore": [
-    "src/composables/useApiEnvironmentSwitch.js"
-  ],
   "ignoreIssues": {
     "src/composables/useHubSession.js": ["exports"],
     "src/composables/usePracticePatterns.js": ["exports"],
