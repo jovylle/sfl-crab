@@ -5,6 +5,7 @@
     "vite.config.js",
     "scripts/*.js",
     "netlify/functions/*.cjs",
+    "scripts/lib/resolve-alias-loader.mjs",
     "tests/**/*.{js,ts}"
   ],
   "project": [
@@ -19,15 +20,7 @@
     "tailwindcss"
   ],
   "ignore": [
-    "src/components/JsonList.vue",
-    "src/components/UsernameViewer.vue",
-    "src/composables/useApiEnvironmentSwitch.js",
-    "src/composables/useSoftReload.js",
-    "src/utils/api.js",
-    "src/utils/getLandId.js",
-    "src/utils/loadTodayGrid.ts",
-    "src/views/LandProfile.vue",
-    "scripts/lib/resolve-alias-loader.mjs"
+    "src/composables/useApiEnvironmentSwitch.js"
   ],
   "ignoreIssues": {
     "src/composables/useHubSession.js": ["exports"],
