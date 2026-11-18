@@ -4,7 +4,7 @@
 
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { createSSRApp, h } from 'vue'
-import { renderToString } from '@vue/server-renderer'
+import { renderToString } from 'vue/server-renderer'
 
 const lifecycle = vi.hoisted(() => ({ mounted: [], unmounted: [] }))
 const api = vi.hoisted(() => ({

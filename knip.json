@@ -1,0 +1,50 @@
+{
+  "vite": false,
+  "entry": [
+    "public/sw.js",
+    "vite.config.js",
+    "scripts/*.js",
+    "netlify/functions/*.cjs",
+    "scripts/lib/resolve-alias-loader.mjs",
+    "tests/**/*.{js,ts}"
+  ],
+  "project": [
+    "src/**/*.{js,ts,vue}",
+    "netlify/**/*.cjs",
+    "scripts/**/*.{js,mjs}",
+    "tests/**/*.{js,ts}"
+  ],
+  "ignoreDependencies": [
+    "prettier",
+    "daisyui",
+    "tailwindcss"
+  ],
+  "ignore": [
+    "src/composables/useApiEnvironmentSwitch.js"
+  ],
+  "ignoreIssues": {
+    "src/composables/useHubSession.js": ["exports"],
+    "src/composables/usePracticePatterns.js": ["exports"],
+    "src/config/api.js": ["exports"],
+    "src/constants/storageKeys.js": ["exports"],
+    "src/data/app/constants.js": ["exports"],
+    "src/data/game/seasonalArtefacts.js": ["exports"],
+    "src/features/hub/hubClient.js": ["exports"],
+    "src/services/digDayApiService.js": ["exports"],
+    "src/services/hubProfileService.js": ["exports"],
+    "src/services/landApiService.js": ["exports"],
+    "src/services/landFetchCoordinator.js": ["exports"],
+    "src/utils/buildDigTimeline.js": ["exports"],
+    "src/utils/buildPublicDigGrid.js": ["exports"],
+    "src/utils/digDayCache.js": ["exports"],
+    "src/utils/digStatsUtils.js": ["exports"],
+    "src/utils/drawerToggle.js": ["exports"],
+    "src/utils/gridStateCodec.js": ["exports"],
+    "src/utils/hintLabel.js": ["exports"],
+    "src/utils/landRoutes.js": ["exports"],
+    "src/utils/patternPreview.js": ["exports"],
+    "src/utils/shareLinks.js": ["exports"],
+    "src/utils/testnet.js": ["exports"],
+    "src/utils/treasurePrices.js": ["exports"]
+  }
+}

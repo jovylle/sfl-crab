@@ -31,7 +31,7 @@ SFL Digging Hub (external, HUB_API_BASE, default https://beta.api.d1g.uk)
                                 enforces merge-by-seq, 500 cap, 256 KB cap
 ```
 
-**The old Netlify Blobs path (`_digDayStore.cjs`) is dead** — `dig-day.cjs` is now a pure pass-through proxy to the external Hub. `_digDayStore.cjs` survives only as a reference implementation of the merge rules the Hub enforces (see [dead-code register](./ARCHITECTURE.md#dead-code--gotchas-register)).
+**The old Netlify Blobs path (`_digDayStore.cjs`) is dead** — `dig-day.cjs` is now a pure pass-through proxy to the external Hub. The legacy `_digDayStore.cjs` file has been removed; the merge rules it used to mirror are enforced only by the Hub (see [dead-code register](./ARCHITECTURE.md#dead-code--gotchas-register)).
 
 ## 1. Composable — `src/composables/useDigDayStore.js`
 
@@ -85,7 +85,7 @@ Pass-through to `${hubBase()}/v1/dig-day` (GET forwards the query string; POST f
 ## 4. Caches & merge semantics
 
 - **GET cache** (`src/utils/digDayCache.js`): `sessionStorage`, key `digDayCache_${landId}_${utcDate}`, entry `{ body, etag, fetchedAt }`, TTL 15 min. `getFreshDigDayCache()` is what lets `fetchDigDay` skip the network. All ops are try/catch-guarded for private mode / SSR.
-- **Merge-by-seq (Hub-side):** mark events are deduped by `seq`, sorted ascending, and capped to the **latest 500** (append-only). Digs are replaced when the incoming set has more dig groups, or an equal count with a newer `updatedAt`. The **256 KB** payload cap yields a `413`. These rules are enforced by the external Hub; `_digDayStore.cjs` mirrors them as a reference (but is not executed).
+- **Merge-by-seq (Hub-side):** mark events are deduped by `seq`, sorted ascending, and capped to the **latest 500** (append-only). Digs are replaced when the incoming set has more dig groups, or an equal count with a newer `updatedAt`. The **256 KB** payload cap yields a `413`. These rules are enforced by the external Hub; the legacy `_digDayStore.cjs` reference copy has been removed.
 
 ## Related
 

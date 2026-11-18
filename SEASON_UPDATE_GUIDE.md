@@ -52,7 +52,7 @@ You'll get the `"No Season found"` error when:
 
 Go to: https://github.com/sunflower-land/sunflower-land
 
-Look at these files:
+Look at these files (paths are in the upstream Sunflower Land repo, not in this repo):
 - `src/features/game/types/seasons.ts` - Season dates and names
 - `src/features/game/types/desert.ts` - Seasonal artifacts
 - `src/features/game/types/treasure.ts` - Treasure definitions

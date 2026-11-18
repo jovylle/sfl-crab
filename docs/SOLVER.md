@@ -74,17 +74,51 @@ confirmations cascade (e.g. G10 → OLD_BOTTLE pinned → G9).
 - **Result:** H10 forces G10, OLD_BOTTLE confirmed, G9 cascades (all Old Bottle).
 - **Commit:** `505ec87`.
 
+## Input format
+
+The solver reads the raw `desert.digging` object from the SFL API:
+
+```
+desert.digging = {
+  patterns: string[],              // formation keys still on the board
+  completedPatterns: string[],     // fully-dug patterns
+  grid: [{ x, y, items: { <TreasureName>|Crab|Sand: count } }]
+}
+```
+
+- The `grid` array contains only **dug** tiles. Undug tiles are absent.
+- `x` and `y` are 0-based (0–9).
+- Item keys are display names as returned by the SFL API, exactly as used in `DIGGING_FORMATIONS` plot names.
+- The primary way to give an AI assistant real data is to paste the raw `desert.digging` JSON into the chat.
+
+## Debug tools
+
+`scripts/debug-solver.js` is a CLI that tests the solver (`src/utils/treasureSolver.js`) against real data. It runs under plain `node`, takes under a second, and needs no browser. It uses `scripts/lib/resolve-alias-loader.mjs` to resolve `@/` imports without Vite.
+
+- **Snapshot format.** The file must be a `landData_<id>` JSON blob: `{ "visitedFarmState": { "desert": { "digging": { "patterns": [...], "grid": [...] } } } }`.
+- **Snapshot location.** `scripts/fixtures/` holds real player data and is gitignored. Never commit a snapshot.
+- The browser view is `src/views/SolverDebug.vue` at `/solver-debug`.
+
+**Other unit test files** run by `npm test`: `tests/digDayOptIn.test.js`, `tests/digDayProxy.test.js`, `tests/digStatsUtils.test.js`, `tests/healthCheck.test.js`, `tests/practicePatterns.test.js` and `tests/sflApiProxy.test.js`. `tests/e2e/solver-debug.spec.js` is Playwright. Run it with `npm run test:e2e`, not `npm test`.
+
+**Rules for new solver tests**
+
+- Use only **non-seasonal formations**: `HIEROGLYPH`, `OLD_BOTTLE`, `COCKLE`, `WOODEN_COMPASS`, `CLAM_SHELLS`, `SEAWEED`, `SEA_CUCUMBERS`. Seasonal formations reference `CURRENT_SEASONAL_ARTEFACT`, which changes monthly and breaks test assertions.
+- The critical invariant is **soundness** (no false positives). A cell in `guaranteed` is safe to dig. A cell absent from `guaranteed` means nothing either way.
+- Already-revealed treasure tiles **are** included in `guaranteed`. The UI filters them for display.
+- Do **not** use a differential oracle (comparing two solver implementations). The production solver runs iterative pseudo-reveal propagation that no single-pass oracle can reproduce. Use **ground-truth comparison** instead: generate a board with known treasure positions and assert every `guaranteed` cell is in that truth set.
+
 ## Testing
 
 | Layer | File | What it guards |
 |---|---|---|
-| Soundness oracle | `tests/solver.oracle.test.js` | Ground-truth boards (random, duplicate-key, 300 full-day 8-pattern, completed-pattern); every `guaranteed` cell must be real treasure. Deterministic seeds — failures reproduce. |
+| Soundness oracle | `tests/solver.oracle.test.js` | Ground-truth boards: 600 random (300 one-formation, 200 two, 100 three), plus duplicate-key, 300 full-day 8-pattern and completed-pattern boards. Every `guaranteed` cell must be real treasure. Seeded PRNG (xorshift32), so failures reproduce. |
 | Scenarios | `tests/solver.scenarios.test.js` | One hand-crafted board per algorithm path (G8 pre-commit pair, G6 crab, H10 coverability, duplicate slots, crab chains). Non-seasonal formations only. |
-| Transform contract | `tests/gridTileTransform.test.js` | String format between `gridArrayToTiles` and `treasureSolver`. |
+| Transform contract | `tests/gridTileTransform.test.js` | String format between `gridArrayToTiles` (emitter) and `treasureSolver` (consumer). Changing `"treasure actual-treasure"` or the `tileImage:` prefix in either file without the other silently breaks the solver with zero errors. |
 | Browser E2E | `tests/e2e/solver-debug.spec.js` | Real Chromium drives `/solver-debug`, asserts zero FAILs. Catches component-wiring bugs unit tests can't see. |
 
 ```bash
-npm test          # unit: 91 tests, ~1s — run before pushing any solver change
+npm test          # unit: 214 tests across 9 files — run before pushing any change to treasureSolver.js or gridTileTransform.js
 npm run test:e2e  # vite build + Playwright (needs: npm install --include=dev; npx playwright install chromium)
 node scripts/debug-solver.js --file scripts/fixtures/<land>.json        # single live board
 node scripts/debug-solver.js --diff <earlier>.json <later>.json         # false-positive oracle on real digs

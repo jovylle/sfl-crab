@@ -96,7 +96,7 @@ The second physical entry exists so a direct hit to `/digging/` resolves to a re
 2. `createApp(App)` + `@vueuse/head` (`createHead()`) + router, mount to `#app`.
 3. `initChatWidget()` after mount.
 4. `useReliableAssets().autoRetryCriticalAssets` runs ~1s later to re-fetch critical CSS if it failed.
-5. **Hot-deploy check** (`checkForUpdates()`): compares baked `__APP_VERSION__` (git SHA from `COMMIT_REF`, injected via Vite `define`) against the SHA in a fresh `no-cache` fetch of `/`. On mismatch it clears all CacheStorage and hard-reloads. Runs **once** at startup (not a repeating interval).
+5. **Hot-deploy check** (`checkForUpdates()`): compares baked `__APP_VERSION__` (git SHA from `COMMIT_REF`, injected via Vite `define`) against the SHA in a fresh `no-cache` fetch of `/`. On mismatch it clears all CacheStorage and hard-reloads. Runs **once** at startup (not a repeating interval). It relies on Netlify setting `COMMIT_REF` at build time. Without it, `__APP_VERSION__` is an empty string and the check never reloads.
 
 ## API environment switching (`src/config/api.js`)
 
@@ -153,7 +153,7 @@ Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, tes
 | `useDigReplay.js` | Read-only step-by-step replay player |
 | `useHubSession.js` | Auth session bootstrap + refresh |
 | `useApiEnvironment.js` | Reactive prod/test API env |
-| `useReliableAssets.js` / `useSoftReload.js` | Critical asset retry + soft reloads |
+| `useReliableAssets.js` | Critical asset retry |
 | `useTodayTreasureNames.js` | Pattern keys → treasure names |
 
 ## Services (`src/services/`)
@@ -180,13 +180,132 @@ Known non-functional or trap-laden spots. Documented so an AI doesn't waste time
 
 | Item | Status |
 |---|---|
-| `npm run prerender` / `scripts/prerender.js` | **Broken** — script file is missing. Ignore. |
-| `netlify/functions/projectmate-feedback.cjs` | **Live but unconfigured** — same-origin proxy to the ProjectMate issues Worker (`/api/projectmate/*` → `/issues*`). Answers `503 PROXY_NOT_CONFIGURED` unless `PROJECTMATE_WORKER_URL` is set, and **no client calls it**: the widget talks to the Worker directly. Optional hardening path only. |
-| `netlify/functions/_digDayStore.cjs` | **Dead** — old Netlify Blobs path, superseded by the Hub proxy. Nothing imports it. Kept only as a reference impl of the merge/500/413 rules the Hub now enforces. |
-| `src/views/Home.vue` | Present but **not referenced by any route** (`/` redirects to `/digging`). |
+| `netlify/functions/projectmate-feedback.cjs` | **Routed, opt-in** — still routed by `netlify.toml` and `public/_redirects` (`/api/projectmate/*` → `/issues*`). No code in `src/` calls `/api/projectmate` by default. It is used only if `VITE_PROJECTMATE_ISSUES_ENDPOINT=/api/projectmate` is set; otherwise the widget talks to the Worker directly. |
 | Tile stringly-typing | Tiles are `string[]` of CSS classes, not objects. Fragile by design — see GRID_MECHANICS.md before touching. |
 
+## Dependency rules
+
+Enforced by `npm run check:deps` (dependency-cruiser, config in `.dependency-cruiser.cjs`). `npm run check` runs it with the dead-code check, the tests and the build.
+
+1. `src/` must not import from `netlify/`, `tests/` or `scripts/`.
+2. `netlify/` must not import from `src/`.
+3. No circular imports. The one exception is the recursive component `src/components/KeyValueList.vue`, which renders itself.
+
+The browser calls the Netlify functions over HTTP (`/api/*`), never by import. That is why the rules only cover imports.
+
+**The `@/` alias** maps to `src/`. It is defined in `jsconfig.json` (`paths: { "@/*": ["src/*"] }`), which dependency-cruiser reads through its `tsConfig` option, and in `vite.config.js` for the build.
+
+**Commands**
+
+- `npm run check:deps`: the three rules above.
+- `npm run check`: `check:deps` + `check:dead` + `test` + `build`. The `test-and-build` job in `.github/workflows/ci.yml` runs it on PRs and on pushes.
+
+## Where new code goes
+
+| Adding | Put it in | Notes |
+|---|---|---|
+| Reusable Vue UI (grids, pickers, modals, layout) | `src/components/` | |
+| Stateful logic (Vue composable) | `src/composables/` | The app does not use Vuex or Pinia |
+| Call to a Netlify proxy | `src/services/` | Land data goes only through `landFetchCoordinator.js` |
+| Pure helper (grid builders, caches, codecs) | `src/utils/` | No Vue state |
+| Page-level view for a route | `src/views/` | |
+| Route or route guard | `src/router/` | |
+| Login, callback, Hub auth | `src/features/` | |
+| API environment, endpoints | `src/config/` | |
+| localStorage key names | `src/constants/storageKeys.js` | |
+| Auto-synced game data | `src/data/game/` | Do not hand-edit |
+| Server proxy | `netlify/functions/` | CommonJS `.cjs` only |
+| Data sync, asset check, debug CLI | `scripts/` | |
+| Unit and E2E tests | `tests/` | |
+| Treasure and artefact images | `public/world/` | `.webp` |
+
+## Architecture diagram
+
+```mermaid
+flowchart LR
+  app["src/ browser app"]
+  fns["netlify/functions/ server proxies"]
+  scripts["scripts/ build and data"]
+  tests["tests/ Vitest and Playwright"]
+
+  app -->|"HTTP /api/* at runtime (allowed)"| fns
+  scripts -->|"import (allowed)"| app
+  tests -->|"import (allowed)"| app
+  tests -->|"import (allowed)"| fns
+  app -.->|"FORBIDDEN import"| fns
+  fns -.->|"FORBIDDEN import"| app
+  app -.->|"FORBIDDEN import"| tests
+  app -.->|"FORBIDDEN import"| scripts
+```
+
+Solid arrows are allowed. Dashed arrows are forbidden imports, which `npm run check:deps` rejects.
+
+## Dead-code baseline
+
+`npm run check:dead` runs knip with `knip.json`. The findings that already exist are listed in `knip.json` as a baseline. The baseline may only shrink. Do not add entries to it. When you delete the code an entry names, delete the entry too.
+
+## Environment
+
+For `netlify dev`, copy `env.example` (detailed) or `.env.example` (terse) to `.env` and set:
+
+| Var | Purpose |
+|---|---|
+| `SFL_API_KEY` / `SFL_API_KEY_DEV` | Server-side SFL API keys |
+| `HUB_API_BASE` | Dig-day and hub-auth backend URL |
+| `HUB_WRITE_SECRET` | Guest dig-day write secret |
+| `ADMIN_PASSWORD` | `/admin` page auth |
+| `PROJECTMATE_WORKER_URL` / `PROJECTMATE_ADMIN_KEY` | **Optional.** Only for the same-origin `/api/projectmate/*` proxy. Unset means the proxy returns 503 and the widget uses the Worker directly |
+| `VITE_*` vars | Client-side, safe to expose |
+
+`VITE_API_PROXY_TARGET` is covered in [Netlify and Vite details](#netlify-and-vite-details).
+
+## Local run, build and browser checks
+
+- `npm run dev` is `netlify dev` (functions on :8888, Vite on :5173). Use it for anything that touches functions (auth, dig-day, practice patterns). `npm run dev:vite` is Vite only, and `/api` proxies to `beta.d1g.uk`.
+- Build check: `npx vite build` (~8s; also catches template and compile errors). Serve it with `npx vite preview --port 4319 --strictPort`, which serves `dist/` with SPA fallback.
+- `vite preview` does **not** run the Netlify functions, so `/api/*` returns 404. "Today's Patterns" then falls back to a Random Round. That is fine for client-only checks. Use `npm run dev` for function-backed flows.
+- Routes to smoke-test: `/`, `/digging`, `/practice`, `/:landId/digging`, `/:landId/digging/history`, `/:landId/practice`.
+- **Digging a tile takes two clicks plus a delay.** The first click arms confirm, and the second digs after `DIG_DELAY_MS` (350 ms). When scripting, click a `.tile` twice, then wait about 500 ms.
+- The grid is 100 `.tile` divs. "Digs:", "Round N" and "Shared Grid" are read from spans and `.badge`.
+- An in-progress practice round persists to `localStorage['practice:in-progress-round:1']`.
+- The practice board link (`?board=`) is self-contained: base64url of JSON `[[key,ox,oy],...]`. The same board gives the same code. The same patterns with a new layout give the same key multiset but a different code.
+- Ignore CORS errors from `cloudflareinsights.com/cdn-cgi/rum` in the console. That is external RUM analytics, not app code.
+- Solver changes and grid-transform changes also need `npm test` first. See [SOLVER.md](./SOLVER.md).
+
+**Tooling.** Prettier is installed but has no config file. There is no ESLint and no lint script.
+
+## Netlify and Vite details
+
+- `netlify.toml`: functions live in `netlify/functions`, bundled with `node_bundler = "esbuild"`, with `@netlify/blobs` marked `external_node_modules`. Node is 22 (`NODE_VERSION`).
+- `pretty_urls = false` stops Netlify from redirecting `/digging` to `/digging/` before the `/digging` rule runs.
+- The SPA fallback is `/* → /index.html`. Redirect rules are also in `netlify.toml` as a backup for `public/_redirects`.
+- `[dev]` runs `npx vite` on :5173 behind `netlify dev` on :8888.
+- `vite.config.js` proxies `/api` in `npm run dev:vite`. The default target is `https://beta.d1g.uk`. Set `VITE_API_PROXY_TARGET=http://localhost:8888` in `.env` to use local functions instead.
+- Vite `define` bakes `__APP_VERSION__` from the `COMMIT_REF` environment variable (see [Startup sequence](#startup-sequence-srcmainjs)).
+
+## CI and monitoring
+
+- `.github/workflows/ci.yml`: the `test-and-build` job runs `npm run check` on every PR and on pushes to `master` and `development`. It uses the Node version in `.nvmrc`.
+- `.github/workflows/health-check.yml` runs every 6 hours (cron `17 */6 * * *`) and on demand. It runs `scripts/health-check.js`, which checks the live sfl-api proxy for land 1, `/api/practice-patterns`, and the Hub `/health` endpoints.
+- On failure, the job opens or comments on a GitHub issue labelled `health-check` and exits non-zero. A later passing run closes the open `health-check` issues.
+- Scheduled workflows run only from `master`. `workflow_dispatch` needs the file on `master` too.
+- Run the check locally with `node scripts/health-check.js`. It sends GET requests only, to public d1g.uk URLs, and needs no secrets. Override targets with `SITE_URL` and `HUB_URL`. The pure validators are tested in `tests/healthCheck.test.js` (no network).
+
+## Auto-synced data
+
+`src/data/game/` is synced from the Sunflower Land repo by CI. Do not hand-edit these files.
+
+- `treasurePrices.json` and `gameConstants.json`: `npm run sync-game-data`, weekly in CI (Sundays 00:00 UTC).
+- `seasonalArtefacts.js`: `npm run sync-artefact`, monthly in CI.
+- `diggingFormations.js`: imported from game data.
+
+Three GitHub Actions workflows auto-commit to the repo: `sync-game-data.yml`, `sync-artefact.yml` and `warm-daily-cache.yml`.
+
+Both sync workflows commit and push to `master`, then mirror the data files to `development` with a file-level checkout (`src/data/game/`, plus `public/world/` for the artefact). The mirror has no fast-forward requirement, so there are no merge conflicts. The mirror is skipped with a warning if `development` has local edits to those paths that `master` does not have. Result: prod (`master`) and beta (`development`) stay on identical game data.
+
 ## Related docs
+
+- [decisions/](./decisions/README.md) — architecture decision records (ADRs)
 
 - [AGENTS.md](../AGENTS.md) — dev commands, conventions, env, API proxy quirks
 - [API_LAYER.md](./API_LAYER.md) — SFL farm API request pipeline + caching/cooldown policy

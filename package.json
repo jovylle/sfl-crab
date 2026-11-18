@@ -14,13 +14,15 @@
     "build:netlify": "netlify build",
     "preview": "netlify build && netlify serve",
     "preview:vite": "vite preview",
-    "prerender": "node scripts/prerender.js",
     "sync-game-data": "node scripts/parse-treasure-data.js",
     "check-assets": "node scripts/check-missing-assets.js",
     "sync-artefact": "node scripts/sync-artefact.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "vite build && playwright test"
+    "test:e2e": "vite build && playwright test",
+    "check": "npm run check:deps && npm run check:dead && npm test && npm run build",
+    "check:deps": "depcruise src netlify scripts tests --config .dependency-cruiser.cjs",
+    "check:dead": "knip"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
@@ -37,6 +39,8 @@
     "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.1.4",
     "@vitejs/plugin-vue": "^5.2.2",
+    "dependency-cruiser": "^18.8.0",
+    "knip": "^6.45.1",
     "netlify-cli": "^17.38.1",
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.4",

@@ -1,6 +1,6 @@
 # Prediction Mode + Guaranteed Treasure Marks — Implementation Plan
 
-> **Status:** Ready to build. All research complete, all design decisions made.
+> **Status:** Shipped. This is the historical plan. For current behaviour see [GRID_MECHANICS.md](./GRID_MECHANICS.md) and [SOLVER.md](./SOLVER.md).
 > **Created:** 2026-07-13
 > **Context:** This plan was developed across a full research session exploring the codebase. Everything you need to build this feature end-to-end is documented below — mechanics, architecture, file:line references, decisions, and step-by-step implementation.
 
@@ -912,7 +912,7 @@ Off by default, persisted per-land (`showPrediction-${landId}`). Available in bo
 
 ## 9. Testing Notes
 
-**No test runner exists** in this project (per AGENTS.md: "No tests for `src/`, no ESLint, no lint script"). Verification is manual.
+**Vitest is configured** (`npm test`; see AGENTS.md). Solver unit tests exist, but the UI scenarios below are verified manually.
 
 ### Manual test scenarios
 
@@ -949,11 +949,13 @@ npm run build        # ensure no build errors
 
 ## Appendix: Existing "potential treasure" / prediction logic in codebase
 
-There is **NO existing automated treasure-prediction engine**. Existing pieces are:
+> **Superseded:** solver is implemented, see [docs/SOLVER.md](./SOLVER.md). The notes below describe the codebase before the change.
+
+There was **NO existing automated treasure-prediction engine** at the time of writing. Existing pieces were:
 
 - `hint-potential-treasure` / `hint-potential-treasure2` classes — exposed in both pickers, purely cosmetic dots (`style.css:235-266`). No logic derives them.
 - `near-crab` / `near-hint-crab` auto-hints (`useGridEngine.js:25-116`) — encodes the crab-proximity invariant but does NOT compute treasure intersections.
 - Practice-only `collectAutoMarkers` (`PracticeGrid.vue:300-336`) — derives `hint-crab-eyes-maybe` / `hint-nothing` from revealed tiles. Single-crab proximity, not intersection.
-- "Guaranteed" treasure is referenced only conceptually in `docs/GRID_MECHANICS.md:15` ("intersection of multiple known crabs is a guaranteed treasure") — **not implemented in code**.
+- "Guaranteed" treasure is referenced only conceptually in `docs/GRID_MECHANICS.md:15` ("intersection of multiple known crabs is a guaranteed treasure") — not implemented at the time of writing (superseded, see above).
 
 The word `guaranteed` / `predict` appears only in the i18n dictionaries of the old vendored game copy (since removed, unrelated).
