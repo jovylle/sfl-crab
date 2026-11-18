@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [master, development]
+  # Lets the data-sync workflows start CI on their own branches. Events made with
+  # GITHUB_TOKEN do not start workflows, so without this the sync PRs get no check.
+  workflow_dispatch:
 
 permissions:
   contents: read
