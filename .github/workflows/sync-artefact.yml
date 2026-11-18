@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write  # Allow the workflow to push commits and sync branches
   pull-requests: write  # Allow the workflow to open and merge the sync PR
+  actions: write  # Allow the workflow to start CI on a sync branch and wait for it
 
 env:
   SYNC_ARTIFACT_VERSION: "1.5"
@@ -77,17 +78,24 @@ jobs:
             --title "🤖 Sync artefact data [$(date +'%Y-%m-%d')]" \
             --body "Automated sync from the Sync Artefact Data workflow. Data-only change to \`src/data/game/\` + \`public/world/\`.")
           echo "PR created: $PR_URL"
-          for i in $(seq 1 10); do
-            MS=$(gh pr view "$PR_URL" --json mergeStateStatus --jq .mergeStateStatus)
-            [ "$MS" = "MERGEABLE" ] && break
-            echo "PR mergeStateStatus=$MS, retrying... ($i/10)"
+          # GITHUB_TOKEN events do not start workflows, so CI is started on this
+          # branch explicitly. The merge runs only if that CI run passes.
+          gh workflow run ci.yml --ref "$BRANCH"
+          RUN_ID=""
+          for i in $(seq 1 30); do
+            RUN_ID=$(gh run list --workflow ci.yml --branch "$BRANCH" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+            [ -n "$RUN_ID" ] && break
             sleep 5
           done
+          if [ -z "$RUN_ID" ]; then echo "::error::No CI run started for $BRANCH"; exit 1; fi
+          gh run watch "$RUN_ID" --exit-status
           gh pr merge "$PR_URL" --merge --delete-branch
           echo "✅ Master updated via PR $PR_URL"
 
       - name: Mirror data files to development branch
         if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -110,7 +118,25 @@ jobs:
           git checkout "$SYNC_SHA" -- src/data/game/ public/world/
           if ! git diff --cached --quiet; then
             git commit -m "🤖 Mirror artefact data from master ($(git rev-parse --short "$SYNC_SHA"))"
-            git push origin sync-dev:development
+            # development requires PRs, so the mirror goes through a PR like master does.
+            BRANCH="sync-dev-${{ github.run_id }}"
+            git push origin "sync-dev:refs/heads/$BRANCH"
+            PR_URL=$(gh pr create --base development --head "$BRANCH" \
+              --title "🤖 Mirror artefact data from master ($(git rev-parse --short "$SYNC_SHA"))" \
+              --body "Mirror of master's artefact data. Data-only change to \`src/data/game/\` + \`public/world/\`.")
+            echo "PR created: $PR_URL"
+            # GITHUB_TOKEN events do not start workflows, so CI is started on this
+            # branch explicitly. The merge runs only if that CI run passes.
+            gh workflow run ci.yml --ref "$BRANCH"
+            RUN_ID=""
+            for i in $(seq 1 30); do
+              RUN_ID=$(gh run list --workflow ci.yml --branch "$BRANCH" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+              [ -n "$RUN_ID" ] && break
+              sleep 5
+            done
+            if [ -z "$RUN_ID" ]; then echo "::error::No CI run started for $BRANCH"; exit 1; fi
+            gh run watch "$RUN_ID" --exit-status
+            gh pr merge "$PR_URL" --merge --delete-branch
           else
             echo "development data already up to date"
           fi
