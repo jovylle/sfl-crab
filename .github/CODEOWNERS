@@ -1,0 +1,16 @@
+# Owner review is not enforced until a ruleset requires code-owner review.
+* @jovylle
+
+/netlify.toml @jovylle
+/package.json @jovylle
+/package-lock.json @jovylle
+/vite.config.js @jovylle
+/vitest.config.js @jovylle
+/.dependency-cruiser.cjs @jovylle
+/knip.json @jovylle
+/jsconfig.json @jovylle
+/.github/ @jovylle
+/AGENTS.md @jovylle
+/CLAUDE.md @jovylle
+/docs/ARCHITECTURE.md @jovylle
+/docs/decisions/ @jovylle

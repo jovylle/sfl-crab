@@ -1,184 +1,95 @@
 # AGENTS.md
 
-> **Start here.** This is the canonical, current reference for developers and AI assistants working on **sfl-crab / d1g.uk** — a visual Desert Digging Assistant for Sunflower Land players.
+Guide for developers and AI assistants working on **sfl-crab / d1g.uk**, a visual Desert Digging Assistant for Sunflower Land players. This file is short on purpose. Details live in `docs/`. If this file and `docs/` conflict with older prose, this file and `docs/` win.
 
-## Documentation map
-
-Read in this order; each doc is kept accurate. If anything here conflicts with older prose, **this file and the `docs/` files win**.
-
-| Doc | When to read it |
-|---|---|
-| **AGENTS.md** (this file) | Dev commands, conventions, env, API-proxy quirks, dead-code register |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture: directories, routes, startup, data flow, composables/services, grid-builders, entrypoints |
-| [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) | The 10×10 grid engine: tiles, hints, formations, practice mode |
-| [docs/API_LAYER.md](docs/API_LAYER.md) | **Request pipeline + caching policy for the SFL farm API** — read before touching anything that fetches land data |
-| [docs/DIG_DAY_SYNC.md](docs/DIG_DAY_SYNC.md) | Dig-day Hub sync: debounce, ETag, merge-by-seq, the layers |
-| [docs/SOLVER.md](docs/SOLVER.md) | Treasure-solver algorithm, improvement log, testing |
-| [docs/HUB_CONSUMPTION_SPEC.md](docs/HUB_CONSUMPTION_SPEC.md) | Hub-side ETag/idempotency contract |
-| [netlify/functions/README.md](netlify/functions/README.md) | Per-function reference for the `.cjs` proxies |
-| [src/data/game/README.md](src/data/game/README.md) | Auto-synced game data files |
-| [SEASON_UPDATE_GUIDE.md](SEASON_UPDATE_GUIDE.md) / [API_KEY_SETUP.md](API_KEY_SETUP.md) | Seasonal artefact updates / SFL API keys |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Fork + PR workflow |
-
-## Solver debug tools
-
-Ways to test / verify the treasure solver (`src/utils/treasureSolver.js`) against real data — no browser screenshots, no bookmarklets.
-
-### CLI: `scripts/debug-solver.js`
-
-Runs under plain `node`, sub-second, no browser. Uses `scripts/lib/resolve-alias-loader.mjs` to resolve `@/` imports without Vite.
-
-**Snapshot format** — the file must be a `landData_<id>` JSON blob:
-```json
-{ "visitedFarmState": { "desert": { "digging": { "patterns": [...], "grid": [...] } } } }
-```
-
-Snapshots go in `scripts/fixtures/` (gitignored — contains real player data).
+## Commands
 
 ```bash
-# Print 10x10 board + guaranteed-cell list for a single snapshot
-node scripts/debug-solver.js --file scripts/fixtures/<land>.json
-
-# Soundness regression oracle: guaranteed cells in <earlier> must not appear as
-# sand/crab in <later>. Prints FAIL loudly and exits nonzero on any false positive.
-node scripts/debug-solver.js --diff scripts/fixtures/<earlier>.json scripts/fixtures/<later>.json
-```
-
-### Vitest test suite
-
-```bash
-npm test              # run all 9 unit test files once (214 tests)
-npm run test:watch    # watch mode
-```
-
-**Key test files** — run `npm test` before pushing any change to `treasureSolver.js` or `gridTileTransform.js`:
-
-| File | What it guards |
-|---|---|
-| `tests/solver.oracle.test.js` | **Soundness oracle** — 600 random boards with known ground-truth; every `guaranteed` cell must be a real treasure. Catches false positives introduced by solver logic changes. Uses deterministic PRNG (xorshift32, seeded) so failures are reproducible. |
-| `tests/solver.scenarios.test.js` | **Hand-crafted scenarios** — one test per algorithm path (Pass 1 treasure-anchor, Pass 2 single-instance forcing, 3-of-4 reveal, edge cases). Intent readable from the board. Catches gross breakage and documents expected solver behaviour. |
-| `tests/gridTileTransform.test.js` | **Transform contract** — locks the string format between `gridArrayToTiles` (emitter) and `treasureSolver` (consumer). Changing `"treasure actual-treasure"` or the `tileImage:` prefix in either file without updating the other silently breaks the solver with zero errors. |
-
-The other unit test files run by `npm test` are `tests/digDayOptIn.test.js`, `tests/digDayProxy.test.js`, `tests/digStatsUtils.test.js`, `tests/healthCheck.test.js`, `tests/practicePatterns.test.js` and `tests/sflApiProxy.test.js`. `tests/e2e/solver-debug.spec.js` is Playwright; run it with `npm run test:e2e`, not `npm test`.
-
-**Key constraints when writing new solver tests**:
-- Use only **non-seasonal formations**: `HIEROGLYPH`, `OLD_BOTTLE`, `COCKLE`, `WOODEN_COMPASS`, `CLAM_SHELLS`, `SEAWEED`, `SEA_CUCUMBERS`. Seasonal formations reference `CURRENT_SEASONAL_ARTEFACT` which changes monthly and breaks test assertions.
-- The solver's **critical invariant** is soundness (no false positives) — it is intentionally conservative. A cell in `guaranteed` means it is safe to dig; a cell absent from `guaranteed` means nothing either way.
-- Already-revealed treasure tiles ARE included in `guaranteed` (they are provably treasures); the UI filters them for display.
-- Do NOT use a differential oracle (compare two solver implementations). The production solver runs iterative pseudo-reveal propagation that no single-pass oracle can reproduce correctly. Use **ground-truth comparison** instead: generate a board with known treasure positions and assert every `guaranteed` cell is in that truth set.
-
-### Raw API shape (stable)
-
-```
-desert.digging = {
-  patterns: string[],              // formation keys still on the board
-  completedPatterns: string[],     // fully-dug patterns
-  grid: [{ x, y, items: { <TreasureName>|Crab|Sand: count } }]
-}
-```
-
-The `grid` array contains only **dug** tiles. Undug tiles are absent. `x`/`y` are 0-based (0–9). Item keys are display names as returned by the SFL API — exactly as used in `DIGGING_FORMATIONS` plot names.
-
-**Primary way to feed AI assistants real data**: paste the raw `desert.digging` JSON directly into the chat.
-
-## Dev commands
-
-```bash
-npm run dev          # netlify dev: functions on :8888 + Vite on :5173 (full stack)
+npm run dev          # netlify dev: functions on :8888 + Vite on :5173
 npm run dev:vite     # Vite only on :5173; /api proxies to beta.d1g.uk
-npm run build        # vite build (used by Netlify deploy)
-npm run preview      # netlify build → netlify serve (full prod simulation)
+npm run build        # vite build (used by the Netlify deploy)
+npm run preview      # netlify build, then netlify serve
+npm test             # vitest run: 9 unit test files, 214 tests
+npm run check:deps   # dependency-cruiser layer rules
+npm run check:dead   # knip, against the baseline in knip.json
+npm run check        # check:deps + check:dead + test + build
 ```
 
-Use `npm run dev` when working with Netlify functions (auth, dig-day, practice patterns). Use `npm run dev:vite` for UI-only work. To proxy `/api` to local functions in vite-only mode, set `VITE_API_PROXY_TARGET=http://localhost:8888` in `.env`.
+Use `npm run dev` for work that touches Netlify functions (auth, dig-day, practice patterns). Use `npm run dev:vite` for UI-only work. Environment variables: [docs/ARCHITECTURE.md#environment](docs/ARCHITECTURE.md#environment).
 
-## Linter / formatter
-
-No ESLint, no lint script. Prettier is installed but has no config file.
-
-## Verifying changes end-to-end
-
-For changes to the solver or grid transform: **run `npm test` first** (214 tests across 9 files). For everything else the real check is **build + drive the app in a browser and observe**. Tool-agnostic (works with Playwright, Puppeteer, or manual clicking).
-
-```bash
-npx vite build                                # ~8s; also catches template/compile errors
-npx vite preview --port 4319 --strictPort     # serves dist/ with SPA fallback
-```
-
-Routes: `/`, `/digging`, `/practice`, `/:landId/digging`, `/:landId/digging/history`, `/:landId/practice`.
-
-- **`vite preview` does NOT run the Netlify functions** (`/api/*` 404). "Today's Patterns" then falls back to a Random Round — fine for verifying client behavior. For function-backed flows use `npm run dev` (netlify dev).
-- **Digging a tile is two clicks + delay**: first click arms confirm, second digs after `DIG_DELAY_MS` (350ms). When scripting: click a `.tile` twice, then wait ~500ms.
-- Grid is 100 `.tile` divs. "Digs:" / "Round N" / "Shared Grid" read from spans/`.badge`.
-- In-progress practice round persists to `localStorage['practice:in-progress-round:1']`.
-- Practice board link (`?board=`) is self-contained: base64url + JSON of `[[key,ox,oy],...]`. Same board ⇒ identical code; same patterns/new layout ⇒ same key multiset, different code.
-- Ignore `cloudflareinsights.com/cdn-cgi/rum` CORS console errors — external RUM analytics, not app code.
-
-## Architecture
-
-- Vue 3 SPA (Composition API, `<script setup>`) + Vite + Tailwind CSS + DaisyUI
-- **No app backend of its own**, but it is not backend-less: the client proxies through Netlify functions to two external systems — the **Sunflower Land public API** (`sfl-api.cjs`) and the **SFL Digging Hub** (`HUB_API_BASE`, auth/dig-day/practice). Env vars ARE required for these (see Env setup).
-- Netlify functions are **CommonJS `.cjs`** with `node_bundler = "esbuild"`; do not use ESM
-- **Two Vite entrypoints**: `index.html` and `digging/index.html`. Both load `src/main.js` and boot the *same* app (only difference: analytics beacon). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-- **British spelling "artefact"** throughout: filenames, function names, data keys, script names (`sync-artefact.js`)
-- SPA uses `createWebHistory()` — the catch-all `_redirects` rule (`/* → /index.html`) is required
-- **Grid digging mechanics**: see [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) for the 10x10 grid, crab/treasure proximity rules, hint system, formation patterns, practice mode, and data flow.
-
-## Auto-generated data (do not edit)
-
-`src/data/game/` files are synced from the Sunflower Land repo by CI:
-- `treasurePrices.json` / `gameConstants.json` — `npm run sync-game-data` (weekly CI, Sundays 00:00 UTC)
-- `seasonalArtefacts.js` — `npm run sync-artefact` (monthly CI)
-- `diggingFormations.js` — imported from game data
-
-Three GitHub Actions auto-commit to the repo: `sync-game-data.yml`, `sync-artefact.yml`, `warm-daily-cache.yml`.
-
-Both sync workflows commit + push to `master`, then **mirror the data files to `development`** via a file-level checkout (`src/data/game/`, plus `public/world/` for artefact) — no fast-forward requirement, no merge conflicts, so beta never drifts a season behind. The mirror is skipped with a warning if `development` has local edits to those paths that `master` doesn't have. Result: prod (`master`) and beta (`development`) stay on identical game data.
-
-## API proxy details
-
-- `sfl-api.cjs` has a 60s in-memory cache for 200 responses. Bypass with `x-sfl-bypass-cache: 1` header or `?bypassCache=1` — the app sends this **only** on explicit user refreshes and env switches (see [docs/API_LAYER.md](docs/API_LAYER.md)); auto loads go through the proxy cache.
-- **All land-data requests go through `src/services/landFetchCoordinator.js`** (single-flight, 5-min localStorage freshness, cooldown). Never call `fetchLandDataFromServer()` from a component.
-- `sfl-api.cjs` only forwards `GET /community/farms/<digits>` (anything else is 404), restricts CORS to an origin allow-list (foreign `Origin` gets 403) rate limits to 60 requests per minute per IP, caps real upstream calls at 120 per minute per warm instance (429, log reason `upstream_budget`; cache hits do not count), bounds the in-memory cache at 500 entries and rejects land ids with leading zeros (404, canonical ids are `[1-9]\d{0,19}`). Update `tests/sflApiProxy.test.js` if you change any of these.
-- `/visit/*` often returns 401 for third-party tools. The app uses `/community/farms/*` as primary and `/visit/*` as fallback only.
-- Prod/test API switching is communicated via `x-sfl-api-env` header. Land data cache keys are prefixed per-environment (`landData_` vs `landData_test_`).
-- Practice patterns are CDN-cached until UTC midnight (`CDN-Cache-Control` headers).
-
-## Env setup
-
-Two example files: `env.example` (detailed) and `.env.example` (terse). For `netlify dev`, copy one to `.env` and set:
-
-| Var | Purpose |
-|---|---|
-| `SFL_API_KEY` / `SFL_API_KEY_DEV` | Server-side SFL API keys |
-| `HUB_API_BASE` | Dig-day/hub-auth backend URL |
-| `HUB_WRITE_SECRET` | Guest dig-day write secret |
-| `ADMIN_PASSWORD` | `/admin` page auth |
-| `PROJECTMATE_WORKER_URL` / `PROJECTMATE_ADMIN_KEY` | **Optional.** Only for the same-origin `/api/projectmate/*` proxy; unset = proxy returns 503 and the widget uses the Worker directly |
-| `VITE_*` vars | Client-side, safe to expose |
-
-## CI and monitoring
-
-- `.github/workflows/ci.yml` runs `npm ci`, `npm test` and `npm run build` on every pull request and on pushes to `master` and `development` (Node from `.nvmrc`).
-- `.github/workflows/health-check.yml` runs every 6 hours (and on demand) and calls `scripts/health-check.js`. It checks the live sfl-api proxy for land 1, `/api/practice-patterns` and the Hub `/health` endpoints. On failure it opens or comments on a GitHub issue labelled `health-check` and fails the run. Scheduled workflows only run from `master`.
-- Run it locally with `node scripts/health-check.js`. It only sends GET requests to public d1g.uk URLs and needs no secrets. Override targets with `SITE_URL` and `HUB_URL`. The pure validators are covered by `tests/healthCheck.test.js` (no network).
-
-## Hot-deploy detection
-
-`main.js` bakes `__APP_VERSION__` (git SHA from `COMMIT_REF`) via Vite `define`. After mount it polls `/` with `cache: no-cache` to compare with the live version and force-reloads on mismatch. Relies on Netlify injecting `COMMIT_REF` at build time.
-
-## Key directories
+## Layout
 
 | Dir | Purpose |
 |---|---|
-| `src/` | Main app (views, composables, services, components) |
-| `netlify/functions/` | Serverless functions (`.cjs`) |
-| `scripts/` | Data sync + asset check scripts |
-| `public/world/` | Treasure/artefact images (`.webp`) |
+| `src/` | Browser app: views, components, composables, services, utils, router, config |
+| `netlify/functions/` | Server proxies (`.cjs`, CommonJS). Per-function reference in its README |
+| `scripts/` | Data sync, asset check, solver debug CLI |
+| `tests/` | Vitest unit tests and the Playwright E2E spec |
+| `public/world/` | Treasure and artefact images (`.webp`) |
 
-## Dead code / gotchas
+Where new code goes: [docs/ARCHITECTURE.md#where-new-code-goes](docs/ARCHITECTURE.md#where-new-code-goes).
 
-Documented so you don't waste time or "fix" load-bearing weirdness. Full table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#dead-code--gotchas-register).
+## Dependency rules
 
-- `netlify/functions/projectmate-feedback.cjs` — still routed by `netlify.toml` and `public/_redirects`. No code in `src/` calls `/api/projectmate` by default. It is used only if `VITE_PROJECTMATE_ISSUES_ENDPOINT=/api/projectmate` is set (opt-in).
-- Grid tiles are `string[]` of CSS classes (not objects) — fragile by design; read GRID_MECHANICS.md first.
+Enforced by `npm run check:deps` (`.dependency-cruiser.cjs`):
+
+1. `src/` must not import `netlify/`, `tests/` or `scripts/`.
+2. `netlify/` must not import `src/`.
+3. No circular imports, except the recursive component `src/components/KeyValueList.vue`.
+
+Details, the `@/` alias and the diagram: [docs/ARCHITECTURE.md#dependency-rules](docs/ARCHITECTURE.md#dependency-rules).
+
+## Conventions
+
+- British spelling everywhere: filenames, functions, data keys, script names (`sync-artefact.js`). Write "artefact".
+- Netlify functions are CommonJS `.cjs` with `node_bundler = "esbuild"`. Do not use ESM there.
+- The SPA uses `createWebHistory()`, so the `_redirects` catch-all (`/* → /index.html`) is required.
+- Land data goes only through `src/services/landFetchCoordinator.js`. Never call `fetchLandDataFromServer()` from a component. See [docs/API_LAYER.md](docs/API_LAYER.md).
+- Grid mechanics: [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md).
+
+## Typing
+
+- The codebase is JavaScript and Vue only. There is no type checker.
+- New code must not add suppression comments (`@ts-ignore`, `@ts-expect-error`, `eslint-disable` and similar).
+- The typing strategy is an open decision: [docs/decisions/0003-typing-strategy.md](docs/decisions/0003-typing-strategy.md).
+
+## Verification
+
+- Before opening a PR, run `npm run check`.
+- Solver or grid-transform changes also need `npm test`. Solver CLI and test rules: [docs/SOLVER.md](docs/SOLVER.md).
+- For UI changes, build and drive the app in a browser. Smoke-test routes, click timing and local storage keys: [docs/ARCHITECTURE.md#local-run-build-and-browser-checks](docs/ARCHITECTURE.md#local-run-build-and-browser-checks).
+- CI and health checks: [docs/ARCHITECTURE.md#ci-and-monitoring](docs/ARCHITECTURE.md#ci-and-monitoring).
+
+## Auto-generated data (do not edit)
+
+`src/data/game/` is synced from the Sunflower Land repo by CI: `treasurePrices.json`, `gameConstants.json`, `seasonalArtefacts.js` and `diggingFormations.js`. Sync schedules and the mirror to `development`: [docs/ARCHITECTURE.md#auto-synced-data](docs/ARCHITECTURE.md#auto-synced-data).
+
+## DO NOT
+
+- Add a dependency without asking.
+- Add a top-level folder without asking.
+- Edit tests or config to make checks pass.
+- Add suppression comments (see Typing).
+- Hand-edit `src/data/game/`.
+- Push to `master`. Changes go by PR only: feature branch to `development`, then `development` to `master`. See [docs/decisions/0001-release-flow.md](docs/decisions/0001-release-flow.md).
+- Add AI attribution (author names, `Co-Authored-By` trailers, "Generated with" lines) to commits or PRs.
+
+## Dead code and gotchas
+
+Dead code and load-bearing quirks (for example the routed `projectmate-feedback.cjs`, and grid tiles as `string[]` of CSS classes) are listed so you don't "fix" them blindly. Register: [docs/ARCHITECTURE.md#dead-code--gotchas-register](docs/ARCHITECTURE.md#dead-code--gotchas-register). Read [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) before touching tiles.
+
+## Docs index
+
+| Doc | Read it when |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Directories, routes, startup, dependency rules, environment, CI, local run |
+| [docs/API_LAYER.md](docs/API_LAYER.md) | Before touching anything that fetches land data |
+| [docs/GRID_MECHANICS.md](docs/GRID_MECHANICS.md) | The 10×10 grid, hints, formations, practice mode |
+| [docs/SOLVER.md](docs/SOLVER.md) | Treasure solver, its debug tools, its tests |
+| [docs/DIG_DAY_SYNC.md](docs/DIG_DAY_SYNC.md) | Dig-day Hub sync: debounce, ETag, merge |
+| [docs/HUB_CONSUMPTION_SPEC.md](docs/HUB_CONSUMPTION_SPEC.md) | Hub-side ETag and idempotency contract |
+| [docs/decisions/](docs/decisions/README.md) | Architecture decision records |
+| [netlify/functions/README.md](netlify/functions/README.md) | Per-function reference for the `.cjs` proxies |
+| [src/data/game/README.md](src/data/game/README.md) | Auto-synced game data |
+| [SEASON_UPDATE_GUIDE.md](SEASON_UPDATE_GUIDE.md) / [API_KEY_SETUP.md](API_KEY_SETUP.md) | Seasonal artefact updates / SFL API keys |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Fork and PR workflow |
