@@ -185,7 +185,7 @@ Known non-functional or trap-laden spots. Documented so an AI doesn't waste time
 
 ## Dependency rules
 
-Enforced by `npm run check:deps` (dependency-cruiser, config in `.dependency-cruiser.cjs`). `npm run check` runs it with the dead-code check, the tests and the build.
+Enforced by `npm run check:deps` (dependency-cruiser, config in `.dependency-cruiser.cjs`). `npm run check` runs it with the dead-code check, the type check, the tests and the build.
 
 1. `src/` must not import from `netlify/`, `tests/` or `scripts/`.
 2. `netlify/` must not import from `src/`.
@@ -198,7 +198,7 @@ The browser calls the Netlify functions over HTTP (`/api/*`), never by import. T
 **Commands**
 
 - `npm run check:deps`: the three rules above.
-- `npm run check`: `check:deps` + `check:dead` + `test` + `build`. The `test-and-build` job in `.github/workflows/ci.yml` runs it on PRs and on pushes.
+- `npm run check`: `check:deps` + `check:dead` + `check:types` + `test` + `build`. The `test-and-build` job in `.github/workflows/ci.yml` runs it on PRs and on pushes.
 
 ## Where new code goes
 

@@ -13,7 +13,7 @@
 ```
 Component / view
    │  e.g. Digging.vue onMounted, LandLoader, RefreshLandData,
-   │       PracticeDigging "start round", useApiEnvironmentSwitch
+   │       PracticeDigging "start round"
    ▼
 useLandSync (src/composables/useLandSync.js)     ← UI state only
    │  isLoading / isCooldown / remaining countdown, dispatch landDataReady
@@ -41,7 +41,6 @@ Sunflower Land public API (api.sunflower-land.com | api-dev.sunflower-land.com)
 | Land page mounts, cache stale (>5 min) | `Digging.vue` onMounted | auto | 1 network call (single-flight with LandLoader) |
 | Land selected via LandLoader | `LandLoader.vue` goToLand | auto | joins the mount's request — never a second call |
 | User clicks "Refresh Data" | `RefreshLandData.vue` | `bypassCache: true` | fresh from SFL API, respects 15s cooldown (button disabled during it) |
-| Prod ↔ testnet switch | `useApiEnvironmentSwitch` | `force: true, bypassCache: true` | fresh from the other server, skips cooldown |
 | Practice "today's round" on a land | `PracticeDigging.vue` startLandRound | auto | reuses the digging page's cache if fresh |
 | Practice patterns (hub) | `usePracticePatterns` | auto | separate path — own single-flight + daily cache, see below |
 

@@ -3,7 +3,9 @@
  * Guest keys stay active without sign-in; hub session keys apply after passwordless login.
  */
 
-/** @type {'guest' | 'guest_or_signed_in' | 'signed_in'} */
+/** @typedef {'guest' | 'guest_or_signed_in' | 'signed_in'} StorageAudience */
+
+/** @type {{ GUEST: StorageAudience, GUEST_OR_SIGNED_IN: StorageAudience, SIGNED_IN: StorageAudience }} */
 export const STORAGE_AUDIENCE = {
   GUEST: 'guest',
   GUEST_OR_SIGNED_IN: 'guest_or_signed_in',
@@ -12,7 +14,7 @@ export const STORAGE_AUDIENCE = {
 
 /**
  * Fixed keys (not parameterized).
- * @type {Record<string, { description: string, audience: string }>}
+ * @type {Record<string, { key: string, description: string, audience: StorageAudience }>}
  */
 export const STORAGE_KEYS = {
   /** JWT from Hub auth (Bearer). v1: localStorage on d1g.uk only. */

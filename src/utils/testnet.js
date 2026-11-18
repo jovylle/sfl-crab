@@ -14,7 +14,7 @@ export function isTestnetLandId (landId) {
  * True when the URL requests testnet (api-dev).
  * Bare `?testnet` (no `=`) is valid; Vue Router may omit it from `query`, so pass `search` or `fullPath` too.
  * @param {Record<string, unknown> | undefined | null} query
- * @param {string} [searchOrFullPath] — e.g. route.fullPath or location.search
+ * @param {string} [searchOrFullPath] - e.g. route.fullPath or location.search
  */
 export function hasTestnetQuery (query, searchOrFullPath = '') {
   if (query && Object.prototype.hasOwnProperty.call(query, TESTNET_QUERY)) {
@@ -75,7 +75,7 @@ export function legacyTestPathRedirect (to) {
 
   return {
     path,
-    query: withTestnetQuery({ ...to.query }, true),
+    query: /** @type {import('vue-router').LocationQueryRaw} */ (withTestnetQuery({ ...to.query }, true)),
     hash: to.hash,
     replace: true,
   }

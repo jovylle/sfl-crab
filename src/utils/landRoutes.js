@@ -21,7 +21,7 @@ export function landDiggingPath (landId, { test = isTestApiEnvironment() } = {})
 }
 
 /**
- * @param {string} [landId]
+ * @param {string | undefined} landId
  * @param {string} page — e.g. `details`, `practice`, `todays-checklist`
  * @param {{ test?: boolean }} [options]
  */
