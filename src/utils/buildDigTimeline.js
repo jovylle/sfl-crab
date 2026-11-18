@@ -7,7 +7,7 @@ export function getTodayUTC () {
 
 /**
  * Group raw digging.grid entries by dugAt (Sand Drill = one step).
- * @param {unknown[]} rawGrid
+ * @param {(DigTile | DigTile[])[]} rawGrid
  * @returns {{ dugAt: number, tiles: DigTile[] }[]}
  */
 export function groupDigEntries (rawGrid) {
@@ -23,7 +23,7 @@ export function groupDigEntries (rawGrid) {
 
 /**
  * Ordered dig steps for replay and mark timing.
- * @param {unknown[]} rawGrid
+ * @param {(DigTile | DigTile[])[]} rawGrid
  * @returns {DigStep[]}
  */
 export function buildDigTimeline (rawGrid) {
@@ -44,7 +44,7 @@ export function buildDigTimeline (rawGrid) {
 
 /**
  * Number of completed dig groups (for mark journal afterDigOrder).
- * @param {unknown[]} rawGrid
+ * @param {(DigTile | DigTile[])[]} rawGrid
  */
 export function getCurrentDigOrder (rawGrid) {
   return buildDigTimeline(rawGrid).length
@@ -52,7 +52,7 @@ export function getCurrentDigOrder (rawGrid) {
 
 /**
  * 1D tile index → 1-based dig order (for order badges).
- * @param {unknown[]} rawGrid
+ * @param {(DigTile | DigTile[])[]} rawGrid
  * @param {number} gridSize
  */
 export function buildTreasureOrderMap (rawGrid, gridSize = 10) {
