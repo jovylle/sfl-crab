@@ -153,7 +153,7 @@ Parameterized key builders: `landDataKey(id, testApi)`, `landCooldownKey(id, tes
 | `useDigReplay.js` | Read-only step-by-step replay player |
 | `useHubSession.js` | Auth session bootstrap + refresh |
 | `useApiEnvironment.js` | Reactive prod/test API env |
-| `useReliableAssets.js` / `useSoftReload.js` | Critical asset retry + soft reloads |
+| `useReliableAssets.js` | Critical asset retry |
 | `useTodayTreasureNames.js` | Pattern keys → treasure names |
 
 ## Services (`src/services/`)
