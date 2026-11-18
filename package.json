@@ -14,7 +14,6 @@
     "build:netlify": "netlify build",
     "preview": "netlify build && netlify serve",
     "preview:vite": "vite preview",
-    "prerender": "node scripts/prerender.js",
     "sync-game-data": "node scripts/parse-treasure-data.js",
     "check-assets": "node scripts/check-missing-assets.js",
     "sync-artefact": "node scripts/sync-artefact.js",

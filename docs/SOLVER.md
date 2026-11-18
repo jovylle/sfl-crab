@@ -84,7 +84,7 @@ confirmations cascade (e.g. G10 → OLD_BOTTLE pinned → G9).
 | Browser E2E | `tests/e2e/solver-debug.spec.js` | Real Chromium drives `/solver-debug`, asserts zero FAILs. Catches component-wiring bugs unit tests can't see. |
 
 ```bash
-npm test          # unit: 91 tests, ~1s — run before pushing any solver change
+npm test          # unit: 214 tests across 9 files — run before pushing any solver change
 npm run test:e2e  # vite build + Playwright (needs: npm install --include=dev; npx playwright install chromium)
 node scripts/debug-solver.js --file scripts/fixtures/<land>.json        # single live board
 node scripts/debug-solver.js --diff <earlier>.json <later>.json         # false-positive oracle on real digs

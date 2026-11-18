@@ -44,7 +44,7 @@ The API key is now handled securely through a **serverless function proxy**:
 
 ## Files Modified
 
-- `netlify/functions/sfl-api.js` - **NEW**: Secure serverless function proxy
+- `netlify/functions/sfl-api.cjs` - **NEW**: Secure serverless function proxy
 - `src/config/api.js` - Updated to use function endpoints
 - `src/services/landApiService.js` - Now calls secure proxy
 - `src/utils/api.js` - Now calls secure proxy

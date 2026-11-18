@@ -180,10 +180,7 @@ Known non-functional or trap-laden spots. Documented so an AI doesn't waste time
 
 | Item | Status |
 |---|---|
-| `npm run prerender` / `scripts/prerender.js` | **Broken** — script file is missing. Ignore. |
-| `netlify/functions/projectmate-feedback.cjs` | **Live but unconfigured** — same-origin proxy to the ProjectMate issues Worker (`/api/projectmate/*` → `/issues*`). Answers `503 PROXY_NOT_CONFIGURED` unless `PROJECTMATE_WORKER_URL` is set, and **no client calls it**: the widget talks to the Worker directly. Optional hardening path only. |
-| `netlify/functions/_digDayStore.cjs` | **Dead** — old Netlify Blobs path, superseded by the Hub proxy. Nothing imports it. Kept only as a reference impl of the merge/500/413 rules the Hub now enforces. |
-| `src/views/Home.vue` | Present but **not referenced by any route** (`/` redirects to `/digging`). |
+| `netlify/functions/projectmate-feedback.cjs` | **Routed, opt-in** — still routed by `netlify.toml` and `public/_redirects` (`/api/projectmate/*` → `/issues*`). No code in `src/` calls `/api/projectmate` by default. It is used only if `VITE_PROJECTMATE_ISSUES_ENDPOINT=/api/projectmate` is set; otherwise the widget talks to the Worker directly. |
 | Tile stringly-typing | Tiles are `string[]` of CSS classes, not objects. Fragile by design — see GRID_MECHANICS.md before touching. |
 
 ## Related docs
