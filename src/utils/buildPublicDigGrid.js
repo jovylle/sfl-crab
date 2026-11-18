@@ -9,6 +9,7 @@ import { getPrimaryDigItem, itemNameToSlug, worldAssetPath } from '@/utils/world
  * @param {number} digCount
  */
 export function marksAtFinalStep (markEvents, digCount) {
+  /** @type {Record<number, string[]>} */
   const active = {}
   const sorted = [...(markEvents || [])].sort((a, b) => a.seq - b.seq)
 

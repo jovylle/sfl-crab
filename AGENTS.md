@@ -12,7 +12,8 @@ npm run preview      # netlify build, then netlify serve
 npm test             # vitest run: 9 unit test files, 214 tests
 npm run check:deps   # dependency-cruiser layer rules
 npm run check:dead   # knip, against the baseline in knip.json
-npm run check        # check:deps + check:dead + test + build
+npm run check:types  # tsc --checkJs on tsconfig.typecheck.json, and bans @ts-ignore and similar
+npm run check        # check:deps + check:dead + check:types + test + build
 ```
 
 Use `npm run dev` for work that touches Netlify functions (auth, dig-day, practice patterns). Use `npm run dev:vite` for UI-only work. Environment variables: [docs/ARCHITECTURE.md#environment](docs/ARCHITECTURE.md#environment).
@@ -49,9 +50,9 @@ Details, the `@/` alias and the diagram: [docs/ARCHITECTURE.md#dependency-rules]
 
 ## Typing
 
-- The codebase is JavaScript and Vue only. There is no type checker.
-- New code must not add suppression comments (`@ts-ignore`, `@ts-expect-error`, `eslint-disable` and similar).
-- The typing strategy is an open decision: [docs/decisions/0003-typing-strategy.md](docs/decisions/0003-typing-strategy.md).
+- The codebase is JavaScript and Vue. Modules listed in `tsconfig.typecheck.json` are checked with `tsc --checkJs` (`npm run check:types`). Add a module there only when it passes with zero errors.
+- New code must not add suppression comments (`@ts-ignore`, `@ts-expect-error`, `eslint-disable` and similar). `check:types` fails on them.
+- Decision: [docs/decisions/0003-typing-strategy.md](docs/decisions/0003-typing-strategy.md) (JSDoc with `checkJs`).
 
 ## Verification
 

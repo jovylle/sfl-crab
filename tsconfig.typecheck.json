@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] },
+    "types": []
+  },
+  "include": [
+    "src/utils/gridStateCodec.js",
+    "src/utils/buildPublicDigGrid.js",
+    "src/utils/buildDigTimeline.js",
+    "src/utils/digStatsUtils.js",
+    "src/utils/patternPreview.js"
+  ]
+}

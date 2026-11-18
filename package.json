@@ -20,9 +20,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vite build && playwright test",
-    "check": "npm run check:deps && npm run check:dead && npm test && npm run build",
+    "check": "npm run check:deps && npm run check:dead && npm run check:types && npm test && npm run build",
     "check:deps": "depcruise src netlify scripts tests --config .dependency-cruiser.cjs",
-    "check:dead": "knip"
+    "check:dead": "knip",
+    "check:types": "tsc -p tsconfig.typecheck.json && ! grep -rnE '@ts-(ignore|expect-error|nocheck)' src netlify scripts tests"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
@@ -45,6 +46,7 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.4",
     "ts-morph": "^25.0.1",
+    "typescript": "^5.9.3",
     "vite": "^6.3.1",
     "vitest": "^4.1.10"
   }

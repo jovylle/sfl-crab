@@ -19,4 +19,4 @@ Keep each ADR under 40 lines. To change an accepted decision, write a new ADR th
 |---|---|---|
 | [0001](0001-release-flow.md) | Release flow: development to master by PR | Accepted |
 | [0002](0002-netlify-proxy.md) | The browser never holds SFL or Hub keys | Accepted |
-| [0003](0003-typing-strategy.md) | Typing strategy | Proposed: decision needed |
+| [0003](0003-typing-strategy.md) | Typing strategy | Accepted: JSDoc with checkJs, scoped |
