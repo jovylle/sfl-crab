@@ -6,7 +6,7 @@
 
 Hub sync is **opt-in per land**. A visitor who never touches the toggle causes no dig-day network traffic at all: no initial `GET /api/dig-day` on mount, no debounced `POST`, no flush on hide/unload. Marks and digs still work locally exactly as before (the mark-journal handlers stay registered; only the network calls are gated).
 
-- **Toggle:** "Save and share this day" (`src/components/DigDaySyncToggle.vue`, rendered by `DigToolSection.vue` in the Digging view). Shown only for persistable land ids; guest and non-numeric ids get the no-op store (`canSync: false`) and no toggle.
+- **Toggle:** "Save and share this day" (`src/components/DigDaySyncToggle.vue`, rendered inside the "More" menu of `DigToolSection.vue` in the Digging view). Shown only for persistable land ids; guest and non-numeric ids get the no-op store (`canSync: false`) and no toggle.
 - **Persistence:** localStorage key `digDaySync-<landId>` (`digDaySyncKey()` in `src/constants/storageKeys.js`; registry entry `DIG_DAY_SYNC`, audience `guest_or_signed_in`). `1` means on; absent means off. Turning it off removes the key.
 - **Default for Hub-signed-in users:** also off. A signed-in user sees the toggle highlighted with a short hint, but nothing is sent until they switch it on. This keeps request volume predictable and the rule simple.
 - **Turning on:** `setSyncEnabled(true)` persists the choice, GETs the Hub snapshot and merges it (`applyRemote`), then POSTs the current local state once if there is at least one dig or mark. After that the normal behaviour below applies.

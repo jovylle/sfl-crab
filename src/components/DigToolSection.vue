@@ -90,6 +90,16 @@
               Don't show land id
             </label>
 
+            <DigDaySyncToggle
+              v-if="canSyncDigDay"
+              :enabled="digDaySyncEnabled"
+              :status="digDaySyncStatus"
+              :error="digDaySyncError"
+              :replay-url="hubReplayUrl"
+              :signed-in="isHubSignedIn"
+              @update:enabled="$emit('update:digDaySyncEnabled', $event)"
+            />
+
             <button
               type="button"
               class="btn btn-error btn-sm tooltip"
@@ -103,15 +113,6 @@
       </div>
     </div>
   </div>
-  <DigDaySyncToggle
-    v-if="canSyncDigDay"
-    :enabled="digDaySyncEnabled"
-    :status="digDaySyncStatus"
-    :error="digDaySyncError"
-    :replay-url="hubReplayUrl"
-    :signed-in="isHubSignedIn"
-    @update:enabled="$emit('update:digDaySyncEnabled', $event)"
-  />
   </div>
 
 </template>
