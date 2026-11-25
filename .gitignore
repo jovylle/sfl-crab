@@ -41,3 +41,6 @@ scripts/fixtures/
 
 # Playwright MCP scratch output (snapshots, console logs)
 .playwright-mcp/
+
+# Decrypted analysis notes. Only docs/vault/enc/ is committed.
+docs/vault/plain/
